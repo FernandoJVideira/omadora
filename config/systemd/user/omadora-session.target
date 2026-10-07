@@ -2,6 +2,8 @@
 Description=Omadora Session Target
 PartOf=graphical-session.target
 After=graphical-session.target xdg-desktop-portal.service
+# Only start inside Hyprland, not other desktops sharing graphical-session.target (e.g. Plasma)
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 
 Wants=omadora-session.service
 Wants=omadora-fcitx5.service

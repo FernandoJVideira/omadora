@@ -3,7 +3,12 @@
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-# Launch the Omadora wifi controls (provided by the Impala TUI).
+# Launch the Omadora wifi controls (provided by the Impala TUI, or nmtui
+# when NetworkManager manages the network, as on Nobara).
 
 rfkill unblock wifi
-omadora_exec omadora-launch-or-focus-tui impala
+if systemctl is-active --quiet NetworkManager.service && has_cmd nmtui; then
+  omadora_exec omadora-launch-or-focus-tui nmtui connect
+else
+  omadora_exec omadora-launch-or-focus-tui impala
+fi

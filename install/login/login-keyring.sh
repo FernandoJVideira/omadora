@@ -29,5 +29,8 @@ configure_omadora_login_keyring() {
   sudo authselect apply-changes
 }
 
-configure_omadora_login_keyring
+# Nobara uses KWallet via its display manager; keep its authselect profile/features
+if [[ -z "${OMADORA_NOBARA:-}" ]]; then
+  configure_omadora_login_keyring
+fi
 unset -f configure_omadora_login_keyring

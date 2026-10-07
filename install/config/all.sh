@@ -13,3 +13,4 @@ source "$OMADORA_INSTALL/config/omadora-toggles.sh"
 
 source "$OMADORA_INSTALL/config/hardware/network.sh"
 source "$OMADORA_INSTALL/config/hardware/power.sh"
+source "$OMADORA_INSTALL/config/hardware/nvidia.sh"
