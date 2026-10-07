@@ -17,6 +17,7 @@ CLI_SUMMARY="Trigger UI functions"
 CLI_NAMESPACES=(
   "toggle|Toggle UI functions"
   "window|Hyprland window functions"
+  "bar|Top bar functions"
 )
 
 CLI_COMMANDS=(
@@ -24,7 +25,8 @@ CLI_COMMANDS=(
   "toggle window-transparency||Toggle window transparency|run_toggle_transparency||"
   "toggle single-window-aspect||Toggle single window aspect ratio|run_toggle_aspect||"
   "toggle workspace-layout||Toggle workspace layout|run_toggle_layout||"
-  "toggle waybar||Hide/show waybar visibility|run_toggle_waybar||"
+  "toggle waybar||Hide/show the top bar|run_toggle_waybar||"
+  "bar use|<quickshell/waybar>|Switch the top bar implementation|run_bar_use||"
   "window killactive||Close launcher or kill active window|run_window_killactive||"
   "window close-all||Close all windows|run_window_close_all||"
   "window pop||Pop active window|run_window_pop||"
@@ -51,7 +53,15 @@ run_toggle_layout() {
 }
 
 run_toggle_waybar() {
-  killall -SIGUSR1 waybar
+  if pgrep -x waybar >/dev/null; then
+    killall -SIGUSR1 waybar
+  else
+    qs -c omadora ipc call bar toggle >/dev/null
+  fi
+}
+
+run_bar_use() {
+  omadora_exec omadora-bar-use "$@"
 }
 
 run_window_killactive() {

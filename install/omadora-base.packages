@@ -64,6 +64,7 @@ playerctl
 plocate
 plymouth-plugin-*
 power-profiles-daemon
+quickshell
 qt5-qtwayland
 qt6-qtwayland
 ripgrep

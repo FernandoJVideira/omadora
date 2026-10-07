@@ -17,7 +17,7 @@ CLI_SUMMARY="Restart Omadora session components"
 CLI_NAMESPACES=()
 
 CLI_COMMANDS=(
-  "waybar||Restart Waybar|run_waybar||"
+  "waybar||Restart the top bar (Quickshell or Waybar)|run_waybar||"
   "hypridle||Restart Hypridle|run_hypridle||"
   "hyprpaper||Restart Hyprpaper|run_hyprpaper||"
   "hyprsunset||Restart Hyprsunset|run_hyprsunset||"
@@ -40,7 +40,7 @@ restart_unit() {
 }
 
 run_waybar() {
-  restart_unit waybar.service
+  omadora_exec omadora-restart-waybar
 }
 
 run_hypridle() {

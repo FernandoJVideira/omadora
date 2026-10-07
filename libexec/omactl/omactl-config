@@ -40,6 +40,7 @@ CONFIG_COMPONENTS=(
   "fastfetch|fastfetch/config.jsonc||omadora-refresh-fastfetch"
   "mako||omadora-restart-mako|"
   "waybar|waybar/config.jsonc|omadora-restart-waybar|omadora-refresh-waybar"
+  "quickshell|quickshell/omadora/Bar.qml||omadora-refresh-waybar"
   "wofi|wofi/config||omadora-refresh-wofi"
 
   "opencode|opencode/opencode.json|omadora-restart-opencode|"

@@ -10,4 +10,4 @@ else
   notify-send -u low "󰂚    Enabled notifications"
 fi
 
-pkill -RTMIN+10 waybar
+"$(dirname "${BASH_SOURCE[0]}")/omadora-bar-refresh" notification-silencing

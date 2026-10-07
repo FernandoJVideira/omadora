@@ -1,5 +1,11 @@
 #!/bin/bash
 
-# Restart Waybar
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-systemctl --user restart waybar.service
+# shellcheck source=lib/service.sh
+source "$OMADORA_LIB_DIR/service.sh"
+
+# Restart the top bar (Quickshell or Waybar)
+
+systemctl --user restart "$(service_bar_unit)"

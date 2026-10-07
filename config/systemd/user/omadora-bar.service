@@ -1,0 +1,15 @@
+[Unit]
+Description=Omadora top bar (Quickshell)
+PartOf=omadora-session.target
+After=graphical-session.target
+ConditionPathExists=!%h/.local/state/omadora/toggles/waybar-off
+# Touching this flag switches the top bar back to Waybar (see omactl ui bar)
+ConditionPathExists=!%h/.local/state/omadora/toggles/bar-waybar
+
+[Service]
+ExecStart=/usr/bin/qs -c omadora -n
+Restart=on-failure
+Slice=app-graphical.slice
+
+[Install]
+WantedBy=omadora-session.target

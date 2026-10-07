@@ -27,7 +27,7 @@ flock -n 9 || exit 0
 # Helpers
 # -----------------------------------------------------------------------------
 waybar_module_refresh() {
-  pkill -RTMIN+7 waybar
+  omadora_run omadora-bar-refresh update
 }
 
 # -----------------------------------------------------------------------------

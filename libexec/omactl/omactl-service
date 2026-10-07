@@ -35,6 +35,7 @@ SERVICE_UNITS=(
   omadora-session.target
   omadora-session.service
   waybar.service
+  omadora-bar.service
   hypridle.service
   hyprpaper.service
   hyprsunset.service

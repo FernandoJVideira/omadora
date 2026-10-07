@@ -18,6 +18,7 @@ Wants=hyprpaper.service
 Wants=hyprsunset.service
 Wants=mako.service
 Wants=waybar.service
+Wants=omadora-bar.service
 
 [Install]
 WantedBy=graphical-session.target

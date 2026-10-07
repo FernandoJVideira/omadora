@@ -197,7 +197,7 @@ reload hyprland
 reload alacritty &
 reload ghostty &
 reload kitty &
-reload waybar &
+reload bar &
 reload mako &
 wait
 reload btop &

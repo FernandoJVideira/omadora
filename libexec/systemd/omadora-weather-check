@@ -533,7 +533,7 @@ compile_state() {
 }
 
 waybar_module_refresh() {
-  pkill -RTMIN+11 waybar
+  omadora_run omadora-bar-refresh weather
 }
 
 info "Starting weather check..."
