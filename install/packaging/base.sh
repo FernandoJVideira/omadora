@@ -1,5 +1,8 @@
-# Install base groups (Nobara already ships a full desktop and its own multimedia stack)
-if [[ -z "${OMADORA_NOBARA:-}" ]]; then
+# Install base groups (Nobara already ships a full desktop and its own multimedia stack,
+# but still needs the development headers for the cargo builds)
+if [[ -n "${OMADORA_NOBARA:-}" ]]; then
+  sudo dnf group install -y development-libs
+else
   mapfile -t groups < <(grep -v '^#' "$OMADORA_INSTALL/omadora-base.groups" | grep -v '^$')
   sudo dnf group install -y "${groups[@]}"
 fi

@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+# Show "Omadora" on the login screen and hide the stock Hyprland sessions.
+# Runs as root (installer and dnf action after Hyprland package updates).
+
+sessions_dir=/usr/share/wayland-sessions
+
+cat >"$sessions_dir/omadora.desktop" <<'DESKTOP'
+[Desktop Entry]
+Name=Omadora
+Comment=Hyprland with Omadora, managed by UWSM
+Exec=uwsm start -e -D Hyprland hyprland.desktop
+DesktopNames=Hyprland
+Type=Application
+DESKTOP
+
+for session in hyprland.desktop hyprland-uwsm.desktop; do
+  file="$sessions_dir/$session"
+  [[ -f $file ]] || continue
+  grep -q '^NoDisplay=true' "$file" ||
+    sed -i '/^\[Desktop Entry\]/a NoDisplay=true\nHidden=true' "$file"
+done
