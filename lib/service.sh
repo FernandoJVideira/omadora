@@ -1,23 +1,6 @@
-# The top bar unit in use: Quickshell by default, Waybar when selected
-service_bar_unit() {
-  if [[ -f "$HOME/.local/state/omadora/toggles/bar-waybar" ]]; then
-    echo waybar.service
-  else
-    echo omadora-bar.service
-  fi
-}
-
 service_reload_bar() {
-  service_reload_waybar
   if systemctl --quiet --user is-active omadora-bar.service; then
     qs -c omadora ipc call bar reloadTheme >/dev/null 2>&1 || true
-  fi
-}
-
-service_reload_waybar() {
-  if pgrep -x "waybar" >/dev/null; then
-    #pkill -SIGUSR2 waybar
-    systemctl --quiet --user restart waybar.service
   fi
 }
 

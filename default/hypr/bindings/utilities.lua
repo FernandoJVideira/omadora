@@ -12,7 +12,7 @@ o.bind("SUPER + ALT + K", "Show Tmux key bindings", o.libexec("omadora-menu-tmux
 o.bind("XF86Calculator", "Calculator", "gnome-calculator")
 
 -- Aesthetics.
-o.bind("SUPER + SHIFT + SPACE", "Toggle top bar", "omactl ui toggle waybar")
+o.bind("SUPER + SHIFT + SPACE", "Toggle top bar", "omactl ui toggle bar")
 o.bind("SUPER + CTRL + SPACE", "Next theme background", o.libexec("omadora-theme-bg-next"))
 o.bind("SUPER + SHIFT + CTRL + SPACE", "Theme menu", o.libexec("omadora-menu theme"))
 o.bind("SUPER + CTRL + ALT + SPACE", "Background switcher", "qs -c omadora ipc call wallpapers open")
@@ -93,7 +93,7 @@ o.bind("SUPER + CTRL + R", "Set reminder", o.libexec("omadora-menu reminder-set"
 o.bind("SUPER + CTRL + ALT + R", "Show reminders", o.libexec("omadora-reminder show"))
 o.bind("SUPER + SHIFT + CTRL + R", "Clear reminders", o.libexec("omadora-reminder clear"))
 
--- Waybar-less information.
+-- Information without a bar.
 o.bind(
   "SUPER + CTRL + ALT + T",
   "Show time",

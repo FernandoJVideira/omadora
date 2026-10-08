@@ -97,7 +97,7 @@ omadora omadora-refresh-hypridle
 omadora omadora-refresh-hyprland
 omadora omadora-refresh-hyprlock
 omadora omadora-refresh-hyprsunset
-omadora omadora-refresh-waybar
+omadora omadora-refresh-bar
 omadora omadora-refresh-wofi
 
 for config in \
@@ -127,7 +127,6 @@ for config in \
   systemd/user/omadora-update-check.timer \
   systemd/user/omadora-weather-check.service \
   systemd/user/omadora-weather-check.timer \
-  systemd/user/waybar.service.d/omadora.conf \
   starship.toml \
   tmux/tmux.conf \
   uwsm/default \

@@ -18,4 +18,4 @@ else
   notify-send -u low "    Weather enabled"
 fi
 
-pkill -RTMIN+11 waybar || true
+"$(dirname "${BASH_SOURCE[0]}")/omadora-bar-refresh" weather

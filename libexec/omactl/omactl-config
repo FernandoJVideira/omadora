@@ -37,8 +37,7 @@ CONFIG_COMPONENTS=(
 
   "btop|btop/btop.conf|omadora-restart-btop|"
   "fastfetch|fastfetch/config.jsonc||omadora-refresh-fastfetch"
-  "waybar|waybar/config.jsonc|omadora-restart-waybar|omadora-refresh-waybar"
-  "quickshell|quickshell/omadora/Bar.qml||omadora-refresh-waybar"
+  "quickshell|quickshell/omadora/Bar.qml|omadora-restart-bar|omadora-refresh-bar"
 
   "opencode|opencode/opencode.json|omadora-restart-opencode|"
 )

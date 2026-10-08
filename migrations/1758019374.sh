@@ -1,2 +1,2 @@
 echo "Update waybar config"
-omadora-refresh-waybar
+omadora-refresh-bar

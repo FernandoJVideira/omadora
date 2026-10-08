@@ -11,19 +11,12 @@ ShellRoot {
   id: root
 
   property bool barVisible: true
-  property bool waybarSelected: false // Waybar replaces the Quickshell bar when this flag file exists
-
-  Process {
-    command: ["test", "-f", `${Omadora.home}/.local/state/omadora/toggles/bar-waybar`]
-    running: true
-    onExited: code => root.waybarSelected = code === 0
-  }
 
   Variants {
     model: Quickshell.screens
 
     Bar {
-      visible: root.barVisible && !root.waybarSelected
+      visible: root.barVisible
     }
   }
 
@@ -51,18 +44,12 @@ ShellRoot {
   IpcHandler {
     target: "bar"
 
-    // Hide/show the bar (Waybar's SIGUSR1)
+    // Hide/show the bar
     function toggle(): void {
       root.barVisible = !root.barVisible;
     }
 
-    // Switch between this bar and Waybar
-    function useWaybar(selected: bool): void {
-      root.waybarSelected = selected;
-    }
-
     // Re-run a script module: update, weather, idle, notification-silencing, screenrecording or all
-    // (Waybar's SIGRTMIN+N)
     function refresh(module: string): void {
       Omadora.refreshRequested(module);
     }

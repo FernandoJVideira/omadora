@@ -1,6 +1,6 @@
 .pragma library
 
-// Convert the Pango markup Waybar scripts print into Qt rich text.
+// Convert the Pango markup the bar scripts print into Qt rich text.
 // Line breaks become <br>, except inside <tt> blocks which keep their
 // column alignment as preformatted text.
 function toHtml(markup) {

@@ -27,7 +27,7 @@ omadora-refresh-hyprlock
 omadora-refresh-hyprsunset
 omadora-refresh-config hypr/windows.conf
 omadora-refresh-fastfetch
-omadora-refresh-waybar
+omadora-refresh-bar
 omadora-refresh-wofi
 
 echo "Update other configs"

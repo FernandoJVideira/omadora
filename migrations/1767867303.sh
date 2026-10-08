@@ -12,4 +12,4 @@ fi
 
 echo "Update configs"
 omadora-refresh-hypridle
-omadora-refresh-waybar
+omadora-refresh-bar

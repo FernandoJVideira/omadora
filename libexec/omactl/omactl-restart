@@ -17,7 +17,7 @@ CLI_SUMMARY="Restart Omadora session components"
 CLI_NAMESPACES=()
 
 CLI_COMMANDS=(
-  "waybar||Restart the top bar (Quickshell or Waybar)|run_waybar||"
+  "bar||Restart the top bar|run_bar||"
   "hypridle||Restart Hypridle|run_hypridle||"
   "hyprpaper||Restart Hyprpaper|run_hyprpaper||"
   "hyprsunset||Restart Hyprsunset|run_hyprsunset||"
@@ -38,8 +38,8 @@ restart_unit() {
   systemctl --user restart "$unit"
 }
 
-run_waybar() {
-  omadora_exec omadora-restart-waybar
+run_bar() {
+  omadora_exec omadora-restart-bar
 }
 
 run_hypridle() {

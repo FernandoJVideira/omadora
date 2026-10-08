@@ -15,7 +15,7 @@ fi
 echo "Setting timezone to $timezone..."
 
 if sudo timedatectl set-timezone "$timezone"; then
-  omadora_run omadora-restart-waybar
+  omadora_run omadora-restart-bar
 else
   echo "Failed to set time zone to $timezone"
   exit 1

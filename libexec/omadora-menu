@@ -249,7 +249,7 @@ show_toggle_menu() {
   *Idle*) omadora_run omadora-toggle-idle ;;
   *Notifications*) omadora_run omadora-toggle-notification-silencing ;;
   *Weather*) omadora_run omadora-toggle-weather-check ;;
-  *Bar*) omadora_run omadora-toggle-waybar ;;
+  *Bar*) omadora_run omadora-toggle-bar ;;
   *Layout*) omadora_run omadora-hyprland-workspace-layout-toggle ;;
   *Ratio*) omadora_run omadora-hyprland-window-single-square-aspect-toggle ;;
   *Gaps*) omadora_run omadora-hyprland-window-gaps-toggle ;;
@@ -471,11 +471,11 @@ show_setup_security_menu() {
 }
 
 show_setup_config_menu() {
-  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprsunset\n󰍜  Waybar\n󰞅  XCompose") in
+  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprsunset\n󰍜  Bar\n󰞅  XCompose") in
   *Hyprland*) open_in_editor ~/.config/hypr/hyprland.lua ;;
   *Hypridle*) open_in_editor ~/.config/hypr/hypridle.conf && omadora_run omadora-restart-hypridle ;;
   *Hyprsunset*) open_in_editor ~/.config/hypr/hyprsunset.conf && omadora_run omadora-restart-hyprsunset ;;
-  *Waybar*) if [[ -f ~/.local/state/omadora/toggles/bar-waybar ]]; then open_in_editor ~/.config/waybar/config.jsonc && omadora_run omadora-restart-waybar; else open_in_editor ~/.config/quickshell/omadora/Bar.qml; fi ;;
+  *Bar*) open_in_editor ~/.config/quickshell/omadora/Bar.qml ;;
   *XCompose*) open_in_editor ~/.XCompose && omadora_run omadora-restart-xcompose ;;
   *) show_setup_menu ;;
   esac
@@ -542,22 +542,22 @@ show_update_menu() {
 }
 
 show_update_process_menu() {
-  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n󰍜  Waybar") in
+  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n󰍜  Bar") in
   *Hypridle*) omadora_run omadora-restart-hypridle ;;
   *Hyprsunset*) omadora_run omadora-restart-hyprsunset ;;
-  *Waybar*) omadora_run omadora-restart-waybar ;;
+  *Bar*) omadora_run omadora-restart-bar ;;
   *) show_update_menu ;;
   esac
 }
 
 show_update_config_menu() {
-  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprsunset\n󱣴  Plymouth\n  Tmux\n󰍜  Waybar") in
+  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprsunset\n󱣴  Plymouth\n  Tmux\n󰍜  Bar") in
   *Hyprland*) present_omadora_terminal omadora-refresh-hyprland ;;
   *Hypridle*) present_omadora_terminal omadora-refresh-hypridle ;;
   *Hyprsunset*) present_omadora_terminal omadora-refresh-hyprsunset ;;
   *Plymouth*) present_omadora_terminal omadora-refresh-plymouth ;;
   *Tmux*) present_omadora_terminal omadora-refresh-tmux ;;
-  *Waybar*) present_omadora_terminal omadora-refresh-waybar ;;
+  *Bar*) present_omadora_terminal omadora-refresh-bar ;;
   *) show_update_menu ;;
   esac
 }

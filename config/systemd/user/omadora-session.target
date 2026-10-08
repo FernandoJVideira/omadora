@@ -17,7 +17,6 @@ Wants=omadora-weather-check.timer
 Wants=hypridle.service
 Wants=hyprpaper.service
 Wants=hyprsunset.service
-Wants=waybar.service
 Wants=omadora-bar.service
 
 [Install]

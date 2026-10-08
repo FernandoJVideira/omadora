@@ -3,11 +3,9 @@
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-# Overwrite the user configs for the top bar (Waybar and Quickshell) with the defaults and restart it.
+# Overwrite the user configs for the top bar with the defaults and restart it.
 
-omadora_run omadora-refresh-config waybar/config.jsonc
-omadora_run omadora-refresh-config waybar/style.css
 while IFS= read -r file; do
   omadora_run omadora-refresh-config "${file#"$OMADORA_ROOT"/config/}"
 done < <(find "$OMADORA_ROOT/config/quickshell/omadora" -type f | sort)
-omadora_run omadora-restart-waybar
+omadora_run omadora-restart-bar

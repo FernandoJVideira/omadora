@@ -30,7 +30,7 @@ This also has help and bash completion to make things a bit nicer.
 
 ## How do I keep Omadora updated?
 
-There is an update indicator which appears in the top right of the Waybar that indicates update status; clicking this will pop a terminal and execute the update script.
+There is an update indicator which appears in the top right of the bar that indicates update status; clicking this will pop a terminal and execute the update script.
 The script can be manually run via `omactl update`, and will update Omadora to the latest version, along with system packages, firmware, flatpaks, and cargo-installed binaries.
 The update check will be performed a few times per day, however you can force an update check with `omactl update check`.
 
