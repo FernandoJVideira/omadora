@@ -1,71 +1,85 @@
 #!/bin/bash
 
-# List, show or set the SDDM login theme: omadora-sddm-theme [list|current|set <name>|sync]
-# "set" writes a drop-in under /etc/sddm.conf.d and "sync" installs the "omadora"
-# theme (colors and wallpaper of the active Omadora theme); both need sudo.
+# List, show or set the Plasma Login Manager wallpaper: omadora-login-theme [list|current|set <name>|sync|sync --auto]
+# "sync" installs an "omadora" wallpaper from the active Omadora theme and "set"
+# selects a wallpaper folder from /usr/share/plasmalogin/wallpapers.
+# The first "sync" needs sudo: it hands the omadora folder to your user and
+# selects it. After that "sync" needs none, and "sync --auto" (run on every theme
+# change) does nothing instead of asking for a password when that setup is missing.
 
-OMADORA_PATH="${OMADORA_PATH:-$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/..}"
-themes_dir=/usr/share/sddm/themes
+wallpapers_dir=/usr/share/plasmalogin/wallpapers
 current_dir="${OMADORA_CONFIG_HOME:-$HOME/.config/omadora}/current"
-conf=/etc/sddm.conf.d/omadora-theme.conf
+conf=/etc/plasmalogin.conf
+kconf=(--file "$conf" --group Greeter --group Wallpaper --group org.kde.image --group General --key Image)
 
 current() {
-  local name
-  name=$(cat /usr/lib/sddm/sddm.conf.d/*.conf /etc/sddm.conf.d/*.conf /etc/sddm.conf 2>/dev/null |
-    awk '/^\[/{s=$0} s=="[Theme]" && /^Current=/{sub(/^Current=/,""); v=$0} END{print v}')
-  echo "${name:-breeze}"
+  local image dir
+  image=$(kreadconfig6 "${kconf[@]}" 2>/dev/null)
+  dir=$(dirname "${image#file://}")
+  basename "${dir:-.}"
 }
 
-# Build the "omadora" SDDM theme from the active Omadora theme and install it.
-sync() {
-  local src="$OMADORA_PATH/default/sddm/omadora" colors="$current_dir/theme/colors.toml"
-  local work bg key value
-  declare -A c
+apply() {
+  local name="$1" file
+  file=$(find "$wallpapers_dir/$name" -maxdepth 1 -type f | sort | head -n 1)
+  if [[ -z $file ]]; then
+    echo "No wallpaper found in $wallpapers_dir/$name" >&2
+    return 1
+  fi
+  sudo kwriteconfig6 "${kconf[@]}" "file://$file"
+  echo "Login screen wallpaper set to $name"
+}
 
-  [[ -f $colors ]] || { echo "No active Omadora theme" >&2; return 1; }
-  while IFS=$'\t' read -r key value; do c[$key]="$value"; done \
-    < <("$OMADORA_PATH/libexec/omadora-theme-color" --file "$colors" --all)
+# Install the active Omadora theme's wallpaper as the "omadora" login wallpaper.
+sync() {
+  local work bg
+  bg=$(readlink -f "$current_dir/background" 2>/dev/null)
+  [[ -f $bg ]] || { echo "No active Omadora theme background" >&2; return 1; }
 
   work=$(mktemp -d)
   trap 'rm -rf "$work"' RETURN
-  cp "$src"/Main.qml "$src"/metadata.desktop "$work/"
-  printf '[General]\naccent=%s\nbackground=%s\nforeground=%s\nmuted=%s\nselection=%s\nerror=%s\n' \
-    "${c[accent]}" "${c[background]}" "${c[foreground]}" "${c[muted]:-${c[dark_foreground]}}" \
-    "${c[selection]:-${c[lighter_background]}}" "${c[red]}" >"$work/theme.conf"
-
-  # SDDM's greeter may lack WebP support, so hand it a JPEG when we can
-  bg=$(readlink -f "$current_dir/background" 2>/dev/null)
-  if [[ -f $bg ]]; then
-    if command -v magick >/dev/null && magick "$bg[0]" -resize '3840x3840>' -quality 90 "jpg:$work/background" 2>/dev/null; then
-      :
-    elif command -v ffmpeg >/dev/null && ffmpeg -loglevel error -y -i "$bg" -frames:v 1 -f image2 -c:v mjpeg -f image2 "$work/background" 2>/dev/null; then
-      :
-    else
-      cp "$bg" "$work/background"
-    fi
+  if command -v magick >/dev/null && magick "$bg[0]" -resize '3840x3840>' -quality 90 "jpg:$work/background.jpg" 2>/dev/null; then
+    :
+  elif command -v ffmpeg >/dev/null && ffmpeg -loglevel error -y -i "$bg" -frames:v 1 -f image2 -c:v mjpeg "$work/background.jpg" 2>/dev/null; then
+    :
+  else
+    cp "$bg" "$work/background.${bg##*.}"
   fi
 
-  sudo rm -rf "$themes_dir/omadora"
-  sudo install -d "$themes_dir/omadora"
-  sudo cp -r "$work"/. "$themes_dir/omadora/"
-  sudo chmod -R a+rX "$themes_dir/omadora"
-  echo "Installed SDDM theme omadora from $(cat "$current_dir/theme.name" 2>/dev/null)"
+  local dest="$wallpapers_dir/omadora"
+  if [[ ! -O $dest || ! -w $dest ]]; then
+    [[ $auto == 1 ]] && return 0
+    sudo install -d -o "$(id -un)" -g "$(id -gn)" "$dest"
+    sudo chown "$(id -un):$(id -gn)" "$dest"
+  fi
+  rm -f "$dest"/*
+  cp "$work"/* "$dest/"
+  chmod a+rX "$dest" "$dest"/*
+  echo "Installed login wallpaper omadora from $(cat "$current_dir/theme.name" 2>/dev/null)"
 }
 
 case "${1:-list}" in
-sync) sync ;;
-list) ls -1 "$themes_dir" ;;
+sync)
+  auto=0
+  if [[ ${2:-} == --auto ]]; then
+    auto=1
+    # Only follow the theme when the omadora wallpaper is the one in use.
+    [[ $(current) == omadora ]] || exit 0
+  fi
+  sync || exit 1
+  # The image path is already stored once omadora is selected.
+  [[ $(current) == omadora ]] || apply omadora
+  ;;
+list) ls -1 "$wallpapers_dir" ;;
 current) current ;;
 set)
   name="${2:-}"
   [[ $name == omadora ]] && { sync || exit 1; }
-  if [[ -z $name || ! -d $themes_dir/$name ]]; then
-    echo "Unknown SDDM theme: ${name:-<none>}" >&2
+  if [[ -z $name || ! -d $wallpapers_dir/$name ]]; then
+    echo "Unknown login wallpaper: ${name:-<none>}" >&2
     exit 1
   fi
-  sudo install -d /etc/sddm.conf.d
-  printf '[Theme]\nCurrent=%s\n' "$name" | sudo tee "$conf" >/dev/null
-  echo "SDDM theme set to $name"
+  apply "$name"
   ;;
-*) echo "Usage: omadora-sddm-theme [list|current|set <name>|sync]" >&2; exit 1 ;;
+*) echo "Usage: omadora-login-theme [list|current|set <name>|sync [--auto]]" >&2; exit 1 ;;
 esac
