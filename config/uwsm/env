@@ -2,7 +2,7 @@
 
 # Omadora paths (also needed when Hyprland is started from a display manager)
 export OMADORA_PATH="$HOME/.local/share/omadora"
-export PATH="$OMADORA_PATH/bin:$HOME/.local/bin:$PATH"
+export PATH="$OMADORA_PATH/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
 
 # Set default terminal and editor
 source ~/.config/uwsm/default
