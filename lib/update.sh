@@ -58,10 +58,9 @@ update_collect_omadora() {
       sort -V |
       tail -n 1
   )"
+  # A remote without release tags (e.g. a fork) has nothing to compare against.
   if [[ -z "$omadora_latest_version" ]]; then
-    omadora_status="error"
-    with_errors=true
-    return 1
+    return 0
   fi
 
   omadora_current_version="$(
@@ -86,14 +85,17 @@ update_collect_dnf() {
     return 1
   fi
 
-  if ! dnf5 -q repoquery --upgrades --queryformat '%{name}\n' |
-    sort -u \
-    >"$OMADORA_UPDATE_DNF_UPGRADES_LIST" \
-    2>/dev/null; then
+  # check-upgrade honours repo priority; repoquery --upgrades does not and
+  # reports packages that `dnf upgrade` will never install. Exit 100 = updates.
+  local check_output check_rc=0
+  check_output="$(dnf5 -q check-upgrade 2>/dev/null)" || check_rc=$?
+  if ((check_rc != 0 && check_rc != 100)); then
     dnf_status="error"
     with_errors=true
     return 1
   fi
+  awk 'NF >= 3 && $1 ~ /\.[^.]+$/ { sub(/\.[^.]+$/, "", $1); print $1 }' \
+    <<<"$check_output" | sort -u >"$OMADORA_UPDATE_DNF_UPGRADES_LIST"
 
   dnf_package_total="$(
     grep -cve '^[[:space:]]*$' "$OMADORA_UPDATE_DNF_UPGRADES_LIST" ||
