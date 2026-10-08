@@ -41,7 +41,7 @@ if "$here/omadora-cmd-missing" "$terminal"; then
   if [[ $installing == "false" ]]; then
     exec "$here/omadora-launch-floating-terminal-with-presentation" "$here/omadora-default-terminal" --install "$terminal"
   fi
-  sudo dnf install -y "$terminal" || exit 1
+  sudo pacman -S --needed --noconfirm "$terminal" || exit 1
 fi
 
 # The chosen terminal first; the rest of the list stays as fallbacks

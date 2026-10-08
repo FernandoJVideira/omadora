@@ -29,8 +29,8 @@ fi
 
 # Each browser: name, desktop file, a command that exists once installed, and how to install it
 case "$1" in
-chromium) browser="chromium"; name="Chromium"; desktop_id="chromium-browser.desktop"; present="chromium-browser"; dnf_package="chromium"; glyph= ;;
-firefox) browser="firefox"; name="Firefox"; desktop_id="firefox.desktop"; present="firefox"; dnf_package="firefox"; glyph=󰈹 ;;
+chromium) browser="chromium"; name="Chromium"; desktop_id="chromium.desktop"; present="chromium"; pkg="chromium"; glyph= ;;
+firefox) browser="firefox"; name="Firefox"; desktop_id="firefox.desktop"; present="firefox"; pkg="firefox"; glyph=󰈹 ;;
 helium) browser="helium"; name="Helium"; desktop_id="helium.desktop"; present="helium"; glyph=󰖟 ;;
 # Brave, Chrome and Edge installed from their own repos win over the Flatpak versions
 brave)
@@ -71,8 +71,8 @@ if ! installed; then
 
   if [[ -n ${flatpak_id:-} ]]; then
     flatpak install -y flathub "$flatpak_id" || exit 1
-  elif [[ -n ${dnf_package:-} ]]; then
-    sudo dnf install -y "$dnf_package" || exit 1
+  elif [[ -n ${pkg:-} ]]; then
+    sudo pacman -S --needed --noconfirm "$pkg" || exit 1
   else
     echo "Install $name yourself, then choose it again." >&2
     exit 1

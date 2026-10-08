@@ -9,7 +9,7 @@ sudo -v || exit 1
 
 echo
 echo -e "\e[32mChecking required packages installed...\e[0m"
-sudo dnf install -y fido2-tools pamu2fcfg
+sudo pacman -S --needed --noconfirm libfido2 pam-u2f
 
 echo
 echo -e "\e[32mChecking for device...\e[0m"
@@ -22,9 +22,8 @@ echo "U2F device detected."
 
 echo
 echo -e "\e[32mEnabling U2F authentication...\e[0m"
-if ! authselect current | grep -q "with-pam-u2f"; then
-  sudo authselect enable-feature with-pam-u2f
-  sudo authselect apply-changes
+if ! grep -q pam_u2f.so /etc/pam.d/sudo; then
+  sudo sed -i '0,/^auth/s//auth       sufficient   pam_u2f.so cue\nauth/' /etc/pam.d/sudo
 fi
 echo "Done."
 

@@ -78,96 +78,35 @@ update_collect_omadora() {
   fi
 }
 
+# On Arch this collects pacman (and AUR, when yay exists) upgrades. The state
+# keys keep their "dnf" names so the update JSON schema its consumers read is
+# unchanged. Arch has no advisory feed here, so the advisories list is empty.
 update_collect_dnf() {
-  if ! dnf5 -q --refresh makecache >/dev/null 2>&1; then
+  local out rc=0
+
+  # checkupdates syncs a private copy of the database, so no root is needed.
+  # Exit 2 = nothing to upgrade.
+  out="$(checkupdates 2>/dev/null)" || rc=$?
+  if ((rc != 0 && rc != 2)); then
     dnf_status="error"
     with_errors=true
     return 1
+  fi
+  [[ $rc -eq 2 ]] && out=""
+
+  if command -v yay >/dev/null; then
+    out+=$'\n'"$(yay -Qua 2>/dev/null || true)"
   fi
 
-  # check-upgrade honours repo priority; repoquery --upgrades does not and
-  # reports packages that `dnf upgrade` will never install. Exit 100 = updates.
-  local check_output check_rc=0
-  check_output="$(dnf5 -q check-upgrade 2>/dev/null)" || check_rc=$?
-  if ((check_rc != 0 && check_rc != 100)); then
-    dnf_status="error"
-    with_errors=true
-    return 1
-  fi
-  awk 'NF >= 3 && $1 ~ /\.[^.]+$/ { sub(/\.[^.]+$/, "", $1); print $1 }' \
-    <<<"$check_output" | sort -u >"$OMADORA_UPDATE_DNF_UPGRADES_LIST"
+  awk 'NF >= 4 && $2 ~ /^[0-9a-zA-Z]/ { print $1 }' <<<"$out" |
+    sort -u >"$OMADORA_UPDATE_DNF_UPGRADES_LIST"
 
   dnf_package_total="$(
     grep -cve '^[[:space:]]*$' "$OMADORA_UPDATE_DNF_UPGRADES_LIST" ||
       true
   )"
 
-  if ! dnf5 -q advisory info --updates --json \
-    >"$OMADORA_UPDATE_DNF_ADVISORIES_JSON" \
-    2>/dev/null; then
-    dnf_status="error"
-    with_errors=true
-    return 1
-  fi
-
-  dnf_advisory_total="$(
-    jq '[unique_by(.Name)[]] | length' "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
-
-  dnf_security_total="$(
-    jq '[unique_by(.Name)[] | select((.Type | ascii_downcase) == "security")] | length' \
-      "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
-
-  dnf_security_critical_total="$(
-    jq '
-      [
-        unique_by(.Name)[]
-        | select(
-            (.Type | ascii_downcase) == "security"
-            and (.Severity | ascii_downcase) == "critical"
-          )
-      ]
-      | length
-    ' "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
-
-  dnf_security_important_total="$(
-    jq '
-      [
-        unique_by(.Name)[]
-        | select(
-            (.Type | ascii_downcase) == "security"
-            and (.Severity | ascii_downcase) == "important"
-          )
-      ]
-      | length
-    ' "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
-
-  dnf_bugfix_total="$(
-    jq '[unique_by(.Name)[] | select((.Type | ascii_downcase) == "bugfix")] | length' \
-      "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
-
-  dnf_enhancement_total="$(
-    jq '[unique_by(.Name)[] | select((.Type | ascii_downcase) == "enhancement")] | length' \
-      "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
-
-  dnf_other_total="$(
-    jq '
-      [
-        unique_by(.Name)[]
-        | select(
-            (.Type | ascii_downcase) != "security" and
-            (.Type | ascii_downcase) != "bugfix" and
-            (.Type | ascii_downcase) != "enhancement"
-          )
-      ]
-      | length
-    ' "$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
-  )"
+  printf '[]\n' >"$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
 }
 
 update_collect_cargo() {

@@ -9,10 +9,7 @@ sudo -v || exit 1
 
 echo
 echo -e "\e[32mDisabling U2F authentication...\e[0m"
-if authselect current | grep -q "with-pam-u2f"; then
-  sudo authselect disable-feature with-pam-u2f
-  sudo authselect apply-changes
-fi
+sudo sed -i '/pam_u2f.so/d' /etc/pam.d/sudo
 echo "Done."
 
 echo
@@ -27,7 +24,7 @@ echo
 if gum confirm "Remove related packages?"; then
   echo
   echo -e "\e[32mRemoving installed packages...\e[0m"
-  sudo dnf remove fido2-tools pamu2fcfg || true
+  sudo pacman -Rns --noconfirm pam-u2f || true
   echo "Done."
   echo
 fi

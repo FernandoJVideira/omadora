@@ -90,7 +90,7 @@ $(coredumpctl list --no-pager 2>&1 | tail -n 15)
 =========================================
 INSTALLED PACKAGES
 =========================================
-$(rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n' 2>/dev/null | sort)
+$(pacman -Q 2>/dev/null | sort)
 REPORT
 
 if [[ $PRINT_ONLY == "true" ]]; then

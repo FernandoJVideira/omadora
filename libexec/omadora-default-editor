@@ -24,10 +24,10 @@ fi
 
 # selection: what you pick; command: what starts it; present: a command that exists once installed
 case "$1" in
-nvim | neovim) selection="nvim"; command="nvim"; present="nvim"; name="Neovim"; dnf_package="neovim"; glyph= ;;
-vim) selection="vim"; command="vim"; present="vim"; name="Vim"; dnf_package="vim-enhanced"; glyph= ;;
-helix | hx) selection="helix"; command="hx"; present="hx"; name="Helix"; dnf_package="helix"; glyph= ;;
-emacs) selection="emacs"; command="emacs"; present="emacs"; name="Emacs"; dnf_package="emacs"; glyph= ;;
+nvim | neovim) selection="nvim"; command="nvim"; present="nvim"; name="Neovim"; pkg="neovim"; glyph= ;;
+vim) selection="vim"; command="vim"; present="vim"; name="Vim"; pkg="vim"; glyph= ;;
+helix | hx) selection="helix"; command="hx"; present="hx"; name="Helix"; pkg="helix"; glyph= ;;
+emacs) selection="emacs"; command="emacs"; present="emacs"; name="Emacs"; pkg="emacs"; glyph= ;;
 code | vscode) selection="code"; command="flatpak run com.visualstudio.code"; flatpak_id="com.visualstudio.code"; name="VSCode"; glyph= ;;
 zed | zeditor) selection="zed"; command="flatpak run dev.zed.Zed"; flatpak_id="dev.zed.Zed"; name="Zed"; glyph= ;;
 *)
@@ -49,7 +49,7 @@ if [[ $have == false ]]; then
   if [[ -n ${flatpak_id:-} ]]; then
     flatpak install -y flathub "$flatpak_id" || exit 1
   else
-    sudo dnf install -y "$dnf_package" || exit 1
+    sudo pacman -S --needed --noconfirm "$pkg" || exit 1
   fi
 fi
 

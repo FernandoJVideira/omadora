@@ -106,3 +106,4 @@ switcheroo-control
 bolt
 dbus
 systemd
+pacman-contrib

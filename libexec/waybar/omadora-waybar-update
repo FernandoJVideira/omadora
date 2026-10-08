@@ -131,7 +131,7 @@ if ! output="$(
   ([0, ($now - .meta.timestamp | floor)] | max) as $age
   | ($age >= 43200) as $stale
   | [
-      {name:"DNF", data:.updates.dnf},
+      {name:"Pacman", data:.updates.dnf},
       {name:"Flatpak", data:.updates.flatpak},
       {name:"Cargo", data:.updates.cargo},
       {name:"Firmware", data:.updates.firmware}

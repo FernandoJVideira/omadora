@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
 # shellcheck source=lib/update.sh
 source "$OMADORA_LIB_DIR/update.sh"
 
-require_cmd dnf5 jq
+require_cmd checkupdates jq
 
 # -----------------------------------------------------------------------------
 # Init
@@ -39,9 +39,9 @@ info 'Collecting omadora updates...'
 update_collect_omadora ||
   error "failed to collect omadora updates"
 
-info 'Collecting dnf updates...'
+info 'Collecting pacman updates...'
 update_collect_dnf ||
-  error "failed to collect dnf updates"
+  error "failed to collect pacman updates"
 
 info 'Collecting cargo updates...'
 update_collect_cargo ||

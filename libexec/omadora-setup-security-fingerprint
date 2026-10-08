@@ -9,7 +9,7 @@ sudo -v || exit 1
 
 echo
 echo -e "\e[32mChecking required packages installed...\e[0m"
-sudo dnf install -y fprintd fprintd-pam lsusb
+sudo pacman -S --needed --noconfirm fprintd usbutils
 
 echo
 echo -e "\e[32mChecking for fingerprint reader...\e[0m"
@@ -22,9 +22,8 @@ fi
 
 echo
 echo -e "\e[32mEnabling fingerprint authentication...\e[0m"
-if ! authselect current | grep -q "with-fingerprint"; then
-  sudo authselect enable-feature with-fingerprint
-  sudo authselect apply-changes
+if ! grep -q pam_fprintd.so /etc/pam.d/sudo; then
+  sudo sed -i '0,/^auth/s//auth       sufficient   pam_fprintd.so\nauth/' /etc/pam.d/sudo
 fi
 echo "Done."
 

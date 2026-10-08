@@ -14,8 +14,7 @@ echo "Done."
 
 echo
 echo -e "\e[32mDisabling fingerprint authentication...\e[0m"
-sudo authselect disable-feature with-fingerprint
-sudo authselect apply-changes
+sudo sed -i '/pam_fprintd.so/d' /etc/pam.d/sudo
 echo "Done."
 
 echo
