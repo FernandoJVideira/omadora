@@ -27,7 +27,7 @@ if [ "$(uname -m)" != "x86_64" ]; then
 fi
 
 # Should be a minimal install (no desktop environment or display manager yet)
-for dm in gdm sddm lightdm plasmalogin; do
+for dm in gdm lightdm plasmalogin; do
   systemctl is-enabled "$dm.service" &>/dev/null && abort "Minimal install without a display manager ($dm is enabled)"
 done
 

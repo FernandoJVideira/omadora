@@ -1,7 +1,17 @@
 #!/bin/bash
 
-# Plasma Login Manager wallpaper sync. The Arch branch logs in through SDDM, which has no
-# equivalent yet, so this is a no-op (theme changes call it with "sync --auto").
-[[ ${1:-} == sync ]] && exit 0
-echo "omadora-login-theme: not supported on the Arch/SDDM branch yet" >&2
-exit 0
+# Login screen theme (SDDM on the Arch branch): omadora-login-theme [list|current|set <name>|sync [--auto]]
+# Thin wrapper over omadora-sddm-theme so the menu, "omactl theme login" and the
+# theme-set hook keep working. "sync --auto" (run on every theme change) only
+# follows the theme when the omadora login theme is in use and sudo needs no password.
+
+here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+sddm="$here/omadora-sddm-theme"
+
+if [[ ${1:-} == sync && ${2:-} == --auto ]]; then
+  [[ $("$sddm" current) == omadora ]] || exit 0
+  sudo -n true 2>/dev/null || exit 0
+  exec "$sddm" sync
+fi
+
+exec "$sddm" "$@"

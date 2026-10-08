@@ -23,10 +23,10 @@ echo "Installing git to clone the Omadora repo..."
 sudo pacman -Sy --needed --noconfirm git
 
 # Use custom repo if specified, otherwise default
-OMADORA_REPO="${OMADORA_REPO:-elpritchos/omadora}"
+OMADORA_REPO="${OMADORA_REPO:-FernandoJVideira/omadora}"
 
 # Use custom branch if instructed, otherwise default to master
-OMADORA_REF="${OMADORA_REF:-master}"
+OMADORA_REF="${OMADORA_REF:-arch}"
 
 echo -e "\nCloning Omadora from: https://github.com/${OMADORA_REPO}.git"
 echo -e "\e[32mUsing ref: $OMADORA_REF\e[0m"
