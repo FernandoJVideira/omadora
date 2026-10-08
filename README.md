@@ -1,9 +1,8 @@
 # Omadora
 
-This is a minimal install of Hyprland for Fedora 44 and Nobara 44, based on the Omarchy implementation and patterns.
-It provides a more stable release cycle with tested and curated packages.
+This is a minimal install of Hyprland for Arch Linux, based on the Omarchy implementation and patterns.
 
-This branch (`nobara`) is a fork of [elpritchos/omadora](https://github.com/elpritchos/omadora) that runs alongside the stock Nobara desktop: it keeps KDE Plasma and adds Omadora as a second login session.
+This branch (`arch`) is a fork of [elpritchos/omadora](https://github.com/elpritchos/omadora), branched from this fork's `nobara` branch and converted from dnf/COPR to pacman and the AUR. It targets a minimal Arch install with no desktop environment. The Nobara branch is `nobara`; keep shared changes (the shell, themes, `omactl`) in step between the two.
 
 Omadora purposely does not include all the apps and features included with Omarchy, as it's intended to be a minimal install that provides core desktop functionality to allow users to build from.
 However, as the implementation closely matches Omarchy, adding the extra features from Omarchy should be simple if you wish to do so.
@@ -17,44 +16,45 @@ See the [screenshot gallery](docs/screenshots/) for dark and light theme preview
 Read more about Omarchy itself at [omarchy.org](https://omarchy.org).
 
 > **Note**
-> Omadora attempts to install only packages from the official Fedora and Nobara repositories, currently with the exception of Hyprland and related packages provided from COPR.
-> Users should perform their own due diligence with regard to accepting the risk of installing packages from this third-party repository.
+> Omadora installs almost everything from the official Arch repositories. A few packages (`xfce-polkit`, `yaru-icon-theme`) come from the AUR and are built with `yay`, which the installer bootstraps from `yay-bin`.
+> Users should perform their own due diligence with regard to accepting the risk of installing AUR packages.
 
 ## What's different on this branch
 
 - **Quickshell shell**: one Quickshell config provides the top bar and its panels (audio, network, Bluetooth, weather, calendar, display, agents), notifications, OSD, launcher and menus, lock screen, and the theme and wallpaper switchers. It replaces Waybar, wofi, mako and hyprlock.
-- **Plasma Login Manager**: Plasma Login Manager (Nobara's login screen) is enabled by default, and only two sessions are offered: **Plasma** and **Omadora**.
-- **Login screen theme**: choose the login wallpaper from the Style menu (Login Screen), including an `omadora` wallpaper that follows the active Omadora theme.
+- **SDDM login**: SDDM is the display manager, with an `omadora` theme whose colors and wallpaper follow the active Omadora theme. Pick the login theme from the Style menu (Login Screen), or run `omactl theme login sync`. Syncing needs sudo; the automatic sync on theme change only runs when sudo needs no password.
 - **Default agent and crash diagnosis**: set a default coding agent with `omadora-default-agent`, and get notified with a diagnosis when an app crashes.
 - **More themes**: Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine and others (see [themes/THIRD_PARTY.md](themes/THIRD_PARTY.md)).
 
 ## Installation
 
-Install Nobara 44 (KDE edition recommended) or a Fedora 44 Custom Operating System base install using the [Everything Network Installer](https://download.fedoraproject.org/pub/fedora/linux/releases/44/Everything).
-On Fedora, it is recommended to use drive encryption, disable root, and add a privileged user.
+Install Arch Linux with `archinstall`: a minimal profile with **no desktop environment and no display manager**, `NetworkManager` as the network backend, a privileged (sudo/wheel) user, and drive encryption if you want it. The installer's guard aborts on a non-Arch system, as root, or when GDM, LightDM or Plasma Login is already enabled.
 
 To install, run the following:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/FernandoJVideira/omadora/nobara/boot.sh | OMADORA_REPO=FernandoJVideira/omadora OMADORA_REF=nobara bash
+curl -fsSL https://raw.githubusercontent.com/FernandoJVideira/omadora/arch/boot.sh | bash
 ```
 
 Or install manually:
 
-Install git (`sudo dnf install -y git`) and shallow clone this branch to the `~/.local/share/omadora` directory.
+Install git (`sudo pacman -S git`) and shallow clone this branch to the `~/.local/share/omadora` directory.
 
 ```
-git clone --depth 1 -b nobara https://github.com/FernandoJVideira/omadora ~/.local/share/omadora
+git clone --depth 1 -b arch https://github.com/FernandoJVideira/omadora ~/.local/share/omadora
 ```
 
-Run `~/.local/share/omadora/install.sh` to install, then reboot.
+Run `~/.local/share/omadora/install.sh` to install; it reboots at the end.
+
+> **Not done yet on Arch**
+> The Plymouth boot splash and NVIDIA driver packages are not set up (NVIDIA only gets its environment variables), and update advisories (security counts) are always zero. Bluetooth, fingerprint, FIDO2 and GPU acceleration have not been tested on real hardware.
 
 > **Tip**
 > For a WiFi only install, see the [FAQ](FAQ.md) for help.
 
 ## Usage
 
-Pick **Omadora** from the session menu on the login screen. Pick **Plasma** to use the regular Nobara desktop.
+Log in at SDDM and keep the **Hyprland (uwsm-managed)** session selected.
 
 Open the menu with `omactl menu` (or its keybinding) to change the theme, wallpaper, login screen, defaults and more. Everything is also available from the CLI: run `omactl` for the list of commands.
 
@@ -72,7 +72,7 @@ Please feel free to submit issues and PRs for improvement.
 
 ## Credits
 
-Omadora is created by [elpritchos](https://github.com/elpritchos), based on [Omarchy](https://omarchy.org). This branch adapts it for Nobara.
+Omadora is created by [elpritchos](https://github.com/elpritchos), based on [Omarchy](https://omarchy.org). This branch adapts it for Arch Linux.
 
 ## License
 
