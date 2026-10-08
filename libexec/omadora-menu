@@ -20,14 +20,46 @@ back_to() {
   fi
 }
 
+# Steps still to be picked when a search result is being followed through the menus.
+# Kept in a file because menus run inside command substitutions.
+REPLAY_FILE=""
+
+# Answer the next menu from the replay steps instead of showing it.
+# Prints the matching option, or nothing (after dropping the replay) if it isn't there.
+replay_step() {
+  local options="$1" step line label
+
+  [[ -s $REPLAY_FILE ]] || return 1
+  step="$(head -n1 "$REPLAY_FILE")"
+  sed -i 1d "$REPLAY_FILE"
+
+  while IFS= read -r line; do
+    label="${line#*  }"
+    label="${label%"${label##*[![:space:]]}"}"
+    if [[ $label == "$step" ]]; then
+      printf '%s\n' "$line"
+      return 0
+    fi
+  done < <(printf '%b\n' "$options")
+
+  : >"$REPLAY_FILE"
+  return 1
+}
+
 menu() {
   local prompt="$1"
   local options="$2"
   local extra="${3:-}"
   local preselect="${4:-}"
+  local search_file="${5:-}"
   local -a args=()
 
+  if replay_step "$options"; then
+    return
+  fi
+
   read -r -a args <<<"$extra"
+  [[ -n $search_file ]] && args+=("--search-extra" "$search_file")
 
   if [[ -n "$preselect" ]]; then
     local index="" line line_number=0
@@ -46,7 +78,7 @@ menu() {
 
   printf '%b\n' "$options" | {
     cd "$HOME" || exit 1
-    pkill wofi || exec wofi --width 600 --height 400 --dmenu --width 320 -p "$prompt…" "${args[@]}"
+    exec "$OMADORA_PATH/libexec/omadora-launch-picker" --dmenu --width 320 -p "$prompt…" "${args[@]}"
   } 2>/dev/null
 }
 
@@ -106,7 +138,7 @@ show_custom_reminder_input() {
   local minutes
   minutes=$(
     echo -e '1\n5\n10\n15\n30\n60\n120' |
-      omadora_run omadora-launch-wofi \
+      omadora_run omadora-launch-picker \
         --dmenu \
         --width 500 \
         --height 240 \
@@ -128,7 +160,7 @@ show_reminder_message_input() {
   local message
   message=$(
     echo 'Take a break...' |
-      omadora_run omadora-launch-wofi \
+      omadora_run omadora-launch-picker \
         --dmenu \
         --width 500 \
         --height 240 \
@@ -142,7 +174,7 @@ show_reminder_message_input() {
   fi
 }
 
-# HACK: Sleeps added to let wofi close before screen capture
+# HACK: Sleeps added to let the picker close before screen capture
 show_capture_menu() {
   case $(menu "Capture" "  Screenshot\n  Screenrecord\n󰴑  Text Extraction\n󰃉  Color") in
   *Screenshot*) sleep 0.1 && omadora_run omadora-capture-screenshot ;;
@@ -180,7 +212,7 @@ show_webcam_select_menu() {
   fi
 }
 
-# HACK: Sleeps added to let wofi close before screen capture
+# HACK: Sleeps added to let the picker close before screen capture
 show_screenrecord_menu() {
   omadora_run omadora-capture-screenrecording --stop-recording && exit 0
 
@@ -209,7 +241,7 @@ show_share_menu() {
 }
 
 show_toggle_menu() {
-  local options="󱄄  Screensaver\n󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n  Weather\n󰍜  Top Bar\n󱂬  Workspace Layout\n  Window Gaps\n  1-Window Ratio\n󰍹  Monitor Scaling"
+  local options="󱄄  Screensaver\n󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n  Weather\n󰍜  Top Bar\n󱂬  Workspace Layout\n  Window Gaps\n  1-Window Ratio\n󰍹  Monitor Scaling\n󱚡  Crash Capture"
 
   case $(menu "Toggle" "$options") in
   *Screensaver*) omadora_run omadora-toggle-screensaver ;;
@@ -222,6 +254,7 @@ show_toggle_menu() {
   *Ratio*) omadora_run omadora-hyprland-window-single-square-aspect-toggle ;;
   *Gaps*) omadora_run omadora-hyprland-window-gaps-toggle ;;
   *Scaling*) omadora_run omadora-hyprland-monitor-scaling-cycle ;;
+  *Crash*) omadora_run omadora-toggle-crash-capture ;;
   *) back_to show_trigger_menu ;;
   esac
 }
@@ -247,10 +280,11 @@ show_hardware_menu() {
 }
 
 show_style_menu() {
-  case $(menu "Style" "󰸌  Theme\n  Terminal Font\n  Background\n  Hyprland\n󱄄  Screensaver\n  About") in
+  case $(menu "Style" "󰸌  Theme\n  Terminal Font\n  Background\n  Login Screen\n  Hyprland\n󱄄  Screensaver\n  About") in
   *Theme*) show_theme_menu ;;
   *"Terminal Font"*) show_font_menu ;;
-  *Background*) omadora_run omadora-theme-bg-next ;;
+  *Background*) qs -c omadora ipc call wallpapers open ;;
+  *"Login Screen"*) show_sddm_theme_menu ;;
   *Hyprland*) open_in_editor ~/.config/hypr/looknfeel.lua ;;
   *Screensaver*) show_screensaver_menu ;;
   *About*) show_about_menu ;;
@@ -277,11 +311,18 @@ show_screensaver_menu() {
 }
 
 show_theme_menu() {
-  theme=$(menu "Theme" "$(omadora_run omadora-theme-list)" "" "$(omadora_run omadora-theme-current || true)")
-  if [[ "$theme" == "CNCLD" || -z "$theme" ]]; then
+  qs -c omadora ipc call themes open
+}
+
+show_sddm_theme_menu() {
+  local choice
+  choice=$(menu "Login Screen" "󰸌  Match Omadora Theme\n$(omadora_run omadora-sddm-theme list)" "--width 350" "$(omadora_run omadora-sddm-theme current)")
+  if [[ $choice == "CNCLD" || -z $choice ]]; then
     back_to show_style_menu
+  elif [[ $choice == *"Match Omadora Theme"* ]]; then
+    present_terminal "$(omadora_command omadora-sddm-theme) set omadora"
   else
-    omadora_run omadora-theme-set "$theme"
+    present_terminal "$(omadora_command omadora-sddm-theme) set \"$choice\""
   fi
 }
 
@@ -298,7 +339,7 @@ show_setup_menu() {
   local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n󰍹  Monitors"
   [ -f ~/.config/hypr/bindings.lua ] && options="$options\n  Keybindings"
   [ -f ~/.config/hypr/input.lua ] && options="$options\n󰍽  Input"
-  options="$options\n󰱔  DNS\n  Security\n  Config"
+  options="$options\n󰱔  DNS\n  Defaults\n  Security\n  Config"
 
   case $(menu "Setup" "$options") in
   *Audio*) omadora_run omadora-launch-audio ;;
@@ -309,9 +350,105 @@ show_setup_menu() {
   *Keybindings*) open_in_editor ~/.config/hypr/bindings.lua ;;
   *Input*) open_in_editor ~/.config/hypr/input.lua ;;
   *DNS*) present_omadora_terminal omadora-setup-dns ;;
+  *Defaults*) show_defaults_menu ;;
   *Security*) show_setup_security_menu ;;
   *Config*) show_setup_config_menu ;;
   *) show_main_menu ;;
+  esac
+}
+
+# A list of choices for one default, with the current one marked
+# usage: default_menu <title> <current> <entries...>, entries as "<glyph>  <Label>|<value>"
+default_menu() {
+  local title="$1" current="$2"
+  shift 2
+
+  local options="" entry label value
+  for entry in "$@"; do
+    label="${entry%%|*}"
+    value="${entry##*|}"
+    options+="$label"
+    [[ $value == "$current" ]] && options+="\t✓"
+    options+="\n"
+  done
+
+  menu "$title" "${options%\\n}"
+}
+
+show_defaults_menu() {
+  case $(menu "Defaults" "󰚩  Agent\t›\n  Browser\t›\n  Terminal\t›\n  Editor\t›") in
+  *Agent*) show_default_agent_menu ;;
+  *Browser*) show_default_browser_menu ;;
+  *Terminal*) show_default_terminal_menu ;;
+  *Editor*) show_default_editor_menu ;;
+  *) show_setup_menu ;;
+  esac
+}
+
+show_default_agent_menu() {
+  local choice
+  choice=$(default_menu "Default Agent" "$(omadora_run omadora-default-agent)" \
+    "󰛄  Claude|claude" "  Codex|codex" "  OpenCode|opencode" "󰫢  Antigravity|agy" "  Copilot|copilot" \
+    "󰋑  Crush|crush" "  Grok|grok" "  Cursor CLI|cursor-agent" "󰛤  Muse Code|muse" "󰚩  Pi|pi" "󰚩  Oh My Pi|omp" "󰚩  Ori|ori")
+  case "$choice" in
+  *Claude*) omadora_run omadora-default-agent claude ;;
+  *Codex*) omadora_run omadora-default-agent codex ;;
+  *OpenCode*) omadora_run omadora-default-agent opencode ;;
+  *Antigravity*) omadora_run omadora-default-agent agy ;;
+  *Copilot*) omadora_run omadora-default-agent copilot ;;
+  *Crush*) omadora_run omadora-default-agent crush ;;
+  *Grok*) omadora_run omadora-default-agent grok ;;
+  *Cursor*) omadora_run omadora-default-agent cursor-agent ;;
+  *Muse*) omadora_run omadora-default-agent muse ;;
+  *"Oh My Pi"*) omadora_run omadora-default-agent omp ;;
+  *Pi*) omadora_run omadora-default-agent pi ;;
+  *Ori*) omadora_run omadora-default-agent ori ;;
+  *) back_to show_defaults_menu ;;
+  esac
+}
+
+show_default_browser_menu() {
+  local choice
+  choice=$(default_menu "Default Browser" "$(omadora_run omadora-default-browser)" \
+    "  Chromium|chromium" "󰈹  Firefox|firefox" "󰖟  Helium|helium" "󰖟  Brave|brave" "󰖟  Brave Origin|brave-origin" "󰊯  Chrome|chrome" "󰇩  Edge|edge" "󰖟  Zen|zen")
+  case "$choice" in
+  *Chromium*) omadora_run omadora-default-browser chromium ;;
+  *Firefox*) omadora_run omadora-default-browser firefox ;;
+  *Helium*) omadora_run omadora-default-browser helium ;;
+  *"Brave Origin"*) omadora_run omadora-default-browser brave-origin ;;
+  *Brave*) omadora_run omadora-default-browser brave ;;
+  *Chrome*) omadora_run omadora-default-browser chrome ;;
+  *Edge*) omadora_run omadora-default-browser edge ;;
+  *Zen*) omadora_run omadora-default-browser zen ;;
+  *) back_to show_defaults_menu ;;
+  esac
+}
+
+show_default_terminal_menu() {
+  local choice
+  choice=$(default_menu "Default Terminal" "$(omadora_run omadora-default-terminal)" \
+    "  Alacritty|alacritty" "  Foot|foot" "  Ghostty|ghostty" "  Kitty|kitty")
+  case "$choice" in
+  *Alacritty*) omadora_run omadora-default-terminal alacritty ;;
+  *Foot*) omadora_run omadora-default-terminal foot ;;
+  *Ghostty*) omadora_run omadora-default-terminal ghostty ;;
+  *Kitty*) omadora_run omadora-default-terminal kitty ;;
+  *) back_to show_defaults_menu ;;
+  esac
+}
+
+show_default_editor_menu() {
+  local choice
+  choice=$(default_menu "Default Editor" "$(omadora_run omadora-default-editor)" \
+    "  Neovim|nvim" "  Vim|vim" "  Helix|hx" "  Emacs|emacs" "  VSCode|flatpak run com.visualstudio.code" "  Zed|flatpak run dev.zed.Zed")
+  case "$choice" in
+  *Neovim*) omadora_run omadora-default-editor nvim ;;
+  *Vim*) omadora_run omadora-default-editor vim ;;
+  *Helix*) omadora_run omadora-default-editor helix ;;
+  *Emacs*) omadora_run omadora-default-editor emacs ;;
+  *VSCode*) omadora_run omadora-default-editor code ;;
+  *Zed*) omadora_run omadora-default-editor zed ;;
+  *) back_to show_defaults_menu ;;
   esac
 }
 
@@ -334,12 +471,10 @@ show_setup_security_menu() {
 }
 
 show_setup_config_menu() {
-  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprlock\n  Hyprsunset\n󰌧  Wofi\n󰍜  Waybar\n󰞅  XCompose") in
+  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprsunset\n󰍜  Waybar\n󰞅  XCompose") in
   *Hyprland*) open_in_editor ~/.config/hypr/hyprland.lua ;;
   *Hypridle*) open_in_editor ~/.config/hypr/hypridle.conf && omadora_run omadora-restart-hypridle ;;
-  *Hyprlock*) open_in_editor ~/.config/hypr/hyprlock.conf ;;
   *Hyprsunset*) open_in_editor ~/.config/hypr/hyprsunset.conf && omadora_run omadora-restart-hyprsunset ;;
-  *Wofi*) open_in_editor ~/.config/wofi/config ;;
   *Waybar*) if [[ -f ~/.local/state/omadora/toggles/bar-waybar ]]; then open_in_editor ~/.config/waybar/config.jsonc && omadora_run omadora-restart-waybar; else open_in_editor ~/.config/quickshell/omadora/Bar.qml; fi ;;
   *XCompose*) open_in_editor ~/.XCompose && omadora_run omadora-restart-xcompose ;;
   *) show_setup_menu ;;
@@ -407,24 +542,21 @@ show_update_menu() {
 }
 
 show_update_process_menu() {
-  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n󰎟  Mako\n󰍜  Waybar") in
+  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n󰍜  Waybar") in
   *Hypridle*) omadora_run omadora-restart-hypridle ;;
   *Hyprsunset*) omadora_run omadora-restart-hyprsunset ;;
-  *Mako*) omadora_run omadora-restart-mako ;;
   *Waybar*) omadora_run omadora-restart-waybar ;;
   *) show_update_menu ;;
   esac
 }
 
 show_update_config_menu() {
-  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprlock\n  Hyprsunset\n󱣴  Plymouth\n  Tmux\n󰌧  Wofi\n󰍜  Waybar") in
+  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprsunset\n󱣴  Plymouth\n  Tmux\n󰍜  Waybar") in
   *Hyprland*) present_omadora_terminal omadora-refresh-hyprland ;;
   *Hypridle*) present_omadora_terminal omadora-refresh-hypridle ;;
-  *Hyprlock*) present_omadora_terminal omadora-refresh-hyprlock ;;
   *Hyprsunset*) present_omadora_terminal omadora-refresh-hyprsunset ;;
   *Plymouth*) present_omadora_terminal omadora-refresh-plymouth ;;
   *Tmux*) present_omadora_terminal omadora-refresh-tmux ;;
-  *Wofi*) present_omadora_terminal omadora-refresh-wofi ;;
   *Waybar*) present_omadora_terminal omadora-refresh-waybar ;;
   *) show_update_menu ;;
   esac
@@ -463,12 +595,29 @@ show_system_menu() {
 }
 
 show_main_menu() {
-  go_to_menu "$(menu "Go" "󰀻  Apps\n󰧑  Learn\n󱓞  Trigger\n  Style\n  Setup\n󰉉  Install\n󰭌  Remove\n  Update\n  About\n  System")"
+  local search_file choice
+  search_file="$(mktemp)"
+  "$OMADORA_LIBEXEC_DIR/omadora-menu-index" >"$search_file" 2>/dev/null
+
+  choice="$(menu "Go" "󰀻  Apps\t›\n󰧑  Learn\t›\n󱓞  Trigger\t›\n  Style\t›\n  Setup\t›\n󰉉  Install\t›\n󰭌  Remove\t›\n  Update\t›\n  About\n  System\t›" "" "" "$search_file")"
+  rm -f "$search_file"
+
+  if [[ $choice == @replay:* ]]; then
+    # A search result: follow its path through the menus
+    local -a steps
+    IFS='|' read -r -a steps <<<"${choice#@replay:}"
+    REPLAY_FILE="$(mktemp)"
+    printf '%s\n' "${steps[@]:1}" >"$REPLAY_FILE"
+    go_to_menu "${steps[0]}"
+    rm -f "$REPLAY_FILE"
+  else
+    go_to_menu "$choice"
+  fi
 }
 
 go_to_menu() {
   case "${1,,}" in
-  *apps*) omadora_run omadora-launch-wofi --show drun -p "Launch…" ;;
+  *apps*) omadora_run omadora-launch-picker --show drun -p "Launch…" ;;
   *learn*) show_learn_menu ;;
   *trigger*) show_trigger_menu ;;
   *toggle*) show_toggle_menu ;;
@@ -483,6 +632,8 @@ go_to_menu() {
   *font*) show_font_menu ;;
   *screenrecord*) show_screenrecord_menu ;;
   *setup*) show_setup_menu ;;
+  *defaults*) show_defaults_menu ;;
+  *agent*) show_default_agent_menu ;;
   *power*) show_setup_power_menu ;;
   *install*) show_install_menu ;;
   *remove*) show_remove_menu ;;

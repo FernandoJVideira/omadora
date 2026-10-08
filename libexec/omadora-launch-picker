@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Open the Quickshell picker: an app launcher (--show drun) or a dmenu-style
+# chooser reading options from stdin and printing the choice (--dmenu).
+# Takes the Wofi-style flags the menus use; running it again closes the picker.
+
+set -u
+
+mode=drun
+prompt=""
+width=600
+height=400
+lines=""
+markup=false
+preselect=0
+
+while (($# > 0)); do
+  case "$1" in
+  --dmenu) mode=dmenu ;;
+  --show)
+    mode="$2"
+    shift
+    ;;
+  -p | --prompt)
+    prompt="$2"
+    shift
+    ;;
+  --width)
+    width="${2%%[!0-9]*}"
+    shift
+    ;;
+  --height)
+    height="${2%%[!0-9]*}"
+    shift
+    ;;
+  --lines)
+    lines="$2"
+    shift
+    ;;
+  -a | --select-index)
+    preselect="$2"
+    shift
+    ;;
+  --allow-markup) markup=true ;;
+  --define | -D) shift ;; # Wofi-only options
+  esac
+  shift
+done
+
+[[ -n $lines ]] && height=$((lines * 30 + 60))
+
+if [[ $(qs -c omadora ipc call picker isOpen 2>/dev/null) == true ]]; then
+  qs -c omadora ipc call picker close >/dev/null 2>&1
+  exit 0
+fi
+
+if [[ $mode == drun ]]; then
+  exec qs -c omadora ipc call picker open drun "$prompt" "$width" "$height" false 0 "" "" >/dev/null
+fi
+
+workdir=$(mktemp -d)
+trap 'rm -rf "$workdir"' EXIT
+cat >"$workdir/items"
+mkfifo "$workdir/out"
+
+if ! qs -c omadora ipc call picker open dmenu "$prompt" "$width" "$height" "$markup" "$preselect" "$workdir/items" "$workdir/out" >/dev/null 2>&1; then
+  echo "omadora-launch-picker: the Quickshell shell is not running" >&2
+  exit 1
+fi
+
+choice=$(cat "$workdir/out")
+[[ -n $choice ]] || exit 1
+printf '%s\n' "$choice"
