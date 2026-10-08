@@ -6,10 +6,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 # shellcheck source=lib/service.sh
 source "$OMADORA_LIB_DIR/service.sh"
 
-# Toggle the top bar service (Quickshell or Waybar)
+# Toggle the top bar (Quickshell or Waybar)
 
 readonly flag="waybar-off"
 unit="$(service_bar_unit)"
+
+# The Quickshell shell also runs notifications and the lock screen, so only hide its bar
+if [[ $unit == omadora-bar.service ]]; then
+  qs -c omadora ipc call bar toggle >/dev/null
+  exit 0
+fi
 
 omadora_run omadora-toggle "$flag"
 

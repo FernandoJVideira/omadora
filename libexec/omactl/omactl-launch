@@ -24,7 +24,7 @@ CLI_COMMANDS=(
   "bluetooth||Open the bluetooth window|run_bluetooth||"
   "editor||Open an editor window|run_editor||"
   "browser||Open a browser window|run_browser||"
-  "wofi||Open a wofi window|run_wofi||"
+  "picker||Open the picker|run_picker||"
   "floating-window||Launch a command in a floating window|run_floating||"
   "tui||Launch a TUI|run_tui||"
   "tui-or-focus||Launch or focus a TUI|run_tui_or_focus||"
@@ -68,8 +68,8 @@ run_browser() {
   omadora_exec omadora-launch-browser "$@"
 }
 
-run_wofi() {
-  omadora_exec omadora-launch-wofi "$@"
+run_picker() {
+  omadora_exec omadora-launch-picker "$@"
 }
 
 run_floating() {

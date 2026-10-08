@@ -1,9 +1,12 @@
 import QtQuick
+import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 
-// Default output volume: click opens the mixer, right click mutes, scroll changes volume by 5%.
+// Default output volume: click opens the audio panel, right click mutes, scroll changes volume by 5%.
 BarItem {
   id: root
+
+  required property var barWindow
 
   readonly property var sink: Pipewire.defaultAudioSink
   readonly property real volume: sink?.audio?.volume ?? 0
@@ -28,12 +31,28 @@ BarItem {
     return Omadora.glyph(levels[Math.min(levels.length - 1, Math.floor(volume * levels.length))]);
   }
   tooltip: `Playing at ${Math.round(volume * 100)}%`
-  onLeftClicked: Omadora.run("omadora-exec omadora-launch-audio")
+  onLeftClicked: panel.toggle()
   onRightClicked: Omadora.run("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")
   onScrolled: delta => {
     if (sink?.audio && delta !== 0) {
       sink.audio.volume = Math.max(0, Math.min(1, volume + (delta > 0 ? 0.05 : -0.05)));
     }
+  }
+
+  Connections {
+    target: Omadora
+
+    function onPanelRequested(name) {
+      if (name === "audio" && (panel.open || root.barWindow.screen.name === Hyprland.focusedMonitor?.name)) {
+        panel.toggle();
+      }
+    }
+  }
+
+  AudioPanel {
+    id: panel
+
+    barWindow: root.barWindow
   }
 
   PwObjectTracker {

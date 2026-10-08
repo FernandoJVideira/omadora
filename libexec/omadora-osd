@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Show the on-screen display: omadora-osd <glyph> <label> [percent]
+# Falls back to a notification when the Quickshell shell is not running.
+
+glyph="$1"
+label="$2"
+value="${3:--1}"
+
+qs -c omadora ipc call osd display "$glyph" "$label" "$value" >/dev/null 2>&1 ||
+  notify-send -h string:x-canonical-private-synchronous:osd -u low -t 2000 "$glyph    $label" "$([[ $value == -1 ]] || echo "$value%")"

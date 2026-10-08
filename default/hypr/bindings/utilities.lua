@@ -15,6 +15,7 @@ o.bind("XF86Calculator", "Calculator", "gnome-calculator")
 o.bind("SUPER + SHIFT + SPACE", "Toggle top bar", "omactl ui toggle waybar")
 o.bind("SUPER + CTRL + SPACE", "Next theme background", o.libexec("omadora-theme-bg-next"))
 o.bind("SUPER + SHIFT + CTRL + SPACE", "Theme menu", o.libexec("omadora-menu theme"))
+o.bind("SUPER + CTRL + ALT + SPACE", "Background switcher", "qs -c omadora ipc call wallpapers open")
 o.bind(
   "SUPER + BACKSPACE",
   "Toggle window transparency",
@@ -32,15 +33,15 @@ o.bind(
 )
 
 -- Notifications.
-o.bind("SUPER + COMMA", "Dismiss last notification", "makoctl dismiss")
-o.bind("SUPER + SHIFT + COMMA", "Dismiss all notifications", "makoctl dismiss --all")
+o.bind("SUPER + COMMA", "Dismiss last notification", "qs -c omadora ipc call notifications dismiss")
+o.bind("SUPER + SHIFT + COMMA", "Dismiss all notifications", "qs -c omadora ipc call notifications dismissAll")
 o.bind(
   "SUPER + CTRL + COMMA",
   "Toggle silencing notifications",
   o.libexec("omadora-toggle-notification-silencing")
 )
-o.bind("SUPER + ALT + COMMA", "Invoke last notification", "makoctl invoke")
-o.bind("SUPER + SHIFT + ALT + COMMA", "Restore last notification", "makoctl restore")
+o.bind("SUPER + ALT + COMMA", "Invoke last notification", "qs -c omadora ipc call notifications invokeLast")
+o.bind("SUPER + SHIFT + ALT + COMMA", "Restore last notification", "qs -c omadora ipc call notifications restoreLast")
 
 -- Toggles.
 o.bind("SUPER + SHIFT + W", "Toggle weather", o.libexec("omadora-toggle-weather-check"))
@@ -110,9 +111,10 @@ o.bind(
 )
 
 -- Control panels.
-o.bind("SUPER + CTRL + A", "Audio controls", o.libexec("omadora-launch-audio"))
-o.bind("SUPER + CTRL + B", "Bluetooth controls", o.libexec("omadora-launch-bluetooth"))
-o.bind("SUPER + CTRL + W", "Wifi controls", o.libexec("omadora-launch-wifi"))
+o.bind("SUPER + CTRL + A", "Audio controls", "qs -c omadora ipc call bar panel audio")
+o.bind("SUPER + SHIFT + CTRL + A", "Agent", o.libexec("omadora-agent --pick"))
+o.bind("SUPER + CTRL + B", "Bluetooth controls", "qs -c omadora ipc call bar panel bluetooth")
+o.bind("SUPER + CTRL + W", "Wifi controls", "qs -c omadora ipc call bar panel network")
 o.bind("SUPER + CTRL + T", "Activity", o.libexec("omadora-launch-system-monitor"))
 
 -- Zoom.

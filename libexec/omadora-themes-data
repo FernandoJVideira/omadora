@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# shellcheck source=lib/theme.sh
+source "$OMADORA_LIB_DIR/theme.sh"
+
+# List the installed themes as JSON for the Quickshell theme switcher.
+#   [{"name":"tokyo-night","label":"Tokyo Night","preview":"/…/preview.png","background":"/…/0-winding-road.webp","current":true}]
+# The preview is the theme's preview.png, or its first background when it has none.
+
+require_cmd jq
+
+current="$(theme_current 2>/dev/null || true)"
+
+first_file() { # <directory> [name filter]
+  [[ -d $1 ]] || return 0
+  find -L "$1" -maxdepth 1 -type f ${2:+-name "$2"} 2>/dev/null | sort | head -n1
+}
+
+while IFS= read -r name; do
+  [[ -n $name ]] || continue
+
+  dir="$OMADORA_USER_THEMES_DIR/$name"
+  [[ -d $dir ]] || dir="$OMADORA_THEMES_DIR/$name"
+
+  background="$(first_file "$OMADORA_USER_BACKGROUNDS_DIR/$name")"
+  [[ -n $background ]] || background="$(first_file "$dir/backgrounds")"
+
+  preview="$(first_file "$dir" 'preview.png')"
+  [[ -n $preview ]] || preview="$background"
+
+  printf '%s\t%s\t%s\n' "$name" "$preview" "$background"
+done < <(theme_list_all) |
+  jq -Rsc --arg current "$current" '
+    split("\n") | map(select(. != "") | split("\t")) | map({
+      key: .[0],
+      name: .[0],
+      label: (.[0] | split("-") | map((.[0:1] | ascii_upcase) + .[1:]) | join(" ")),
+      preview: .[1],
+      background: .[2],
+      current: (.[0] == $current)
+    })'

@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Watch for process crashes and offer an AI diagnosis (ported from Omarchy).
+# systemd-coredump journals every core dump under a known MESSAGE_ID with
+# structured COREDUMP_* fields, which carry more than the core filenames do.
+
+set -uo pipefail
+
+here="$(dirname "${BASH_SOURCE[0]}")"
+
+# See systemd.journal-fields(7).
+readonly COREDUMP_MESSAGE_ID=fc2e22bc6ee647b6b90729ab34a250b1
+
+# nf-md-robot_dead, escaped so this file reads without a Nerd Font.
+readonly CRASH_GLYPH=$'\U000f16a1'
+
+# Crash loops dump core repeatedly, so announce each program at most once a window.
+readonly dedupe_seconds=${OMADORA_CRASH_DEDUPE_SECONDS:-60}
+
+# Extended regex of process names never worth announcing.
+readonly ignore_pattern=${OMADORA_CRASH_IGNORE:-}
+
+declare -A last_notified
+
+# Show the toast and wait for a click on it in the background, so a long-lived
+# toast never holds up the next crash. The click is the notification's default action.
+announce() {
+  local comm=$1 pid=$2 exe=$3 signal=$4
+
+  {
+    local choice
+    choice="$(notify-send --wait --urgency=critical --app-name=omadora-crash-watch \
+      --action="default=Diagnose with AI" \
+      "$CRASH_GLYPH    Process crashed: $comm" "Click to diagnose with AI" 2>/dev/null)"
+    [[ $choice == default ]] && "$here/omadora-agent-crash" "$pid" "$comm" "$exe" "$signal"
+  } &
+  return 0
+}
+
+# -n 0 so a restart does not re-announce crashes already dealt with.
+journalctl -f -n 0 -o json "MESSAGE_ID=$COREDUMP_MESSAGE_ID" 2>/dev/null |
+  while IFS= read -r entry; do
+    # A dash for a field that is empty as well as one that is missing: tab is
+    # IFS whitespace, so an empty field would collapse into the next delimiter.
+    IFS=$'\t' read -r uid comm pid exe signal < <(
+      jq -r 'def field: if . == null or . == "" then "-" else . end;
+             [(._UID | field),
+              (.COREDUMP_COMM | field),
+              (.COREDUMP_PID | field),
+              (.COREDUMP_EXE | field),
+              (.COREDUMP_SIGNAL_NAME | field)] | @tsv' <<<"$entry" 2>/dev/null
+    )
+
+    [[ $pid =~ ^[0-9]+$ ]] || continue
+
+    # The toast only offers a diagnosis, so it has nothing to offer until an agent
+    # is chosen. Checked per crash so picking one takes effect without a restart.
+    [[ -n $("$here/omadora-default-agent") ]] || continue
+
+    # Only this user's crashes; a daemon dumping core is a sysadmin's problem.
+    [[ $uid =~ ^[0-9]+$ ]] || continue
+    ((uid == UID)) || continue
+
+    # comm is truncated to 15 characters, so prefer the executable's basename.
+    name=$comm
+    [[ $exe == /* ]] && name=${exe##*/}
+
+    # A process can set its own comm to anything, slashes included. The mute below
+    # turns this name into a path, so keep it one component.
+    name=${name##*/}
+    [[ -n $name && $name != "-" && $name != "." && $name != ".." ]] || name=unknown
+
+    [[ -n $ignore_pattern && $name =~ $ignore_pattern ]] && continue
+
+    # Never announce our own machinery, or it notifies about itself.
+    [[ $name == omadora-crash-* || $name == omadora-agent-* ]] && continue
+
+    # Muted at the end of a diagnosis, when the user asked for it. One flag per program.
+    "$here/omadora-toggle-enabled" "crash-ignore/$name" && continue
+
+    now=$EPOCHSECONDS
+    (((now - ${last_notified[$name]:-0}) < dedupe_seconds)) && continue
+
+    last_notified[$name]=$now
+    announce "$name" "$pid" "$exe" "$signal"
+  done

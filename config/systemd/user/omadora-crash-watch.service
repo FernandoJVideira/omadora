@@ -1,0 +1,17 @@
+[Unit]
+Description=Announce process crashes and offer an AI diagnosis
+PartOf=omadora-session.target
+# Wants= from omadora-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+# Set by omadora-toggle-crash-capture. Checked here so a disabled watcher stays
+# off across logins.
+ConditionPathExists=!%h/.local/state/omadora/toggles/crash-capture-off
+
+[Service]
+ExecStart=%h/.local/share/omadora/libexec/omadora-crash-watch
+Restart=on-failure
+Slice=app-graphical.slice
+
+[Install]
+WantedBy=omadora-session.target

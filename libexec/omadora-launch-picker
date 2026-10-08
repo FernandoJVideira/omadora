@@ -9,10 +9,12 @@ set -u
 mode=drun
 prompt=""
 width=600
-height=400
+height=520
 lines=""
 markup=false
 preselect=0
+extra=""
+search=""
 
 while (($# > 0)); do
   case "$1" in
@@ -42,12 +44,20 @@ while (($# > 0)); do
     shift
     ;;
   --allow-markup) markup=true ;;
+  -S | --search)
+    search="$2"
+    shift
+    ;;
+  --search-extra) # entries that only show up while searching: "<label>\t<parent path>\t<result>"
+    extra="$2"
+    shift
+    ;;
   --define | -D) shift ;; # Wofi-only options
   esac
   shift
 done
 
-[[ -n $lines ]] && height=$((lines * 30 + 60))
+[[ -n $lines ]] && height=$((lines * 34 + 70))
 
 if [[ $(qs -c omadora ipc call picker isOpen 2>/dev/null) == true ]]; then
   qs -c omadora ipc call picker close >/dev/null 2>&1
@@ -55,7 +65,7 @@ if [[ $(qs -c omadora ipc call picker isOpen 2>/dev/null) == true ]]; then
 fi
 
 if [[ $mode == drun ]]; then
-  exec qs -c omadora ipc call picker open drun "$prompt" "$width" "$height" false 0 "" "" >/dev/null
+  exec qs -c omadora ipc call picker open drun "$prompt" "$width" "$height" false 0 "" "" "" "$search" >/dev/null
 fi
 
 workdir=$(mktemp -d)
@@ -63,7 +73,7 @@ trap 'rm -rf "$workdir"' EXIT
 cat >"$workdir/items"
 mkfifo "$workdir/out"
 
-if ! qs -c omadora ipc call picker open dmenu "$prompt" "$width" "$height" "$markup" "$preselect" "$workdir/items" "$workdir/out" >/dev/null 2>&1; then
+if ! qs -c omadora ipc call picker open dmenu "$prompt" "$width" "$height" "$markup" "$preselect" "$workdir/items" "$workdir/out" "$extra" "$search" >/dev/null 2>&1; then
   echo "omadora-launch-picker: the Quickshell shell is not running" >&2
   exit 1
 fi

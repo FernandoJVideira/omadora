@@ -51,4 +51,4 @@ brightnessctl -d "$device" set "$new_brightness" >/dev/null
 
 # Display the new brightness setting.
 percent=$((new_brightness * 100 / max_brightness))
-notify-send -h string:x-canonical-private-synchronous:brightness -u low -t 2000 "Keyboard Brightness" "$percent%"
+"$(dirname "${BASH_SOURCE[0]}")/omadora-osd" $'\U000f030c' "Keyboard brightness" "$percent"

@@ -21,10 +21,6 @@ service_reload_waybar() {
   fi
 }
 
-service_reload_mako() {
-  makoctl reload
-}
-
 service_reload_hyprland() {
   hyprctl -q reload
 }

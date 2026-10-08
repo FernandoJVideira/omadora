@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 
 // The top bar, one per screen. Module order matches the Waybar config.
 PanelWindow {
@@ -33,18 +34,29 @@ PanelWindow {
     }
   }
 
+  IndicatorsModule {
+    anchors.right: centerRow.left
+    barWindow: bar
+  }
+
   Row {
+    id: centerRow
+
     anchors.horizontalCenter: parent.horizontalCenter
     height: parent.height
 
-    ClockModule {}
+    ClockModule {
+      barWindow: bar
+    }
 
     ScriptModule {
+      id: weather
+
       name: "weather"
+      tooltip: "" // the panel replaces the hover tooltip
       script: "libexec/waybar/omadora-waybar-weather"
       guard: "! omactl state toggles exists weather-check-off"
       interval: 60
-      altFormat: true
       alertClasses: ["error"]
       icons: {
         const g = codepoint => Omadora.glyph(codepoint);
@@ -65,24 +77,34 @@ PanelWindow {
           "severe_thunderstorm": [`${g(0xe338)} ${g(0xe32f)}`, `${g(0xe30f)} ${g(0xe304)}`]
         };
       }
-    }
 
-    ScriptModule {
-      name: "screenrecording"
-      script: "libexec/waybar/omadora-waybar-screen-recording"
-      command: "omactl capture screenrecording >/dev/null 2>&1"
-    }
+      WeatherPanel {
+        id: weatherPanel
 
-    ScriptModule {
-      name: "idle"
-      script: "libexec/waybar/omadora-waybar-idle"
-      command: "omactl toggle idle-lock"
-    }
+        barWindow: bar
+      }
 
-    ScriptModule {
-      name: "notification-silencing"
-      script: "libexec/waybar/omadora-waybar-notification-silencing"
-      command: "omactl toggle notification-silencing"
+      Connections {
+        target: weather
+
+        function onLeftClicked() {
+          weatherPanel.toggle();
+        }
+
+        function onRightClicked() {
+          weather.showText = !weather.showText;
+        }
+      }
+
+      Connections {
+        target: Omadora
+
+        function onPanelRequested(name) {
+          if (name === "weather" && (weatherPanel.open || bar.screen.name === Hyprland.focusedMonitor?.name)) {
+            weatherPanel.toggle();
+          }
+        }
+      }
     }
   }
 
@@ -95,11 +117,25 @@ PanelWindow {
       barWindow: bar
     }
 
-    BluetoothModule {}
+    AgentsModule {
+      barWindow: bar
+    }
 
-    NetworkModule {}
+    BluetoothModule {
+      barWindow: bar
+    }
 
-    AudioModule {}
+    NetworkModule {
+      barWindow: bar
+    }
+
+    AudioModule {
+      barWindow: bar
+    }
+
+    DisplayModule {
+      barWindow: bar
+    }
 
     CpuModule {}
 

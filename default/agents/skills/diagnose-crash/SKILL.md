@@ -1,0 +1,1 @@
+/home/fvideira/dotfiles/linux/nobara/.claude/skills/diagnose-crash/SKILL.md

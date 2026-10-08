@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if makoctl mode | grep -q 'do-not-disturb'; then
+if [[ $(qs -c omadora ipc call notifications isSilenced 2>/dev/null) == true ]]; then
   echo '{"text": "󰂛", "tooltip": "Notifications silenced", "class": "active"}'
 else
   echo '{"text": ""}'

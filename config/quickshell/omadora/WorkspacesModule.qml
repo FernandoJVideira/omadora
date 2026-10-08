@@ -2,7 +2,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 
-// Hyprland workspaces on this bar's monitor, with 1-5 always shown.
+// Hyprland workspaces on this bar's monitor, with 1-5 always shown unless
+// another monitor owns them (e.g. 6-10 pinned to the second screen).
 Row {
   id: root
 
@@ -12,7 +13,10 @@ Row {
   readonly property var persistent: [1, 2, 3, 4, 5]
 
   readonly property var workspaceIds: {
-    const ids = new Set(persistent);
+    const ids = new Set(persistent.filter(id => {
+      const ws = Hyprland.workspaces.values.find(w => w.id === id);
+      return !ws || !ws.monitor || ws.monitor === monitor;
+    }));
     for (const ws of Hyprland.workspaces.values) {
       if (ws.id > 0 && (!ws.monitor || ws.monitor === monitor)) {
         ids.add(ws.id);

@@ -10,13 +10,13 @@ wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle >/dev/null
 if wpctl get-volume @DEFAULT_SOURCE@ | grep -q MUTED; then
   led=on
   osd_message='Microphone muted'
-  osd_icon='microphone-sensitivity-muted-symbolic'
+  osd_icon=$'\U000f036d'
 else
   led=off
   osd_message='Microphone on'
-  osd_icon='audio-input-microphone-symbolic'
+  osd_icon=$'\U000f036c'
 fi
 
 omadora_run omadora-brightness-keyboard-mute "$led"
 
-notify-send -h string:x-canonical-private-synchronous:audio -i "$osd_icon" -u low -t 2000 "Microphone" "$osd_message"
+omadora_run omadora-osd "$osd_icon" "$osd_message"

@@ -1,10 +1,13 @@
 import QtQuick
+import Quickshell.Hyprland
 import Quickshell.Io
 
 // Wi-Fi signal / ethernet / disconnected, with bandwidth in the tooltip.
 // Uses a small script so it works with both NetworkManager and iwd/systemd-networkd.
 BarItem {
   id: root
+
+  required property var barWindow
 
   readonly property var wifiIcons: [0xf092f, 0xf091f, 0xf0922, 0xf0925, 0xf0928]
 
@@ -66,7 +69,25 @@ BarItem {
       return "Disconnected";
     }
   }
-  onLeftClicked: Omadora.run("omadora-exec omadora-launch-wifi")
+  onLeftClicked: panel.toggle()
+
+  Connections {
+    target: Omadora
+
+    function onPanelRequested(name) {
+      if (name === "network" && (panel.open || root.barWindow.screen.name === Hyprland.focusedMonitor?.name)) {
+        panel.toggle();
+      }
+    }
+  }
+
+  NetworkPanel {
+    id: panel
+
+    barWindow: root.barWindow
+    module: root
+    panelWidth: 380
+  }
 
   Process {
     id: proc

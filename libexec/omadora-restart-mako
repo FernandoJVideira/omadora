@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# Reload mako configuration.
-
-makoctl reload

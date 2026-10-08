@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
 omadora_run omadora-refresh-config waybar/config.jsonc
 omadora_run omadora-refresh-config waybar/style.css
-for file in "$OMADORA_ROOT"/config/quickshell/omadora/*; do
-  omadora_run omadora-refresh-config "quickshell/omadora/${file##*/}"
-done
+while IFS= read -r file; do
+  omadora_run omadora-refresh-config "${file#"$OMADORA_ROOT"/config/}"
+done < <(find "$OMADORA_ROOT/config/quickshell/omadora" -type f | sort)
 omadora_run omadora-restart-waybar

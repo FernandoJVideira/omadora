@@ -33,15 +33,12 @@ CONFIG_COMPONENTS=(
 
   "hyprland|hypr/hyprland.lua|omadora-restart-hyprctl|omadora-refresh-hyprland"
   "hypridle|hypr/hypridle.conf|omadora-restart-hypridle|omadora-refresh-hypridle"
-  "hyprlock|hypr/hyprlock.conf||omadora-refresh-hyprlock"
   "hyprsunset|hypr/hyprsunset.conf|omadora-restart-hyprsunset|omadora-refresh-hyprsunset"
 
   "btop|btop/btop.conf|omadora-restart-btop|"
   "fastfetch|fastfetch/config.jsonc||omadora-refresh-fastfetch"
-  "mako||omadora-restart-mako|"
   "waybar|waybar/config.jsonc|omadora-restart-waybar|omadora-refresh-waybar"
   "quickshell|quickshell/omadora/Bar.qml||omadora-refresh-waybar"
-  "wofi|wofi/config||omadora-refresh-wofi"
 
   "opencode|opencode/opencode.json|omadora-restart-opencode|"
 )

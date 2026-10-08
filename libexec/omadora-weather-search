@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Look up places by name with Open-Meteo's geocoding service, for the weather panel's city search.
+#   [{"name":"Malibu","region":"California, United States","latitude":34.03,"longitude":-118.68}]
+
+query="${1:-}"
+
+if [[ -z $query ]]; then
+  echo '[]'
+  exit 0
+fi
+
+curl --fail --silent --show-error --max-time 8 --get 'https://geocoding-api.open-meteo.com/v1/search' \
+  --data-urlencode "name=$query" \
+  --data-urlencode count=6 \
+  --data-urlencode language=en \
+  --data-urlencode format=json |
+  jq -c '[(.results // [])[] | {
+    name,
+    region: ([.admin1, .country] | map(select(. != null and . != "")) | join(", ")),
+    latitude,
+    longitude
+  }]'

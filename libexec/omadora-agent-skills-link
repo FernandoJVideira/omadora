@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Make Omadora's agent skills (omadora, diagnose-crash) available to the coding agents you use,
+# by linking them into each agent's skills folder. Safe to run again.
+
+set -euo pipefail
+
+root="${OMADORA_PATH:-$HOME/.local/share/omadora}"
+
+targets=(
+  "$HOME/.agents/skills"
+  "$HOME/.claude/skills"
+  "$HOME/.codex/skills"
+  "$HOME/.pi/agent/skills"
+  "$HOME/.gemini/config/skills"
+)
+
+for target in "${targets[@]}"; do
+  mkdir -p "$target"
+done
+
+for skill in "$root"/default/agents/skills/*/; do
+  name="$(basename "$skill")"
+  for target in "${targets[@]}"; do
+    ln -sfn "${skill%/}" "$target/$name"
+  done
+done

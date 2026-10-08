@@ -15,16 +15,30 @@ Singleton {
   readonly property string themeFile: `${home}/.config/omadora/current/theme/waybar.css`
   property color foreground: "#e0def4"
   property color background: "#191724"
+  property color accent: "#c4a7e7"
   readonly property color alert: "#a55555"
 
   readonly property string fontFamily: "Adwaita Sans"
-  readonly property real fontSize: 10.5
-  readonly property int barHeight: 26
-  readonly property int sectionPadding: 5 // 0.35rem
-  readonly property int modulePadding: 8 // 0.55rem
-  readonly property int minModuleWidth: 28 // 2em
+  // Text size in px (12 is the default); set with omadora-display-text-size or from the display panel
+  property int textSize: 12
+  readonly property real textScale: textSize / 12
+
+  // Scale a point size with the text size
+  function pt(size: real): real {
+    return size * textScale;
+  }
+
+  readonly property real fontSize: 10.5 * textScale
+  readonly property int barHeight: Math.round(26 * textScale)
+  readonly property int sectionPadding: Math.round(5 * textScale) // 0.35rem
+  readonly property int modulePadding: Math.round(8 * textScale) // 0.55rem
+  readonly property int minModuleWidth: Math.round(28 * textScale) // 2em
+
+  // Do not disturb: only notify-send gets through (see Notifications.qml)
+  property bool silenced: false
 
   signal refreshRequested(string module)
+  signal panelRequested(string name)
 
   function glyph(codepoint: int): string {
     return String.fromCodePoint(codepoint);
@@ -55,8 +69,27 @@ Singleton {
         root.foreground = parseColor(match[2].trim());
       } else if (match[1] === "background") {
         root.background = parseColor(match[2].trim());
+      } else if (match[1] === "accent") {
+        root.accent = parseColor(match[2].trim());
       }
     }
+  }
+
+  // Shell settings: {"textSize": 12}
+  FileView {
+    path: `${root.home}/.config/omadora/shell.json`
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: {
+      try {
+        const size = JSON.parse(text()).textSize;
+        root.textSize = size >= 9 && size <= 20 ? size : 12;
+      } catch (e) {
+        root.textSize = 12;
+      }
+    }
+    onLoadFailed: root.textSize = 12
   }
 
   FileView {

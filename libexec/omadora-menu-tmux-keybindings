@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Display Tmux keybindings defined in your configuration using wofi for an interactive search menu.
+# Display Tmux keybindings defined in your configuration using the picker for an interactive search menu.
 
 print_only=false
 config_file="${TMUX_CONF:-$HOME/.config/tmux/tmux.conf}"
@@ -245,5 +245,5 @@ else
         printf "<tt>%s</tt>%s\n", key_combo, action
       }
     ' |
-    "$OMADORA_PATH/libexec/omadora-launch-wofi" --dmenu --allow-markup --define parse_action=true -p 'Search Tmux keybindings…'
+    "$OMADORA_PATH/libexec/omadora-launch-picker" --dmenu --allow-markup --define parse_action=true -p 'Search Tmux keybindings…'
 fi

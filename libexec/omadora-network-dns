@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Set the DNS provider of a NetworkManager connection and apply it without reconnecting.
+
+if (($# < 2)); then
+  echo "Usage: omadora-network-dns <connection> <dhcp|cloudflare|google|custom> [server...]" >&2
+  exit 1
+fi
+
+address_list='^[0-9a-fA-F:. ]+$'
+connection="$1"
+provider="$2"
+shift 2
+
+case "$provider" in
+dhcp) servers="" ;;
+cloudflare) servers="1.1.1.1 1.0.0.1" ;;
+google) servers="8.8.8.8 8.8.4.4" ;;
+custom)
+  servers="$*"
+  servers="${servers//,/ }"
+  if [[ ! $servers =~ $address_list ]]; then
+    notify-send -u critical "Invalid DNS servers" "Enter IP addresses separated by commas or spaces"
+    exit 1
+  fi
+  ;;
+*)
+  echo "Unknown provider: $provider" >&2
+  exit 1
+  ;;
+esac
+
+ignore_auto=no
+[[ -n $servers ]] && ignore_auto=yes
+
+nmcli connection modify "$connection" ipv4.dns "$servers" ipv4.ignore-auto-dns "$ignore_auto" || exit 1
+
+iface="$(nmcli -g GENERAL.DEVICES connection show "$connection" 2>/dev/null | head -n1)"
+[[ -n $iface ]] || iface="$(nmcli -g connection.interface-name connection show "$connection")"
+[[ -n $iface ]] && nmcli device reapply "$iface" >/dev/null 2>&1
+
+if [[ $provider == dhcp ]]; then
+  notify-send -u low "󰇖    DNS: automatic (DHCP)"
+else
+  notify-send -u low "󰇖    DNS: $provider ${servers:+($servers)}"
+fi

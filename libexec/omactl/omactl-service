@@ -39,10 +39,8 @@ SERVICE_UNITS=(
   hypridle.service
   hyprpaper.service
   hyprsunset.service
-  mako.service
   omadora-fcitx5.service
   omadora-hyprland-monitor.service
-  omadora-hyprlock.service
   omadora-polkitagent.service
   omadora-recover-internal-monitor.service
   omadora-battery-monitor.service

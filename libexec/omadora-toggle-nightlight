@@ -32,3 +32,5 @@ else
   notify-send -u low "    Daylight screen temperature"
   restart_nightlighted_waybar
 fi
+
+"$(dirname "${BASH_SOURCE[0]}")/omadora-bar-refresh" nightlight

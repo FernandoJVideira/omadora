@@ -1,10 +1,10 @@
 [Unit]
-Description=Omadora top bar (Quickshell)
+Description=Omadora shell (Quickshell: bar, launcher, notifications, OSD, lock)
 PartOf=omadora-session.target
 After=graphical-session.target
-ConditionPathExists=!%h/.local/state/omadora/toggles/waybar-off
-# Touching this flag switches the top bar back to Waybar (see omactl ui bar)
-ConditionPathExists=!%h/.local/state/omadora/toggles/bar-waybar
+# Wants= from omadora-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 
 [Service]
 ExecStart=/usr/bin/qs -c omadora -n

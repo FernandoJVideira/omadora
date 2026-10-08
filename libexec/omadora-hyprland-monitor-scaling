@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Show or set the scale of the focused Hyprland monitor (ported from Omarchy).
+#   omadora-hyprland-monitor-scaling          print the current scale
+#   omadora-hyprland-monitor-scaling <scale>  set it (1 to 4); fractional scales are rounded up
+#                                             to the nearest one the monitor's resolution allows
+
+usage() {
+  echo "Usage: omadora-hyprland-monitor-scaling [SCALE]" >&2
+}
+
+# Hyprland only accepts scales where the mode divides into whole logical
+# pixels (in 1/120 steps), so clean scales are divisors of gcd(w*120, h*120).
+clean_scale() {
+  awk -v scale="$1" -v width="$2" -v height="$3" '
+    function gcd(a, b, t) { while (b) { t = a % b; a = b; b = t } return a }
+    BEGIN {
+      g = gcd(width * 120, height * 120)
+      k = int(scale * 120 + 0.5)
+      if (k > g) k = g
+      while (g % k != 0) k++
+      printf "%g\n", k / 120
+    }'
+}
+
+focused_monitor() {
+  hyprctl monitors -j | jq -e -c '.[] | select(.focused == true)'
+}
+
+if (($# == 0)); then
+  focused_monitor | jq -r '.scale' | awk 'NR == 1 { printf "%g\n", $0 }'
+  exit 0
+fi
+
+requested="$1"
+if [[ ! $requested =~ ^[0-9]+([.][0-9]+)?$ ]] || ! awk -v scale="$requested" 'BEGIN { exit !(scale >= 1 && scale <= 4) }'; then
+  usage
+  exit 1
+fi
+
+monitor_info="$(focused_monitor)" || exit 1
+active_monitor="$(jq -r '.name' <<<"$monitor_info")"
+width="$(jq -r '.width' <<<"$monitor_info")"
+height="$(jq -r '.height' <<<"$monitor_info")"
+refresh_rate="$(jq -r '.refreshRate' <<<"$monitor_info")"
+
+# The name goes into a Lua string below, so only a plain connector name may pass
+if [[ ! $active_monitor =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Refusing unsafe monitor name" >&2
+  exit 1
+fi
+
+new_scale="$(clean_scale "$requested" "$width" "$height")"
+# GTK only honors integer GDK_SCALE values, so persist the nearest whole factor
+new_gdk_scale="$(awk -v scale="$new_scale" 'BEGIN { printf "%d", int(scale + 0.5) }')"
+
+hyprctl eval "hl.monitor({ output = \"$active_monitor\", mode = \"${width}x${height}@${refresh_rate}\", position = \"auto\", scale = $new_scale })" >/dev/null
+
+# Persist to monitors.lua while it still has the generic defaults, so the scale survives reboots
+monitor_lua="$HOME/.config/hypr/monitors.lua"
+if [[ -f $monitor_lua ]] && grep -q '^local omadora_monitor_scale = ' "$monitor_lua"; then
+  sed -i -E \
+    -e "s|^local omadora_monitor_scale = .*|local omadora_monitor_scale = ${new_scale}|" \
+    -e "s|^local omadora_gdk_scale = .*|local omadora_gdk_scale = ${new_gdk_scale}|" \
+    "$monitor_lua"
+fi

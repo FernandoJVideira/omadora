@@ -21,8 +21,5 @@ ln -snf ~/.config/omadora/current/theme/neovim.lua ~/.config/nvim/lua/plugins/om
 mkdir -p ~/.config/btop/themes
 ln -snf ~/.config/omadora/current/theme/btop.theme ~/.config/btop/themes/current.theme
 
-mkdir -p ~/.config/mako
-ln -snf ~/.config/omadora/current/theme/mako.ini ~/.config/mako/config
-
 # Screensaver
 pipx install terminaltexteffects==0.14.2

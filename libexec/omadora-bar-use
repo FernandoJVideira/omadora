@@ -12,11 +12,12 @@ quickshell)
   rm -f "$flag"
   systemctl --quiet --user stop waybar.service || true
   systemctl --quiet --user start omadora-bar.service
+  qs -c omadora ipc call bar useWaybar false >/dev/null 2>&1 || true
   ;;
 waybar)
   mkdir -p "$(dirname "$flag")"
   touch "$flag"
-  systemctl --quiet --user stop omadora-bar.service || true
+  qs -c omadora ipc call bar useWaybar true >/dev/null 2>&1 || true
   systemctl --quiet --user start waybar.service
   ;;
 *)

@@ -3,12 +3,12 @@
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-# Pick one option with Wofi
+# Pick one option with the picker
 
 set -euo pipefail
 
 if (($# < 2)); then
-  echo "Usage: omadora-menu-select <prompt> <option>... [-- wofi args...]" >&2
+  echo "Usage: omadora-menu-select <prompt> <option>... [-- picker args...]" >&2
   exit 1
 fi
 
@@ -30,8 +30,8 @@ while (($# > 0)); do
 done
 
 if ((${#options[@]} == 0)); then
-  echo "Usage: omadora-menu-select <prompt> <option>... [-- wofi args...]" >&2
+  echo "Usage: omadora-menu-select <prompt> <option>... [-- picker args...]" >&2
   exit 1
 fi
 
-printf '%s\n' "${options[@]}" | omadora_run omadora-launch-wofi --dmenu --width 295 --lines 10 -p "$prompt…" "${args[@]}" 2>/dev/null
+printf '%s\n' "${options[@]}" | omadora_run omadora-launch-picker --dmenu --width 295 --lines 10 -p "$prompt…" "${args[@]}" 2>/dev/null

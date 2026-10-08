@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# shellcheck source=lib/theme.sh
+source "$OMADORA_LIB_DIR/theme.sh"
+
+# Set the current background to a specific image.
+#   omadora-theme-bg-set <path-to-image>
+
+(($# == 1)) || die "usage: omadora-theme-bg-set <path-to-image>"
+
+background="$(realpath -- "$1")"
+[[ -f $background ]] || die "file does not exist: $background"
+
+ln -nsf "$1" "$OMADORA_CURRENT_BACKGROUND_LINK"
+
+theme_apply_background ||
+  die "failed to apply background"
+
+info "Background changed: ${background##*/}"

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Toggle crash capture: the watcher that offers an AI diagnosis when a process crashes
+
+readonly flag="crash-capture-off"
+readonly unit="omadora-crash-watch.service"
+
+"$(dirname "${BASH_SOURCE[0]}")/omadora-toggle" "$flag"
+
+if "$(dirname "${BASH_SOURCE[0]}")/omadora-toggle-enabled" "$flag"; then
+  systemctl --quiet --user stop "$unit"
+  notify-send -u low "󱚡    Crash capture disabled"
+else
+  systemctl --quiet --user start "$unit"
+  notify-send -u low "󱚡    Crash capture enabled"
+fi

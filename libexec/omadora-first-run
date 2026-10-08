@@ -11,4 +11,5 @@ if [[ -f $FIRST_RUN_MODE ]]; then
 
   bash "$OMADORA_PATH/install/first-run/gdk-scale.sh"
   bash "$OMADORA_PATH/install/first-run/welcome.sh"
+  bash "$OMADORA_PATH/install/first-run/agent-setup.sh"
 fi

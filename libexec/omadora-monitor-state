@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print the state the Quickshell display panel shows, as JSON.
+#   {"focused":"DP-1","brightness":100,"textSize":12,
+#    "displays":[{"name":"DP-1","enabled":true,"focused":true,"width":1920,"height":1080,"scale":1}]}
+# brightness is null when the focused display has no brightness control.
+
+here="$(dirname "${BASH_SOURCE[0]}")"
+shell_config="${XDG_CONFIG_HOME:-$HOME/.config}/omadora/shell.json"
+
+monitors="$(hyprctl monitors all -j)"
+focused="$(jq -r '[.[] | select(.focused == true)][0].name // ""' <<<"$monitors")"
+
+brightness="$("$here/omadora-brightness-display" --monitor "$focused" 2>/dev/null | head -n1 || true)"
+text_size="$(jq -r '.textSize // 12' "$shell_config" 2>/dev/null || echo 12)"
+
+jq -nc --argjson monitors "$monitors" --arg focused "$focused" --arg brightness "$brightness" --argjson textSize "${text_size:-12}" '
+  {
+    focused: $focused,
+    brightness: ($brightness | tonumber? // null),
+    textSize: $textSize,
+    displays: [$monitors[] | {name, enabled: (.disabled != true), focused: (.focused == true), width, height, scale}]
+  }'

@@ -52,7 +52,6 @@ libinput
 libxkbcommon
 libxkbcommon-utils
 lsof
-mako
 mpv
 nautilus
 nautilus-python
@@ -70,6 +69,8 @@ qt6-qtwayland
 ripgrep
 seahorse
 selinux-policy-devel
+qrencode
+systemd-coredump
 slurp
 socat
 sushi
@@ -92,7 +93,6 @@ wget
 whois
 wiremix
 wl-clipboard
-wofi
 xdg-desktop-portal-gtk
 xdg-terminal-exec
 xdg-user-dirs

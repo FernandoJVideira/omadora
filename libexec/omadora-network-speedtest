@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Measure download and upload speed against Cloudflare's speed test endpoints.
+# Prints {"down": <Mbit/s>, "up": <Mbit/s>}. Only runs when asked: it sends a few MB.
+
+base="https://speed.cloudflare.com"
+
+down=$(curl -fsS -o /dev/null -w '%{speed_download}' --max-time 20 "$base/__down?bytes=25000000" 2>/dev/null) || down=0
+up=$(head -c 10000000 /dev/zero | curl -fsS -o /dev/null -w '%{speed_upload}' --max-time 20 -X POST --data-binary @- "$base/__up" 2>/dev/null) || up=0
+
+jq -nc --argjson down "${down:-0}" --argjson up "${up:-0}" \
+  '{down: ($down * 8 / 1000000), up: ($up * 8 / 1000000)}'
