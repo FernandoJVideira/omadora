@@ -284,7 +284,7 @@ show_style_menu() {
   *Theme*) show_theme_menu ;;
   *"Terminal Font"*) show_font_menu ;;
   *Background*) qs -c omadora ipc call wallpapers open ;;
-  *"Login Screen"*) show_sddm_theme_menu ;;
+  *"Login Screen"*) show_login_theme_menu ;;
   *Hyprland*) open_in_editor ~/.config/hypr/looknfeel.lua ;;
   *Screensaver*) show_screensaver_menu ;;
   *About*) show_about_menu ;;
@@ -314,15 +314,15 @@ show_theme_menu() {
   qs -c omadora ipc call themes open
 }
 
-show_sddm_theme_menu() {
+show_login_theme_menu() {
   local choice
-  choice=$(menu "Login Screen" "󰸌  Match Omadora Theme\n$(omadora_run omadora-sddm-theme list)" "--width 350" "$(omadora_run omadora-sddm-theme current)")
+  choice=$(menu "Login Screen" "󰸌  Match Omadora Theme\n$(omadora_run omadora-login-theme list)" "--width 350" "$(omadora_run omadora-login-theme current)")
   if [[ $choice == "CNCLD" || -z $choice ]]; then
     back_to show_style_menu
   elif [[ $choice == *"Match Omadora Theme"* ]]; then
-    present_terminal "$(omadora_command omadora-sddm-theme) set omadora"
+    present_terminal "$(omadora_command omadora-login-theme) set omadora"
   else
-    present_terminal "$(omadora_command omadora-sddm-theme) set \"$choice\""
+    present_terminal "$(omadora_command omadora-login-theme) set \"$choice\""
   fi
 }
 

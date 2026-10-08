@@ -204,4 +204,8 @@ reload opencode &
 ("$OMADORA_LIBEXEC_DIR/omadora-hook" theme-set "$theme_name" ||
   warn "theme-set hook failed") &
 
+# Keep the login screen wallpaper in step (a no-op unless it uses the omadora one).
+("$OMADORA_LIBEXEC_DIR/omadora-login-theme" sync --auto >/dev/null 2>&1 ||
+  warn "login screen wallpaper sync failed") &
+
 info "Theme applied: $theme_name"

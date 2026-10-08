@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# List, show or set the Plasma Login Manager wallpaper: omadora-login-theme [list|current|set <name>|sync|sync --auto]
+# "sync" installs an "omadora" wallpaper from the active Omadora theme and "set"
+# selects a wallpaper folder from /usr/share/plasmalogin/wallpapers.
+# The first "sync" needs sudo: it hands the omadora folder to your user and
+# selects it. After that "sync" needs none, and "sync --auto" (run on every theme
+# change) does nothing instead of asking for a password when that setup is missing.
+
+wallpapers_dir=/usr/share/plasmalogin/wallpapers
+current_dir="${OMADORA_CONFIG_HOME:-$HOME/.config/omadora}/current"
+conf=/etc/plasmalogin.conf
+kconf=(--file "$conf" --group Greeter --group Wallpaper --group org.kde.image --group General --key Image)
+
+current() {
+  local image dir
+  image=$(kreadconfig6 "${kconf[@]}" 2>/dev/null)
+  dir=$(dirname "${image#file://}")
+  basename "${dir:-.}"
+}
+
+apply() {
+  local name="$1" file
+  file=$(find "$wallpapers_dir/$name" -maxdepth 1 -type f | sort | head -n 1)
+  if [[ -z $file ]]; then
+    echo "No wallpaper found in $wallpapers_dir/$name" >&2
+    return 1
+  fi
+  sudo kwriteconfig6 "${kconf[@]}" "file://$file"
+  echo "Login screen wallpaper set to $name"
+}
+
+# Install the active Omadora theme's wallpaper as the "omadora" login wallpaper.
+sync() {
+  local work bg
+  bg=$(readlink -f "$current_dir/background" 2>/dev/null)
+  [[ -f $bg ]] || { echo "No active Omadora theme background" >&2; return 1; }
+
+  work=$(mktemp -d)
+  trap 'rm -rf "$work"' RETURN
+  if command -v magick >/dev/null && magick "$bg[0]" -resize '3840x3840>' -quality 90 "jpg:$work/background.jpg" 2>/dev/null; then
+    :
+  elif command -v ffmpeg >/dev/null && ffmpeg -loglevel error -y -i "$bg" -frames:v 1 -f image2 -c:v mjpeg "$work/background.jpg" 2>/dev/null; then
+    :
+  else
+    cp "$bg" "$work/background.${bg##*.}"
+  fi
+
+  local dest="$wallpapers_dir/omadora"
+  if [[ ! -O $dest || ! -w $dest ]]; then
+    [[ $auto == 1 ]] && return 0
+    sudo install -d -o "$(id -un)" -g "$(id -gn)" "$dest"
+    sudo chown "$(id -un):$(id -gn)" "$dest"
+  fi
+  rm -f "$dest"/*
+  cp "$work"/* "$dest/"
+  chmod a+rX "$dest" "$dest"/*
+  echo "Installed login wallpaper omadora from $(cat "$current_dir/theme.name" 2>/dev/null)"
+}
+
+case "${1:-list}" in
+sync)
+  auto=0
+  if [[ ${2:-} == --auto ]]; then
+    auto=1
+    # Only follow the theme when the omadora wallpaper is the one in use.
+    [[ $(current) == omadora ]] || exit 0
+  fi
+  sync || exit 1
+  # The image path is already stored once omadora is selected.
+  [[ $(current) == omadora ]] || apply omadora
+  ;;
+list) ls -1 "$wallpapers_dir" ;;
+current) current ;;
+set)
+  name="${2:-}"
+  [[ $name == omadora ]] && { sync || exit 1; }
+  if [[ -z $name || ! -d $wallpapers_dir/$name ]]; then
+    echo "Unknown login wallpaper: ${name:-<none>}" >&2
+    exit 1
+  fi
+  apply "$name"
+  ;;
+*) echo "Usage: omadora-login-theme [list|current|set <name>|sync [--auto]]" >&2; exit 1 ;;
+esac
