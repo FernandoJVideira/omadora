@@ -21,5 +21,6 @@ install_cargo_bin() {
 
 install_cargo_bin cargo-update cargo-install-update
 install_cargo_bin bluetui
-install_cargo_bin impala
+# Impala manages iwd, which Nobara doesn't use (Wi-Fi goes through NetworkManager/nmtui)
+[[ -z "${OMADORA_NOBARA:-}" ]] && install_cargo_bin impala
 install_cargo_bin satty

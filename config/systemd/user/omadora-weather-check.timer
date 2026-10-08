@@ -1,6 +1,9 @@
 [Unit]
 Description=Omadora Weather Check Timer
 PartOf=omadora-session.target
+# Wants= from omadora-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 ConditionPathExists=!%h/.local/state/omadora/toggles/weather-check-off
 
 [Timer]

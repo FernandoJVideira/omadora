@@ -3,12 +3,12 @@
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-# Pick a file with Wofi
+# Pick a file with the picker
 
 set -euo pipefail
 
 if (($# < 3)); then
-  echo "Usage: omadora-menu-file <label> <paths> <formats> [wofi args...]" >&2
+  echo "Usage: omadora-menu-file <label> <paths> <formats> [picker args...]" >&2
   exit 1
 fi
 
@@ -21,7 +21,7 @@ IFS=: read -r -a paths <<<"$paths_arg"
 read -r -a formats <<<"$formats_arg"
 
 if ((${#paths[@]} == 0 || ${#formats[@]} == 0)); then
-  echo "Usage: omadora-menu-file <label> <paths> <formats> [wofi args...]" >&2
+  echo "Usage: omadora-menu-file <label> <paths> <formats> [picker args...]" >&2
   exit 1
 fi
 
@@ -47,4 +47,4 @@ done
 find_args+=(")" -printf '%T@\t%p\n')
 
 find "${find_args[@]}" 2>/dev/null | sort -rn | cut -f2- |
-  omadora_run omadora-launch-wofi --dmenu --width 800 --lines 10 -p "$label…" "$@" 2>/dev/null
+  omadora_run omadora-launch-picker --dmenu --width 800 --lines 10 -p "$label…" "$@" 2>/dev/null

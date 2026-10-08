@@ -2,4 +2,9 @@
 
 # Lock the computer and turn off the display
 
-systemctl --user start omadora-hyprlock.service
+"$(dirname "${BASH_SOURCE[0]}")/omadora-pre-lock"
+
+if ! qs -c omadora ipc call lock lock >/dev/null 2>&1; then
+  notify-send -u critical "Could not lock the screen" "The Quickshell shell is not running"
+  exit 1
+fi

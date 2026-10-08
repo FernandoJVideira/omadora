@@ -10,4 +10,4 @@ else
   notify-send -u low "󱫖    Now locking computer when idle"
 fi
 
-pkill -RTMIN+9 waybar
+"$(dirname "${BASH_SOURCE[0]}")/omadora-bar-refresh" idle

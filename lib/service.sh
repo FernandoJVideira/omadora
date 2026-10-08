@@ -1,12 +1,7 @@
-service_reload_waybar() {
-  if pgrep -x "waybar" >/dev/null; then
-    #pkill -SIGUSR2 waybar
-    systemctl --quiet --user restart waybar.service
+service_reload_bar() {
+  if systemctl --quiet --user is-active omadora-bar.service; then
+    qs -c omadora ipc call bar reloadTheme >/dev/null 2>&1 || true
   fi
-}
-
-service_reload_mako() {
-  makoctl reload
 }
 
 service_reload_hyprland() {

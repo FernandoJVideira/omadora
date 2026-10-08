@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+"""Usage data for the Quickshell agents panel, as a JSON array with one object per detected agent.
+
+  [{"id": "claude", "name": "Claude Code", "plan": "MAX 20X",
+    "limits": [{"label": "Session", "percent": 6.0, "resetsAt": 1738425600}],
+    "limitsNote": "",
+    "days": [{"label": "Sat", "tokens": 7900000}, ... {"label": "Today", "tokens": 57700000}],
+    "models": [{"name": "Opus 5", "tokens": 1000000000}]}]
+
+Agents: Claude Code, Codex, OpenCode and Gemini CLI, each only when its data directory exists.
+Token counts come from the agents' own local session logs; nothing is sent anywhere.
+Rate limits come from what each agent last reported (see omadora-claude-statusline).
+"""
+
+import glob
+import json
+import os
+import re
+import sqlite3
+import sys
+import time
+from datetime import datetime, timedelta
+
+HOME = os.path.expanduser("~")
+CACHE = os.path.join(os.environ.get("XDG_CACHE_HOME", os.path.join(HOME, ".cache")), "omadora", "agents")
+DAYS = 7
+NOW = time.time()
+TODAY = datetime.now().astimezone().date()
+FIRST_DAY = TODAY - timedelta(days=DAYS - 1)
+WINDOW_START = time.mktime(FIRST_DAY.timetuple())
+
+
+def local_date(timestamp):
+    """Local calendar date of an ISO-8601 string or epoch seconds, or None."""
+    try:
+        if isinstance(timestamp, (int, float)):
+            return datetime.fromtimestamp(timestamp).astimezone().date()
+        return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone().date()
+    except (ValueError, AttributeError, OSError):
+        return None
+
+
+def day_rows(per_day):
+    rows = []
+    for offset in range(DAYS - 1, -1, -1):
+        day = TODAY - timedelta(days=offset)
+        label = "Today" if offset == 0 else day.strftime("%a")
+        rows.append({"label": label, "tokens": per_day.get(day, 0)})
+    return rows
+
+
+def model_rows(per_model):
+    rows = [{"name": name, "tokens": tokens} for name, tokens in per_model.items() if tokens > 0]
+    return sorted(rows, key=lambda row: -row["tokens"])
+
+
+def claude_model_name(model):
+    """claude-opus-5-5 -> Opus 5.5, claude-haiku-4-5-20251001 -> Haiku 4.5"""
+    parts = [part for part in model.removeprefix("claude-").split("-") if not re.fullmatch(r"\d{8}", part)]
+    if not parts:
+        return model
+    family = [part for part in parts if not part.isdigit()]
+    version = [part for part in parts if part.isdigit()]
+    return " ".join(part.capitalize() for part in family) + (" " + ".".join(version) if version else "")
+
+
+def claude_plan():
+    try:
+        with open(os.path.join(HOME, ".claude.json")) as handle:
+            account = json.load(handle).get("oauthAccount") or {}
+    except (OSError, ValueError):
+        return ""
+    tier = str(account.get("userRateLimitTier") or account.get("organizationRateLimitTier") or "").lower()
+    match = re.search(r"max_(\d+)x", tier)
+    if match:
+        return f"MAX {match.group(1)}X"
+    kind = str(account.get("organizationType") or "")
+    return {"claude_pro": "PRO", "claude_max": "MAX", "claude_team": "TEAM", "claude_enterprise": "ENTERPRISE"}.get(kind, "")
+
+
+def claude_limits():
+    try:
+        with open(os.path.join(CACHE, "claude-rate-limits.json")) as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return [], "Run omadora-agents-setup claude to show session and weekly limits."
+    limits = []
+    for key, label in (("five_hour", "Session"), ("seven_day", "Weekly")):
+        window = data.get(key) or {}
+        resets_at = window.get("resets_at")
+        # Claude Code drops a window once it has reset
+        if resets_at and resets_at > NOW and window.get("used_percentage") is not None:
+            limits.append({"label": label, "percent": window["used_percentage"], "resetsAt": resets_at})
+    note = "" if limits else "Limits appear after your next Claude Code message."
+    return limits, note
+
+
+def claude():
+    root = os.path.join(HOME, ".claude", "projects")
+    if not os.path.isdir(root):
+        return None
+    per_day, per_model, seen = {}, {}, set()
+    for path in glob.glob(os.path.join(root, "**", "*.jsonl"), recursive=True):
+        try:
+            if os.path.getmtime(path) < WINDOW_START:
+                continue
+            handle = open(path, encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        with handle:
+            for line in handle:
+                if '"usage"' not in line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except ValueError:
+                    continue
+                message = entry.get("message") or {}
+                usage = message.get("usage")
+                if entry.get("type") != "assistant" or not usage:
+                    continue
+                key = (message.get("id"), entry.get("requestId")) if message.get("id") else entry.get("uuid")
+                if key in seen:
+                    continue
+                seen.add(key)
+                day = local_date(entry.get("timestamp"))
+                if day is None or day < FIRST_DAY:
+                    continue
+                tokens = sum(usage.get(field) or 0 for field in ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
+                model = message.get("model") or ""
+                if model.startswith("<") or not model:
+                    continue
+                per_day[day] = per_day.get(day, 0) + tokens
+                name = claude_model_name(model)
+                per_model[name] = per_model.get(name, 0) + tokens
+    limits, note = claude_limits()
+    return {"id": "claude", "name": "Claude Code", "plan": claude_plan(), "limits": limits, "limitsNote": note,
+            "days": day_rows(per_day), "models": model_rows(per_model)}
+
+
+def codex():
+    root = os.path.join(HOME, ".codex", "sessions")
+    if not os.path.isdir(root):
+        return None
+    per_day, per_model = {}, {}
+    latest_limits, latest_time = None, 0
+    for path in glob.glob(os.path.join(root, "**", "rollout-*.jsonl"), recursive=True):
+        try:
+            if os.path.getmtime(path) < WINDOW_START:
+                continue
+            handle = open(path, encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        model, previous_total = "", 0
+        with handle:
+            for line in handle:
+                try:
+                    entry = json.loads(line)
+                except ValueError:
+                    continue
+                payload = entry.get("payload") or {}
+                kind = payload.get("type")
+                if entry.get("type") == "turn_context" and payload.get("model"):
+                    model = payload["model"]
+                if kind != "token_count":
+                    continue
+                info = payload.get("info") or {}
+                total = (info.get("total_token_usage") or {}).get("total_tokens")
+                moment = entry.get("timestamp")
+                if total is not None:
+                    day = local_date(moment)
+                    delta = max(0, total - previous_total)
+                    previous_total = total
+                    if day is not None and day >= FIRST_DAY:
+                        per_day[day] = per_day.get(day, 0) + delta
+                        per_model[model or "Unknown"] = per_model.get(model or "Unknown", 0) + delta
+                limits = payload.get("rate_limits")
+                stamp = datetime.fromisoformat(moment.replace("Z", "+00:00")).timestamp() if moment else 0
+                if limits and stamp >= latest_time:
+                    latest_limits, latest_time = limits, stamp
+    limits = []
+    for key, fallback in (("primary", "Session"), ("secondary", "Weekly")):
+        window = (latest_limits or {}).get(key) or {}
+        if window.get("used_percent") is None:
+            continue
+        resets_at = window.get("resets_at") or (latest_time + window["resets_in_seconds"] if window.get("resets_in_seconds") is not None else None)
+        if resets_at and resets_at > NOW:
+            minutes = window.get("window_minutes") or 0
+            label = "Weekly" if minutes >= 7 * 24 * 60 else ("Session" if minutes else fallback)
+            limits.append({"label": label, "percent": window["used_percent"], "resetsAt": resets_at})
+    return {"id": "codex", "name": "Codex", "plan": "", "limits": limits,
+            "limitsNote": "" if limits else "Limits appear after your next Codex message.",
+            "days": day_rows(per_day), "models": model_rows(per_model)}
+
+
+def add(per_day, per_model, day, model, tokens):
+    if day is None or day < FIRST_DAY or tokens <= 0:
+        return
+    per_day[day] = per_day.get(day, 0) + tokens
+    per_model[model or "Unknown"] = per_model.get(model or "Unknown", 0) + tokens
+
+
+def short_model(model):
+    """Drop a provider prefix: anthropic/claude-sonnet-4 -> claude-sonnet-4"""
+    return model.split("/", 1)[-1] if model else model
+
+
+def opencode():
+    root = os.path.join(os.environ.get("XDG_DATA_HOME", os.path.join(HOME, ".local", "share")), "opencode")
+    if not os.path.isdir(root):
+        return None
+    per_day, per_model = {}, {}
+
+    def count(message, created_ms):
+        tokens = message.get("tokens") or {}
+        cache = tokens.get("cache") or {}
+        total = sum(tokens.get(field) or 0 for field in ("input", "output", "reasoning")) + (cache.get("read") or 0) + (cache.get("write") or 0)
+        created = created_ms if created_ms is not None else (message.get("time") or {}).get("created")
+        day = local_date(created / 1000) if created else None
+        add(per_day, per_model, day, short_model(message.get("modelID") or ""), total)
+
+    # Newer versions keep sessions in SQLite, older ones in one JSON file per message
+    database = os.path.join(root, "opencode.db")
+    if os.path.isfile(database):
+        try:
+            connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+            for data, created in connection.execute("SELECT data, time_created FROM message"):
+                try:
+                    message = json.loads(data)
+                except (TypeError, ValueError):
+                    continue
+                if message.get("role") == "assistant":
+                    count(message, created)
+            connection.close()
+        except sqlite3.Error:
+            pass
+    for path in glob.glob(os.path.join(root, "storage", "message", "*", "*.json")):
+        try:
+            if os.path.getmtime(path) < WINDOW_START:
+                continue
+            with open(path, encoding="utf-8") as handle:
+                message = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        if message.get("role") == "assistant":
+            count(message, None)
+    return {"id": "opencode", "name": "OpenCode", "plan": "", "limits": [], "limitsNote": "",
+            "days": day_rows(per_day), "models": model_rows(per_model)}
+
+
+def gemini():
+    root = os.path.join(HOME, ".gemini", "tmp")
+    if not os.path.isdir(root):
+        return None
+    per_day, per_model = {}, {}
+
+    def count(message):
+        tokens = message.get("tokens") or {}
+        total = tokens.get("total")
+        if total is None:
+            total = sum(tokens.get(field) or 0 for field in ("input", "output", "thoughts", "tool"))
+        add(per_day, per_model, local_date(message.get("timestamp")), message.get("model") or "", total)
+
+    for path in glob.glob(os.path.join(root, "*", "chats", "session-*.json*")):
+        try:
+            if os.path.getmtime(path) < WINDOW_START:
+                continue
+            with open(path, encoding="utf-8", errors="replace") as handle:
+                if path.endswith(".jsonl"):
+                    messages = [json.loads(line) for line in handle if line.strip()]
+                else:
+                    messages = json.load(handle).get("messages") or []
+        except (OSError, ValueError):
+            continue
+        for message in messages:
+            if isinstance(message, dict) and message.get("type") == "gemini":
+                count(message)
+    return {"id": "gemini", "name": "Gemini CLI", "plan": "", "limits": [], "limitsNote": "",
+            "days": day_rows(per_day), "models": model_rows(per_model)}
+
+
+def main():
+    wanted = sys.argv[1:]
+    providers = [("claude", claude), ("codex", codex), ("opencode", opencode), ("gemini", gemini)]
+    result = []
+    for name, collect in providers:
+        if wanted and name not in wanted:
+            continue
+        try:
+            data = collect()
+        except Exception as error:  # a broken log must not hide the other agents
+            data = {"id": name, "name": name.capitalize(), "plan": "", "limits": [], "limitsNote": f"Could not read usage: {error}", "days": day_rows({}), "models": []}
+        if data:
+            result.append(data)
+    json.dump(result, sys.stdout, separators=(",", ":"))
+
+
+main()

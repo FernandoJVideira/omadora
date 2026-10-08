@@ -2,12 +2,10 @@
 
 # Toggle notification do-not-disturb mode
 
-makoctl mode -t do-not-disturb
-
-if makoctl mode | grep -q 'do-not-disturb'; then
+if [[ $(qs -c omadora ipc call notifications toggleSilenced) == true ]]; then
   notify-send -u low "󰂛    Silenced notifications"
 else
   notify-send -u low "󰂚    Enabled notifications"
 fi
 
-pkill -RTMIN+10 waybar
+"$(dirname "${BASH_SOURCE[0]}")/omadora-bar-refresh" notification-silencing

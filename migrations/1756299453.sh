@@ -32,7 +32,7 @@ omadora-refresh-hyprlock
 omadora-refresh-hypridle
 omadora-refresh-walker
 omadora-refresh-wofi
-omadora-refresh-waybar
+omadora-refresh-bar
 omadora-refresh-applications
 
 echo "Remove old desktop files and icons"

@@ -36,5 +36,8 @@ install_omadora_keyring_policy() {
   rm -rf -- "$policy_build_dir"
 }
 
-install_omadora_keyring_policy
+# Skip when SELinux is disabled (the Nobara default)
+if [[ "$(getenforce 2>/dev/null)" != "Disabled" ]]; then
+  install_omadora_keyring_policy
+fi
 unset -f install_omadora_keyring_policy

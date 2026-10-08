@@ -62,7 +62,7 @@ hl.config({
 })
 
 hl.layer_rule({
-  match = { namespace = "wofi" },
+  match = { namespace = "omadora-picker" },
   animation = "popin",
 })
 

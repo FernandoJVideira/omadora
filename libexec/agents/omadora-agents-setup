@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Let the agents panel read Claude Code's session and weekly limits.
+# Claude Code only shows those to a status line command, so this points the
+# status line at omadora-claude-statusline, which saves them and then runs your
+# previous status line (if you had one) unchanged.
+#
+#   omadora-agents-setup claude            install
+#   omadora-agents-setup claude --remove   restore the previous status line
+
+readonly settings="$HOME/.claude/settings.json"
+readonly store="${XDG_CONFIG_HOME:-$HOME/.config}/omadora/agents.json"
+readonly hook="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/omadora-claude-statusline"
+
+[[ ${1:-} == claude ]] || {
+  echo "Usage: omadora-agents-setup claude [--remove]" >&2
+  exit 1
+}
+
+mkdir -p "$(dirname "$settings")" "$(dirname "$store")"
+[[ -f $settings ]] || echo '{}' >"$settings"
+[[ -f $store ]] || echo '{}' >"$store"
+
+current="$(jq -r '.statusLine.command // empty' "$settings")"
+
+write() { # <file> <jq filter> [jq args...]
+  local file="$1" filter="$2"
+  shift 2
+  jq "$@" "$filter" "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+}
+
+if [[ ${2:-} == --remove ]]; then
+  if [[ $current != "$hook" ]]; then
+    echo "The status line is not set to omadora-claude-statusline; nothing to do."
+    exit 0
+  fi
+  previous="$(jq -r '.claudeStatusline // empty' "$store")"
+  if [[ -n $previous ]]; then
+    write "$settings" '.statusLine = {type: "command", command: $command}' --arg command "$previous"
+  else
+    write "$settings" 'del(.statusLine)'
+  fi
+  write "$store" 'del(.claudeStatusline)'
+  echo "Restored your previous Claude Code status line."
+  exit 0
+fi
+
+if [[ $current == "$hook" ]]; then
+  echo "Already set up."
+  exit 0
+fi
+
+cp "$settings" "$settings.omadora-backup"
+[[ -n $current ]] && write "$store" '.claudeStatusline = $command' --arg command "$current"
+write "$settings" '.statusLine = {type: "command", command: $command}' --arg command "$hook"
+echo "Claude Code status line now records rate limits (backup: $settings.omadora-backup)."

@@ -1,17 +1,63 @@
 #!/bin/bash
 
-# Adjust brightness on the most likely display device.
+# Show or adjust brightness on the focused display: the laptop backlight, or DDC/CI for external monitors.
+#   omadora-brightness-display [--no-osd] [--monitor <name>] [+N%|N%-|N%|off|on]
+# With no step it prints the current brightness in percent (and fails when the display has no control).
 
-step="${1:-+5%}"
+no_osd=0
+monitor=""
+
+while (($# > 0)); do
+  case "$1" in
+  --no-osd)
+    no_osd=1
+    shift
+    ;;
+  --monitor)
+    (($# >= 2)) || exit 1
+    monitor="$2"
+    shift 2
+    ;;
+  *) break ;;
+  esac
+done
+
+here="$(dirname "${BASH_SOURCE[0]}")"
+
+[[ -n $monitor ]] || monitor="$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true).name' 2>/dev/null || true)"
+
+use_ddc() {
+  [[ -n $monitor && ! $monitor =~ ^(eDP|LVDS|DSI)- ]]
+}
 
 # Start with the first possible output, then refine to the most likely given an order heuristic.
-device="$(ls -1 /sys/class/backlight 2>/dev/null | head -n1)"
-for candidate in amdgpu_bl* intel_backlight acpi_video*; do
-  if [[ -e /sys/class/backlight/$candidate ]]; then
-    device="$candidate"
-    break
+backlight_device() {
+  local device candidate
+  device="$(ls -1 /sys/class/backlight 2>/dev/null | head -n1)"
+  for candidate in /sys/class/backlight/amdgpu_bl* /sys/class/backlight/intel_backlight /sys/class/backlight/acpi_video*; do
+    if [[ -e $candidate ]]; then
+      device="${candidate##*/}"
+      break
+    fi
+  done
+  [[ -n $device ]] && printf '%s\n' "$device"
+}
+
+backlight_percent() {
+  brightnessctl -d "$1" -m 2>/dev/null | awk -F, '{ gsub("%", "", $4); print $4; found=1 } END { exit !found }'
+}
+
+step="${1:-}"
+
+if [[ -z $step ]]; then
+  if use_ddc; then
+    "$here/omadora-brightness-display-ddc" "$monitor"
+  else
+    device="$(backlight_device)" || exit 1
+    backlight_percent "$device"
   fi
-done
+  exit
+fi
 
 if [[ $step == "off" ]]; then
   hyprctl dispatch 'hl.dsp.dpms({ action = "disable" })' >/dev/null 2>&1 || hyprctl dispatch dpms off >/dev/null 2>&1
@@ -21,33 +67,38 @@ elif [[ $step == "on" ]]; then
   exit 0
 fi
 
-# Current brightness percentage
-current=$(brightnessctl -d "$device" -m | cut -d',' -f4 | tr -d '%')
+# Drop overlapping brightness key events so concurrent invocations do not race
+exec {lock_fd}>"${XDG_RUNTIME_DIR:-/tmp}/omadora-brightness-display.lock"
+flock -n "$lock_fd" || exit 0
 
-# Apply non-uniform step size: 1% steps if at or below 5%, otherwise set an
-# absolute target percentage to avoid raw backlight rounding causing uneven OSD steps.
-if [[ $step == "+5%" ]]; then
-  if ((current < 5)); then
-    ((target = current + 1))
-  else
-    ((target = current + 5))
+if use_ddc; then
+  brightness="$("$here/omadora-brightness-display-ddc" "$monitor" "$step")" || exit 1
+else
+  device="$(backlight_device)" || exit 1
+  current="$(backlight_percent "$device")" || exit 1
+
+  # Apply non-uniform step size: 1% steps if at or below 5%, otherwise set an
+  # absolute target percentage to avoid raw backlight rounding causing uneven OSD steps.
+  if [[ $step == "+5%" ]]; then
+    if ((current < 5)); then
+      ((target = current + 1))
+    else
+      ((target = current + 5))
+    fi
+    ((target > 100)) && target=100
+    step="$target%"
+  elif [[ $step == "5%-" ]]; then
+    if ((current <= 5)); then
+      ((target = current - 1))
+    else
+      ((target = current - 5))
+    fi
+    ((target < 1)) && target=1
+    step="$target%"
   fi
 
-  ((target > 100)) && target=100
-  step="$target%"
-elif [[ $step == "5%-" ]]; then
-  if ((current <= 5)); then
-    ((target = current - 1))
-  else
-    ((target = current - 5))
-  fi
-
-  ((target < 1)) && target=1
-  step="$target%"
+  brightnessctl -d "$device" set "$step" >/dev/null
+  brightness="$(backlight_percent "$device")"
 fi
 
-# Set the actual brightness of the display device.
-brightnessctl -d "$device" set "$step" >/dev/null
-
-# Display the new brightness setting.
-notify-send -h string:x-canonical-private-synchronous:brightness -u low -t 2000 "Monitor Brightness" "$(brightnessctl -d "$device" -m | cut -d',' -f4 | tr -d '%')"
+((no_osd)) || "$here/omadora-osd" $'\U000f00e0' "Monitor brightness" "$brightness"

@@ -2,11 +2,14 @@
 Description=Omadora Session Target
 PartOf=graphical-session.target
 After=graphical-session.target xdg-desktop-portal.service
+# Only start inside Hyprland, not other desktops sharing graphical-session.target (e.g. Plasma)
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 
 Wants=omadora-session.service
 Wants=omadora-fcitx5.service
 Wants=omadora-hyprland-monitor.service
 Wants=omadora-polkitagent.service
+Wants=omadora-crash-watch.service
 Wants=omadora-battery-monitor.timer
 Wants=omadora-update-check.timer
 Wants=omadora-weather-check.timer
@@ -14,8 +17,7 @@ Wants=omadora-weather-check.timer
 Wants=hypridle.service
 Wants=hyprpaper.service
 Wants=hyprsunset.service
-Wants=mako.service
-Wants=waybar.service
+Wants=omadora-bar.service
 
 [Install]
 WantedBy=graphical-session.target

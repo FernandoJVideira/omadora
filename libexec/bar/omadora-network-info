@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print details of the default route's connection as JSON for the Quickshell network panel.
+#   {"iface":"wlan0","type":"wifi","connection":"home","ip":"192.168.0.2","gateway":"192.168.0.1",
+#    "dns":["1.1.1.1"],"dnsMode":"cloudflare","band":"6 GHz","bandMode":"auto","qr":true}
+# dnsMode is dhcp, cloudflare, google or custom; bandMode is auto, a (5/6 GHz) or bg (2.4 GHz).
+
+iface="$(ip -o route show default 2>/dev/null | awk '{ print $5; exit }')"
+
+if [[ -z $iface ]] || ! command -v nmcli >/dev/null 2>&1; then
+  echo '{}'
+  exit 0
+fi
+
+type=ethernet
+[[ -d /sys/class/net/$iface/wireless ]] && type=wifi
+
+device() { nmcli -g "$1" device show "$iface" 2>/dev/null | head -n1; }
+
+connection="$(device GENERAL.CONNECTION)"
+ip="$(device IP4.ADDRESS | cut -d/ -f1)"
+gateway="$(device IP4.GATEWAY)"
+dns="$(nmcli -g IP4.DNS device show "$iface" 2>/dev/null | sed 's/ | /\n/g; /^$/d')"
+
+# Servers set on the profile decide the provider; none means DHCP
+profile_dns="$(nmcli -g ipv4.dns connection show "$connection" 2>/dev/null | tr ',' '\n' | sed '/^$/d' | sort | paste -sd' ')"
+case "$profile_dns" in
+"") dns_mode=dhcp ;;
+"1.0.0.1 1.1.1.1") dns_mode=cloudflare ;;
+"8.8.4.4 8.8.8.8") dns_mode=google ;;
+*) dns_mode=custom ;;
+esac
+
+band=""
+band_mode=auto
+qr=false
+if [[ $type == wifi ]]; then
+  frequency="$(iw dev "$iface" link 2>/dev/null | sed -n 's/^[[:space:]]*freq: \([0-9]*\).*/\1/p')"
+  if [[ -n $frequency ]]; then
+    if ((frequency >= 5955)); then
+      band="6 GHz"
+    elif ((frequency >= 4900)); then
+      band="5 GHz"
+    else
+      band="2.4 GHz"
+    fi
+  fi
+  band_mode="$(nmcli -g 802-11-wireless.band connection show "$connection" 2>/dev/null)"
+  band_mode="${band_mode:-auto}"
+  key_mgmt="$(nmcli -g 802-11-wireless-security.key-mgmt connection show "$connection" 2>/dev/null)"
+  [[ -n $key_mgmt && $key_mgmt != none ]] && command -v qrencode >/dev/null 2>&1 && qr=true
+fi
+
+jq -nc --arg iface "$iface" --arg type "$type" --arg connection "$connection" --arg ip "$ip" \
+  --arg gateway "$gateway" --arg dns "$dns" --arg dnsMode "$dns_mode" --arg band "$band" \
+  --arg bandMode "$band_mode" --argjson qr "$qr" \
+  '{iface: $iface, type: $type, connection: $connection, ip: $ip, gateway: $gateway,
+    dns: ($dns | split("\n") | map(select(. != ""))), dnsMode: $dnsMode,
+    band: $band, bandMode: $bandMode, qr: $qr}'

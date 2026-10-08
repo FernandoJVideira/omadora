@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print the default route's network state as JSON for the Quickshell bar.
+# Works with NetworkManager as well as iwd/systemd-networkd.
+#   {"type":"wifi","iface":"wlan0","rx":1,"tx":2,"signal":80,"essid":"home","frequency":5180}
+#   {"type":"ethernet","iface":"enp3s0","rx":1,"tx":2}
+#   {"type":"disconnected"}
+
+iface="$(ip -o route show default 2>/dev/null | awk '{ print $5; exit }')"
+
+if [[ -z $iface || ! -d /sys/class/net/$iface ]]; then
+  echo '{"type":"disconnected"}'
+  exit 0
+fi
+
+rx="$(<"/sys/class/net/$iface/statistics/rx_bytes")"
+tx="$(<"/sys/class/net/$iface/statistics/tx_bytes")"
+
+if [[ ! -d /sys/class/net/$iface/wireless ]]; then
+  jq -nc --arg iface "$iface" --argjson rx "$rx" --argjson tx "$tx" \
+    '{type: "ethernet", iface: $iface, rx: $rx, tx: $tx}'
+  exit 0
+fi
+
+# Link quality is out of 70
+quality="$(awk -v dev="$iface:" '$1 == dev { sub(/\.$/, "", $3); print int($3) }' /proc/net/wireless)"
+signal=$((${quality:-0} * 100 / 70))
+((signal > 100)) && signal=100
+
+essid=""
+frequency=0
+if command -v iw >/dev/null 2>&1; then
+  link="$(iw dev "$iface" link 2>/dev/null || true)"
+  essid="$(sed -n 's/^[[:space:]]*SSID: //p' <<<"$link")"
+  frequency="$(sed -n 's/^[[:space:]]*freq: \([0-9]*\).*/\1/p' <<<"$link")"
+fi
+if [[ -z $essid ]] && command -v nmcli >/dev/null 2>&1; then
+  essid="$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1 == "yes" { print $2; exit }')"
+fi
+
+jq -nc --arg iface "$iface" --argjson rx "$rx" --argjson tx "$tx" \
+  --argjson signal "$signal" --arg essid "$essid" --argjson frequency "${frequency:-0}" \
+  '{type: "wifi", iface: $iface, rx: $rx, tx: $tx, signal: $signal, essid: $essid, frequency: $frequency}'

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Claude Code status line command: remember the rate limits Claude Code reports
+# (5-hour and 7-day windows) for the Quickshell agents panel, then hand the same
+# input to the status line command that was configured before, if any.
+
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omadora/agents"
+previous_file="${XDG_CONFIG_HOME:-$HOME/.config}/omadora/agents.json"
+
+input="$(cat)"
+
+if limits="$(jq -ce '.rate_limits // empty' <<<"$input" 2>/dev/null)" && [[ -n $limits ]]; then
+  mkdir -p "$cache_dir"
+  jq -c --argjson now "$(date +%s)" '. + {updated: $now}' <<<"$limits" >"$cache_dir/claude-rate-limits.json.tmp" &&
+    mv "$cache_dir/claude-rate-limits.json.tmp" "$cache_dir/claude-rate-limits.json"
+fi
+
+if [[ -f $previous_file ]] && previous="$(jq -r '.claudeStatusline // empty' "$previous_file")" && [[ -n $previous ]]; then
+  bash -c "$previous" <<<"$input"
+fi

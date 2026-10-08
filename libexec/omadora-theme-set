@@ -17,9 +17,7 @@ local_theme_path="${OMADORA_USER_THEMES_DIR}/${theme_name}"
 system_theme_path="${OMADORA_THEMES_DIR}/${theme_name}"
 
 # What a theme installed from a git repo may not ship, because these run code.
-# Omadora also sources mako.ini and hyprlock.conf directly, so those configs
-# need the same treatment as terminal configs and Lua overrides.
-installed_theme_denied=(alacritty.toml foot.ini ghostty.conf hyprlock.conf kitty.conf mako.ini vscode.json)
+installed_theme_denied=(alacritty.toml foot.ini ghostty.conf kitty.conf vscode.json)
 ignored_theme_files=()
 
 is_denied_installed_file() {
@@ -197,8 +195,7 @@ reload hyprland
 reload alacritty &
 reload ghostty &
 reload kitty &
-reload waybar &
-reload mako &
+reload bar &
 wait
 reload btop &
 reload opencode &

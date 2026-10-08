@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Silence crash notifications for one program, or list what is silenced (ported from Omarchy).
+#   omadora-crash-mute [--] [<program>] [on|off|toggle]
+# The flag omadora-crash-watch reads before announcing a crash. Muting is per
+# program; Trigger > Toggle > Crash Capture is the switch for all of them.
+
+set -uo pipefail
+
+readonly MUTES="$HOME/.local/state/omadora/toggles/crash-ignore"
+
+usage() {
+  echo "Usage: omadora-crash-mute [--] [<program>] [on|off|toggle]" >&2
+}
+
+list() {
+  local entry found=0
+
+  for entry in "$MUTES"/* "$MUTES"/.*; do
+    [[ -f $entry ]] || continue
+    printf '%s\n' "${entry##*/}"
+    found=1
+  done
+
+  ((found)) || echo "No programs muted. Crashes all notify."
+}
+
+[[ ${1:-} == "--" ]] && shift
+
+if (($# == 0)); then
+  list
+  exit 0
+fi
+
+program=$1
+action=${2:-on}
+
+# The watcher keys the mute on the executable's basename, so accept the path it
+# reports as readily as the name.
+program=${program##*/}
+
+if [[ -z $program || $program == "." || $program == ".." ]]; then
+  echo "Not a program name: $1" >&2
+  usage
+  exit 1
+fi
+
+case "$action" in
+on | off | toggle) ;;
+*)
+  echo "Not an action: $action" >&2
+  usage
+  exit 1
+  ;;
+esac
+
+flag="$MUTES/$program"
+case "$action" in
+on) mkdir -p "$MUTES" && touch "$flag" ;;
+off) rm -f "$flag" ;;
+toggle) if [[ -f $flag ]]; then rm -f "$flag"; else mkdir -p "$MUTES" && touch "$flag"; fi ;;
+esac
+
+if [[ -f $flag ]]; then
+  echo "Muted crash notifications for $program."
+else
+  echo "Crash notifications for $program are back on."
+fi

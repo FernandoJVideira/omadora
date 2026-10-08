@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# Restart Waybar
-
-systemctl --user restart waybar.service

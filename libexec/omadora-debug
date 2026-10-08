@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# Collect a system report for debugging (ported from Omarchy, minus its upload to Omarchy's log server).
+#   omadora-debug [--no-sudo] [--print]
+# Writes /tmp/omadora-debug.log, then lets you view it, save it, copy it, or hand it to your default agent.
+
+NO_SUDO=false
+PRINT_ONLY=false
+
+while (($# > 0)); do
+  case "$1" in
+  --no-sudo)
+    NO_SUDO=true
+    shift
+    ;;
+  --print)
+    PRINT_ONLY=true
+    shift
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    echo "Usage: omadora-debug [--no-sudo] [--print]" >&2
+    exit 1
+    ;;
+  esac
+done
+
+here="$(dirname "${BASH_SOURCE[0]}")"
+LOG_FILE="/tmp/omadora-debug.log"
+
+if [[ $NO_SUDO == "true" ]]; then
+  KERNEL_LOG="$(journalctl -k -b --no-pager 2>&1 | tail -n 400)"
+  KERNEL_NOTE="(kernel journal; run without --no-sudo for dmesg)"
+else
+  KERNEL_LOG="$(sudo dmesg)"
+  KERNEL_NOTE=""
+fi
+
+system_info() {
+  if command -v inxi >/dev/null 2>&1; then
+    inxi -Farz -c 0
+  else
+    hostnamectl
+    echo
+    lscpu | head -n 20
+    echo
+    free -h
+    echo
+    lspci 2>/dev/null | grep -Ei "vga|3d|display|network|audio"
+  fi
+}
+
+cat >"$LOG_FILE" <<REPORT
+Date: $(date)
+Hostname: $(hostname)
+Omadora: $(git -C "${OMADORA_PATH:-$HOME/.local/share/omadora}" log -1 --format='%h %s (%cs)' 2>/dev/null || echo unknown)
+Theme: $(cat "$HOME/.config/omadora/current/theme.name" 2>/dev/null || echo unknown)
+Default agent: $("$here/omadora-default-agent" 2>/dev/null || echo none)
+
+=========================================
+SYSTEM INFORMATION
+=========================================
+$(system_info)
+
+=========================================
+KERNEL LOG $KERNEL_NOTE
+=========================================
+$KERNEL_LOG
+
+=========================================
+JOURNAL (CURRENT BOOT, WARNINGS AND ERRORS)
+=========================================
+$(journalctl -b -p 4..1 --no-pager 2>&1 | tail -n 600)
+
+=========================================
+USER SESSION JOURNAL (CURRENT BOOT, WARNINGS AND ERRORS)
+=========================================
+$(journalctl --user -b -p 4..1 --no-pager 2>&1 | tail -n 300)
+
+=========================================
+USER SERVICES THAT FAILED
+=========================================
+$(systemctl --user --failed --no-pager 2>&1)
+
+=========================================
+RECENT CRASHES
+=========================================
+$(coredumpctl list --no-pager 2>&1 | tail -n 15)
+
+=========================================
+INSTALLED PACKAGES
+=========================================
+$(rpm -qa --qf '%{NAME} %{VERSION}-%{RELEASE}\n' 2>/dev/null | sort)
+REPORT
+
+if [[ $PRINT_ONLY == "true" ]]; then
+  cat "$LOG_FILE"
+  exit 0
+fi
+
+OPTIONS=("View log" "Save in current directory" "Copy to clipboard")
+if "$here/omadora-default-agent" >/dev/null 2>&1 && [[ -n $("$here/omadora-default-agent") ]]; then
+  OPTIONS=("Ask my agent to analyze it" "${OPTIONS[@]}")
+fi
+
+ACTION=$(gum choose "${OPTIONS[@]}")
+
+case "$ACTION" in
+"Ask my agent to analyze it")
+  exec "$here/omadora-agent-prompt" "Read the system report at $LOG_FILE and look for problems on this Omadora machine. Report what looks wrong, how sure you are, and what you would check next. Do not change anything."
+  ;;
+"View log")
+  less "$LOG_FILE"
+  ;;
+"Save in current directory")
+  cp "$LOG_FILE" "./omadora-debug.log"
+  echo "✓ Log saved to $(pwd)/omadora-debug.log"
+  ;;
+"Copy to clipboard")
+  wl-copy <"$LOG_FILE" && echo "✓ Log copied to the clipboard"
+  ;;
+esac

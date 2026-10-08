@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""List every entry of the Omadora menu tree for searching, built from omadora-menu itself.
+
+One line per entry below the top level, tab separated:
+  <glyph>  <label> <TAB> <parent path> <TAB> @replay:<step>|<step>|...
+
+The replay steps are the labels to pick, in order, starting from the main menu.
+omadora-menu follows them through the real menus, so searching reuses their actions.
+Menus whose entries are generated at run time (themes, fonts, power profiles) are listed
+as entries but not expanded.
+"""
+
+import fnmatch
+import os
+import re
+
+SOURCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "omadora-menu")
+STRING = r'"((?:[^"\\]|\\.)*)"'
+
+with open(SOURCE, encoding="utf-8") as handle:
+    source = handle.read()
+
+functions = {m.group(1): m.group(2) for m in re.finditer(r"^(\w+)\(\) \{\n(.*?)^\}", source, re.S | re.M)}
+
+
+def split_options(raw):
+    """Option strings hold a literal backslash-n between entries, each as '<glyph>  <label>'."""
+    entries = []
+    for line in raw.split("\\n"):
+        line = line.split("\\t")[0].rstrip()
+        if not line.strip():
+            continue
+        match = re.match(r"^(\S)\s{2}(.*)$", line)
+        entries.append((match.group(1), match.group(2).strip(), line) if match else ("", line.strip(), line))
+    return entries
+
+
+def parse_menu(name):
+    """Return (entries, branches) of a function with a static menu, else None."""
+    body = functions.get(name)
+    if body is None:
+        return None
+    call = re.search(r'menu "[^"]*" ' + STRING, body)
+    if not call:
+        return None
+    raw = call.group(1)
+    if raw.startswith("$") and raw != "$options":
+        return None  # generated at run time
+    if raw == "$options":
+        base = re.search(r'local options=' + STRING, body)
+        if not base:
+            return None
+        raw = base.group(1)
+        # Entries added to $options under conditions are listed too
+        for extra in re.finditer(r'options="\$options\\n((?:[^"\\]|\\.)*)"', body):
+            raw += "\\n" + extra.group(1)
+    branches = []
+    for branch in re.finditer(r"^  (\*[^\n)]*)\)(.*?)(?:;;|(?=^  \*[^\n)]*\)))", body, re.S | re.M):
+        branches.append((branch.group(1).replace('"', ""), branch.group(2)))
+    return split_options(raw), branches
+
+
+def child_of(line, branches, lowercase=False):
+    """The submenu function the first matching branch opens, if any."""
+    subject = line.lower() if lowercase else line
+    for pattern, action in branches:
+        if fnmatch.fnmatchcase(subject, pattern):
+            if pattern == "*":
+                return None
+            found = re.search(r"\b(show_\w+)\b", action)
+            return found.group(1) if found else None
+    return None
+
+
+# Main menu: top level entries and which function each opens
+main_entries, _ = parse_menu("show_main_menu")
+go_branches = [(p.replace('"', ""), a) for p, a in re.findall(r"^  (\*[^\n)]*)\)([^\n]*)", functions["go_to_menu"], re.M)]
+
+results = []
+
+
+def walk(function, path, stack):
+    parsed = parse_menu(function)
+    if not parsed:
+        return
+    entries, branches = parsed
+    for glyph, label, line in entries:
+        steps = path + [label]
+        if len(steps) >= 2:
+            results.append((f"{glyph}  {label}" if glyph else label, " › ".join(path), "|".join(steps)))
+        child = child_of(line, branches)
+        if child and child not in stack:
+            walk(child, steps, stack + [child])
+
+
+for glyph, label, line in main_entries:
+    child = child_of(label, go_branches, lowercase=True)
+    if child:
+        walk(child, [label], [child])
+
+seen = set()
+for text, parent, steps in results:
+    if steps not in seen:
+        seen.add(steps)
+        print(f"{text}\t{parent}\t@replay:{steps}")

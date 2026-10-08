@@ -1,3 +1,6 @@
+# Nobara keeps NetworkManager
+[[ -n "${OMADORA_NOBARA:-}" ]] && return 0
+
 # systemd-networkd-defaults provides the DHCP network profiles for wired and WiFi.
 sudo systemctl enable systemd-networkd.service
 sudo systemctl enable iwd.service

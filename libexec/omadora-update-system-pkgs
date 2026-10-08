@@ -4,6 +4,17 @@ set -euo pipefail
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
+# Nobara ships its own updater that applies required package fixups
+if has_cmd nobara-sync; then
+  info "Updating system packages (nobara-sync)"
+  nobara-sync cli ||
+    die "failed to upgrade system packages"
+  if ! dnf5 needs-restarting >/dev/null 2>&1; then
+    sudo touch /run/reboot-required
+  fi
+  exit 0
+fi
+
 require_cmd dnf5
 
 info "Updating system packages"

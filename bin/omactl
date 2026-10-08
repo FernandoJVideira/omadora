@@ -63,9 +63,9 @@ omactl_fast_path() {
       shift 2
       omactl_exec_libexec omadora-launch-browser "$@"
       ;;
-    wofi)
+    picker)
       shift 2
-      omactl_exec_libexec omadora-launch-wofi "$@"
+      omactl_exec_libexec omadora-launch-picker "$@"
       ;;
     floating-window)
       shift 2

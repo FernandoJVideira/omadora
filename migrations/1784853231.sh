@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Refreshing the Waybar update module..."
-omactl config restore waybar
+# Waybar was removed; its bar module no longer exists.

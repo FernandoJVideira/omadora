@@ -2,6 +2,9 @@
 Description=Omadora Fcitx5 Service
 PartOf=omadora-session.target
 After=graphical-session.target
+# Wants= from omadora-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 
 [Service]
 Type=simple

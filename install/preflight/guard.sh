@@ -9,11 +9,11 @@ abort() {
   esac
 }
 
-# Must be Fedora 44
+# Must be Fedora 44 (or Nobara 44, which is built on it)
 [[ -f /etc/os-release ]] || abort "Fedora 44"
 # shellcheck source=/dev/null
 source /etc/os-release
-[[ "${ID:-}" == "fedora" && "${VERSION_ID:-}" == "44" ]] || abort "Fedora 44"
+[[ "${ID:-}" =~ ^(fedora|nobara)$ && "${VERSION_ID:-}" == "44" ]] || abort "Fedora 44 or Nobara 44"
 
 # Must not be running as root
 if [ "$EUID" -eq 0 ]; then
@@ -25,9 +25,11 @@ if [ "$(uname -m)" != "x86_64" ] && [ "$(uname -m)" != "aarch64" ]; then
   abort "x86_64 or aarch64 CPU"
 fi
 
-# Should be a core only install
-groups=$(dnf group list --installed --hidden -q | awk 'NR>1 {print $1}')
-[ "$groups" != "core" ] && abort "Core only Fedora install"
+# Should be a core only install (Nobara installs alongside its existing desktop)
+if [[ -z "${OMADORA_NOBARA:-}" ]]; then
+  groups=$(dnf group list --installed --hidden -q | awk 'NR>1 {print $1}')
+  [ "$groups" != "core" ] && abort "Core only Fedora install"
+fi
 
 # Cleared all guards
 echo "Guards: OK"

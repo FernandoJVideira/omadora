@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# Set the default browser for Omadora and XDG handlers (ported from Omarchy).
+#   omadora-default-browser                print the current default
+#   omadora-default-browser <browser>      chromium, firefox, helium, brave, brave-origin, chrome, edge or zen
+
+installing=false
+if [[ ${1:-} == "--install" ]]; then
+  installing=true
+  shift
+fi
+
+here="$(dirname "${BASH_SOURCE[0]}")"
+
+if (($# == 0)); then
+  case "$(env -u BROWSER xdg-settings get default-web-browser)" in
+  chromium-browser.desktop | chromium.desktop) echo "chromium" ;;
+  firefox.desktop) echo "firefox" ;;
+  helium.desktop) echo "helium" ;;
+  brave-browser.desktop | com.brave.Browser.desktop) echo "brave" ;;
+  brave-origin.desktop | com.brave.Origin.desktop) echo "brave-origin" ;;
+  com.google.Chrome.desktop | google-chrome.desktop) echo "chrome" ;;
+  com.microsoft.Edge.desktop | microsoft-edge.desktop) echo "edge" ;;
+  app.zen_browser.zen.desktop) echo "zen" ;;
+  *) env -u BROWSER xdg-settings get default-web-browser ;;
+  esac
+  exit 0
+fi
+
+# Each browser: name, desktop file, a command that exists once installed, and how to install it
+case "$1" in
+chromium) browser="chromium"; name="Chromium"; desktop_id="chromium-browser.desktop"; present="chromium-browser"; dnf_package="chromium"; glyph= ;;
+firefox) browser="firefox"; name="Firefox"; desktop_id="firefox.desktop"; present="firefox"; dnf_package="firefox"; glyph=󰈹 ;;
+helium) browser="helium"; name="Helium"; desktop_id="helium.desktop"; present="helium"; glyph=󰖟 ;;
+# Brave, Chrome and Edge installed from their own repos win over the Flatpak versions
+brave)
+  browser="brave"; name="Brave"; glyph=󰖟
+  if "$here/omadora-cmd-present" brave-browser; then desktop_id="brave-browser.desktop"; present="brave-browser"; else desktop_id="com.brave.Browser.desktop"; flatpak_id="com.brave.Browser"; fi
+  ;;
+brave-origin)
+  browser="brave-origin"; name="Brave Origin"; glyph=󰖟
+  if "$here/omadora-cmd-present" brave-origin; then desktop_id="brave-origin.desktop"; present="brave-origin"; else desktop_id="com.brave.Origin.desktop"; flatpak_id="com.brave.Origin"; fi
+  ;;
+chrome)
+  browser="chrome"; name="Chrome"; glyph=󰊯
+  if "$here/omadora-cmd-present" google-chrome-stable; then desktop_id="google-chrome.desktop"; present="google-chrome-stable"; else desktop_id="com.google.Chrome.desktop"; flatpak_id="com.google.Chrome"; fi
+  ;;
+edge)
+  browser="edge"; name="Edge"; glyph=󰇩
+  if "$here/omadora-cmd-present" microsoft-edge-stable; then desktop_id="microsoft-edge.desktop"; present="microsoft-edge-stable"; else desktop_id="com.microsoft.Edge.desktop"; flatpak_id="com.microsoft.Edge"; fi
+  ;;
+zen) browser="zen"; name="Zen"; desktop_id="app.zen_browser.zen.desktop"; flatpak_id="app.zen_browser.zen"; glyph=󰖟 ;;
+*)
+  echo "Usage: omadora-default-browser <chromium|firefox|helium|brave|brave-origin|chrome|edge|zen>" >&2
+  exit 1
+  ;;
+esac
+
+installed() {
+  if [[ -n ${flatpak_id:-} ]]; then
+    flatpak info "$flatpak_id" >/dev/null 2>&1
+  else
+    "$here/omadora-cmd-present" "$present"
+  fi
+}
+
+if ! installed; then
+  if [[ $installing == "false" ]]; then
+    exec "$here/omadora-launch-floating-terminal-with-presentation" "$here/omadora-default-browser" --install "$browser"
+  fi
+
+  if [[ -n ${flatpak_id:-} ]]; then
+    flatpak install -y flathub "$flatpak_id" || exit 1
+  elif [[ -n ${dnf_package:-} ]]; then
+    sudo dnf install -y "$dnf_package" || exit 1
+  else
+    echo "Install $name yourself, then choose it again." >&2
+    exit 1
+  fi
+fi
+
+env -u BROWSER xdg-settings set default-web-browser "$desktop_id" || exit 1
+
+"$here/omadora-notification-send" "$glyph" "$name is now the default browser"

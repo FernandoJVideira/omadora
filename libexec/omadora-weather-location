@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Choose the place the weather is shown for, or go back to locating by IP address.
+#   omadora-weather-location set <latitude> <longitude> <label>
+#   omadora-weather-location auto
+
+require_cmd jq
+
+usage() {
+  echo "Usage: omadora-weather-location set <latitude> <longitude> <label> | auto" >&2
+  exit 1
+}
+
+write_config() { # <jq filter> [jq args...]
+  local filter="$1"
+  shift
+  local config='{}'
+
+  mkdir -p "$(dirname "$OMADORA_CONFIG_FILE")"
+  [[ -f $OMADORA_CONFIG_FILE ]] && config="$(jq -ec 'select(type == "object")' "$OMADORA_CONFIG_FILE" 2>/dev/null || echo '{}')"
+  jq "$@" "$filter" <<<"$config" >"$OMADORA_CONFIG_FILE.tmp"
+  mv "$OMADORA_CONFIG_FILE.tmp" "$OMADORA_CONFIG_FILE"
+}
+
+case "${1:-}" in
+set)
+  (($# == 4)) || usage
+  [[ $2 =~ ^-?[0-9]+(\.[0-9]+)?$ && $3 =~ ^-?[0-9]+(\.[0-9]+)?$ && -n $4 ]] || usage
+  write_config '.location = {latitude: $lat, longitude: $lon, label: $label}' \
+    --argjson lat "$2" --argjson lon "$3" --arg label "$4"
+  ;;
+auto)
+  write_config 'del(.location)'
+  ;;
+*)
+  usage
+  ;;
+esac
+
+# Fetch the weather for the new place right away
+systemctl --user start --no-block omadora-weather-check.service 2>/dev/null || true

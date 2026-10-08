@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Set the Wi-Fi band preference of a NetworkManager connection: auto, a (5/6 GHz) or bg (2.4 GHz).
+
+if (($# != 2)); then
+  echo "Usage: omadora-network-band <connection> <auto|a|bg>" >&2
+  exit 1
+fi
+
+connection="$1"
+case "$2" in
+auto) band="" ;;
+a | bg) band="$2" ;;
+*)
+  echo "Unknown band: $2" >&2
+  exit 1
+  ;;
+esac
+
+nmcli connection modify "$connection" 802-11-wireless.band "$band" || exit 1
+nmcli connection up "$connection" >/dev/null 2>&1 || true

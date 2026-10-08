@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Ask the top bar to re-run status modules: update, weather, idle,
+# notification-silencing or screenrecording.
+
+for module in "$@"; do
+  if command -v qs >/dev/null; then
+    qs -c omadora ipc call bar refresh "$module" >/dev/null 2>&1
+  fi
+done
+
+exit 0

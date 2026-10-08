@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Kill wofi or active window.
+# Close the picker or active window.
 
-if pgrep -x wofi >/dev/null; then
-  pkill -x wofi
+if [[ $(qs -c omadora ipc call picker isOpen 2>/dev/null) == true ]]; then
+  qs -c omadora ipc call picker close
 else
   hyprctl dispatch 'hl.dsp.window.close()' || hyprctl dispatch killactive
 fi

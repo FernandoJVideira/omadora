@@ -1,3 +1,6 @@
+# Nobara keeps its desktop, NetworkManager and multimedia groups
+[[ -n "${OMADORA_NOBARA:-}" ]] && return 0
+
 # Remove unwanted groups
 mapfile -t groups < <(grep -v '^#' "$OMADORA_INSTALL/omadora-removed.groups" | grep -v '^$')
 sudo dnf group remove -y "${groups[@]}"

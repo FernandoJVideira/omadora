@@ -1,0 +1,3 @@
+# Used by the Quickshell lock screen. A custom PAM config directory only
+# resolves includes from itself, so point at the system stack by absolute path.
+auth    substack    /etc/pam.d/system-auth

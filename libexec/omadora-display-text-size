@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# Scale text across the desktop (ported from Omarchy): the Quickshell shell, GTK apps and terminals.
+#   omadora-display-text-size          print the current sizes
+#   omadora-display-text-size <px>     set the text size (9 to 20 px)
+#   omadora-display-text-size reset    back to the defaults (12 px, GTK factor 1.0, 10.5 pt terminals)
+#
+# One knob, anchored at 12 px: the shell font base size, GTK's text-scaling-factor
+# (quantized so the interface font lands on a whole point size) and the terminal font size (px * 10.5 / 12).
+
+MIN=9
+MAX=20
+GKEY_SCHEMA="org.gnome.desktop.interface"
+GKEY_NAME="text-scaling-factor"
+TERM_DEFAULT_PT=10.5
+SHELL_DEFAULT_PX=12
+
+shell_config="${XDG_CONFIG_HOME:-$HOME/.config}/omadora/shell.json"
+
+usage() {
+  echo "Usage: omadora-display-text-size [size|reset]" >&2
+}
+
+current_base_size() {
+  [[ -f $shell_config ]] && jq -r '.textSize // empty' "$shell_config" 2>/dev/null
+}
+
+write_shell_config() { # <jq filter> [jq args...]
+  local filter="$1"
+  shift
+  local config='{}'
+  mkdir -p "$(dirname "$shell_config")"
+  [[ -f $shell_config ]] && config="$(jq -ec 'select(type == "object")' "$shell_config" 2>/dev/null || echo '{}')"
+  jq "$@" "$filter" <<<"$config" >"$shell_config.tmp" && mv "$shell_config.tmp" "$shell_config"
+}
+
+gtk_font_pt() {
+  local name pt
+  name="$(gsettings get "$GKEY_SCHEMA" font-name 2>/dev/null)"
+  pt="${name%\'}"
+  pt="${pt##* }"
+  if [[ $pt =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    echo "$pt"
+  else
+    echo 11
+  fi
+}
+
+set_factor() {
+  gsettings set "$GKEY_SCHEMA" "$GKEY_NAME" "$1" 2>/dev/null || true
+}
+
+# Terminal point size for a text size, rounded to the nearest half point
+term_pt_for() {
+  awk -v s="$1" -v p="$TERM_DEFAULT_PT" -v b="$SHELL_DEFAULT_PX" 'BEGIN { printf "%.1f", int(s * p / b * 2 + 0.5) / 2 }'
+}
+
+# Set the font size in the terminal configs that exist, and ask running terminals to reload
+set_terminal_size() {
+  local pt="$1"
+
+  if [[ -f ~/.config/alacritty/alacritty.toml ]]; then
+    sed -i -E "s/^size[[:space:]]*=.*/size = $pt/" ~/.config/alacritty/alacritty.toml
+  fi
+
+  if [[ -f ~/.config/kitty/kitty.conf ]] || command -v kitty >/dev/null 2>&1; then
+    mkdir -p ~/.config/kitty
+    if grep -qE '^[[:space:]]*font_size[[:space:]]+' ~/.config/kitty/kitty.conf 2>/dev/null; then
+      sed --follow-symlinks -i -E "s/^[[:space:]]*font_size[[:space:]]+.*/font_size $pt/" ~/.config/kitty/kitty.conf
+    else
+      printf '\nfont_size %s\n' "$pt" >>~/.config/kitty/kitty.conf
+    fi
+    pkill -USR1 kitty 2>/dev/null || true
+  fi
+
+  if [[ -f ~/.config/ghostty/config ]]; then
+    sed -i -E "s/^font-size = .*/font-size = $pt/" ~/.config/ghostty/config
+    pkill -SIGUSR2 ghostty 2>/dev/null || true
+  fi
+
+  if [[ -f ~/.config/foot/foot.ini ]]; then
+    sed -i -E "s/(:size=)[0-9.]+/\1$pt/" ~/.config/foot/foot.ini
+  fi
+}
+
+case "${1:-}" in
+-h | --help)
+  usage
+  exit 0
+  ;;
+"")
+  cur="$(current_base_size)"
+  printf 'text size: %s px\ngtk text-scaling-factor: %s\n' "${cur:-12 (default)}" "$(gsettings get "$GKEY_SCHEMA" "$GKEY_NAME" 2>/dev/null)"
+  exit 0
+  ;;
+reset | default)
+  write_shell_config 'del(.textSize)'
+  gsettings reset "$GKEY_SCHEMA" "$GKEY_NAME" 2>/dev/null || true
+  set_terminal_size "$TERM_DEFAULT_PT"
+  exit 0
+  ;;
+esac
+
+size="$1"
+if [[ ! $size =~ ^[0-9]+$ ]] || ((size < MIN || size > MAX)); then
+  echo "Size must be an integer between $MIN and $MAX (px)." >&2
+  usage
+  exit 1
+fi
+
+write_shell_config '.textSize = $size' --argjson size "$size"
+
+factor="$(awk -v s="$size" -v b="$SHELL_DEFAULT_PX" -v f="$(gtk_font_pt)" 'BEGIN { printf "%.4f", int(f * s / b + 0.5) / f }')"
+set_factor "$factor"
+
+set_terminal_size "$(term_pt_for "$size")"

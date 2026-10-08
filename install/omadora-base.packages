@@ -52,7 +52,6 @@ libinput
 libxkbcommon
 libxkbcommon-utils
 lsof
-mako
 mpv
 nautilus
 nautilus-python
@@ -64,11 +63,14 @@ playerctl
 plocate
 plymouth-plugin-*
 power-profiles-daemon
+quickshell
 qt5-qtwayland
 qt6-qtwayland
 ripgrep
 seahorse
 selinux-policy-devel
+qrencode
+systemd-coredump
 slurp
 socat
 sushi
@@ -85,13 +87,11 @@ unzip
 uresourced
 usbutils
 v4l-utils
-waybar
 wf-recorder
 wget
 whois
 wiremix
 wl-clipboard
-wofi
 xdg-desktop-portal-gtk
 xdg-terminal-exec
 xdg-user-dirs
