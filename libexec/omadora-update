@@ -16,9 +16,13 @@ require_cmd gum
 # Confirmation
 # -----------------------------------------------------------------------------
 update_confirm() {
+  # Wrap inside the terminal, otherwise long lines break the border
+  local width=$(($(tput cols 2>/dev/null || echo 80) - 2))
+
   gum style \
     --border normal \
     --padding "1 2" \
+    --width "$width" \
     "Ready to update?" \
     "" \
     "The update process includes: Omadora, DNF packages, Flatpaks, Cargo bins, and firmware." \
