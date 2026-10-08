@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=XFCE PolicyKit Agent
+# Omadora runs xfce-polkit itself (omadora-polkitagent.service). The AUR package also ships an XDG
+# autostart entry, and two agents for one session makes the second fail with a dialog.
+Hidden=true

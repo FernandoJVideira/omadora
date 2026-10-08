@@ -8,7 +8,7 @@ ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
-ExecStart=/usr/libexec/xfce-polkit
+ExecStart=/usr/lib/xfce-polkit/xfce-polkit
 Slice=session.slice
 TimeoutStopSec=5sec
 Restart=on-failure
