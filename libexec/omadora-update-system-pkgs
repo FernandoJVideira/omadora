@@ -4,29 +4,19 @@ set -euo pipefail
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-# Nobara ships its own updater that applies required package fixups
-if has_cmd nobara-sync; then
-  info "Updating system packages (nobara-sync)"
-  nobara-sync cli ||
-    die "failed to upgrade system packages"
-  if ! dnf5 needs-restarting >/dev/null 2>&1; then
-    sudo touch /run/reboot-required
-  fi
-  exit 0
-fi
-
-require_cmd dnf5
+require_cmd pacman
 
 info "Updating system packages"
 
-sudo dnf5 --refresh makecache ||
-  die "failed to update cache"
+if has_cmd yay; then
+  yay -Syu --noconfirm ||
+    die "failed to upgrade system packages"
+else
+  sudo pacman -Syu --noconfirm ||
+    die "failed to upgrade system packages"
+fi
 
-sudo dnf5 upgrade -y ||
-  die "failed to upgrade system packages"
-
-# Fedora: use dnf needs-restarting to detect if a reboot is recommended/required.
-# Non-zero exit status indicates a reboot is needed.
-if ! dnf5 needs-restarting >/dev/null 2>&1; then
+# A new kernel on disk that differs from the running one means a reboot is needed.
+if [[ ! -d /usr/lib/modules/$(uname -r) ]]; then
   sudo touch /run/reboot-required
 fi

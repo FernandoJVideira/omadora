@@ -3,11 +3,11 @@
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
-# Show a fuzzy-finder TUI for picking new DNF packages to install.
+# Show a fuzzy-finder TUI for picking new packages (official repos and AUR) to install.
 
 fzf_args=(
   --multi
-  --preview 'dnf info {1} 2>/dev/null'
+  --preview 'yay -Si {2} 2>/dev/null'
   --preview-label='alt-p: toggle description, alt-j/k: scroll, tab: multi-select'
   --preview-label-pos='bottom'
   --preview-window 'down:65%:wrap'
@@ -17,11 +17,11 @@ fzf_args=(
   --color 'pointer:green,marker:green'
 )
 
-pkg_names=$(dnf repoquery --available --qf "%{name}\n" 2>/dev/null | fzf "${fzf_args[@]}")
+# "<repo> <name>" lines; the AUR is searched only through yay's own database.
+pkg_names=$(yay -Sl 2>/dev/null | awk '{print $1" "$2}' | fzf "${fzf_args[@]}" | awk '{print $2}')
 
 if [[ -n "$pkg_names" ]]; then
-  # Convert newline-separated list into an array
   readarray -t pkgs <<<"$pkg_names"
-  sudo dnf install "${pkgs[@]}"
+  yay -S "${pkgs[@]}"
   omadora_run omadora-show-done
 fi

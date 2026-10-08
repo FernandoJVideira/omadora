@@ -9,27 +9,27 @@ abort() {
   esac
 }
 
-# Must be Fedora 44 (or Nobara 44, which is built on it)
-[[ -f /etc/os-release ]] || abort "Fedora 44"
+# Must be Arch Linux (or an Arch-based distro that keeps pacman and the official repos)
+[[ -f /etc/os-release ]] || abort "Arch Linux"
 # shellcheck source=/dev/null
 source /etc/os-release
-[[ "${ID:-}" =~ ^(fedora|nobara)$ && "${VERSION_ID:-}" == "44" ]] || abort "Fedora 44 or Nobara 44"
+[[ "${ID:-}" == "arch" || "${ID_LIKE:-}" == *arch* ]] || abort "Arch Linux"
+command -v pacman >/dev/null || abort "pacman"
 
 # Must not be running as root
 if [ "$EUID" -eq 0 ]; then
   abort "Running as user (not root)"
 fi
 
-# Must be x86_64 or aarch64
-if [ "$(uname -m)" != "x86_64" ] && [ "$(uname -m)" != "aarch64" ]; then
-  abort "x86_64 or aarch64 CPU"
+# Must be x86_64 (the AUR and Hyprland's packages target it)
+if [ "$(uname -m)" != "x86_64" ]; then
+  abort "x86_64 CPU"
 fi
 
-# Should be a core only install (Nobara installs alongside its existing desktop)
-if [[ -z "${OMADORA_NOBARA:-}" ]]; then
-  groups=$(dnf group list --installed --hidden -q | awk 'NR>1 {print $1}')
-  [ "$groups" != "core" ] && abort "Core only Fedora install"
-fi
+# Should be a minimal install (no desktop environment or display manager yet)
+for dm in gdm sddm lightdm plasmalogin; do
+  systemctl is-enabled "$dm.service" &>/dev/null && abort "Minimal install without a display manager ($dm is enabled)"
+done
 
 # Cleared all guards
 echo "Guards: OK"

@@ -20,7 +20,7 @@ clear
 echo -e "\n$ansi_art\n"
 
 echo "Installing git to clone the Omadora repo..."
-sudo dnf install -y git
+sudo pacman -Sy --needed --noconfirm git
 
 # Use custom repo if specified, otherwise default
 OMADORA_REPO="${OMADORA_REPO:-elpritchos/omadora}"

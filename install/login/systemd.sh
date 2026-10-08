@@ -6,7 +6,6 @@ systemctl --user enable omadora-session.target
 systemctl --user enable omadora-recover-internal-monitor.service
 
 # Let PAM unlock a user-manager-owned keyring daemon before a graphical session starts
-# (Nobara uses KWallet instead)
-if [[ -z "${OMADORA_NOBARA:-}" ]]; then
+if true; then
   systemctl --user enable gnome-keyring-daemon.socket
 fi

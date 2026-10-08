@@ -7,7 +7,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
 fzf_args=(
   --multi
-  --preview 'dnf info {1} 2>/dev/null'
+  --preview 'pacman -Qi {1} 2>/dev/null'
   --preview-label='alt-p: toggle description, alt-j/k: scroll, tab: multi-select'
   --preview-label-pos='bottom'
   --preview-window 'down:65%:wrap'
@@ -17,11 +17,10 @@ fzf_args=(
   --color 'pointer:red,marker:red'
 )
 
-pkg_names=$(dnf repoquery --installed --qf "%{name}\n" 2>/dev/null | fzf "${fzf_args[@]}")
+pkg_names=$(pacman -Qq 2>/dev/null | fzf "${fzf_args[@]}")
 
 if [[ -n "$pkg_names" ]]; then
-  # Convert newline-separated list into an array
   readarray -t pkgs <<<"$pkg_names"
-  sudo dnf remove "${pkgs[@]}"
+  sudo pacman -Rns "${pkgs[@]}"
   omadora_run omadora-show-done
 fi
