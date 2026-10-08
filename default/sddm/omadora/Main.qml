@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls
-import SddmComponents 2.0
 
 Rectangle {
     id: root
