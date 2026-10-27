@@ -316,6 +316,12 @@ show_theme_menu() {
 
 show_login_theme_menu() {
   local choice
+  # with the greeter there is no login wallpaper or theme to pick: it follows the active theme itself
+  if systemctl is-enabled --quiet greetd.service 2>/dev/null; then
+    notify-send "Login Screen" "The login screen is the Quickshell greeter; it follows the active theme on its own."
+    back_to show_style_menu
+    return
+  fi
   if [[ ! -d /usr/share/plasmalogin/wallpapers ]]; then
     notify-send "Login Screen" "Plasma Login Manager isn't installed, so there is no login wallpaper to set."
     back_to show_style_menu
