@@ -109,6 +109,8 @@ TOML
     esac
   fi
 
+  # the greeter used to live in the dotfiles repo's own directory
+  [[ -d /usr/local/share/dotfiles-greeter ]] && sudo rm -rf /usr/local/share/dotfiles-greeter
   sudo systemctl disable "$old_dm.service" 2>/dev/null || true
   sudo systemctl enable --force greetd.service
   echo "greetd is the login manager from the next boot. If the login screen doesn't show up: Ctrl+Alt+F3, log in, omadora-greeter rollback."
