@@ -25,7 +25,7 @@ INSTALLED_COPY=/usr/local/libexec/skein-remove-kde
 
 YES=0
 KDE_ONLY=0
-TARGET_HOME="$HOME"
+TARGET_HOME="${HOME:-}"  # unset when systemd runs "boot"; cmd_boot reads the home from the pending file
 
 as_root() { if ((EUID == 0)); then "$@"; else sudo "$@"; fi; }
 
