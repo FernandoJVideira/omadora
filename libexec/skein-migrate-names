@@ -3,7 +3,8 @@
 # Move an existing install from Omadora's names to Skein's (run once; safe to repeat):
 #   ~/.config|.local/state|.cache/omadora  and  ~/.config/quickshell/omadora  ->  .../skein
 # Each old path stays behind as a symlink to the new one, so configs that still mention the old name
-# keep working. The old user units (omadora-*.service, timers, targets) are disabled and removed;
+# keep working. Config files the installer copied into ~/.config (hypr/bindings.lua, ...) are rewritten
+# in place, since they name commands, keys and paths (a copy is kept in ~/.config/skein-backup). The old user units (omadora-*.service, timers, targets) are disabled and removed;
 # the installer then enables the skein-* ones. A running session keeps its old units until you log
 # out, so log out or reboot afterwards. (~/.local/share/omadora, the checkout itself, is moved by
 # whoever runs the new checkout: the dotfiles installers do.)
@@ -27,8 +28,27 @@ rename_dir "$HOME/.local/state/omadora" "$HOME/.local/state/skein"
 rename_dir "$HOME/.cache/omadora" "$HOME/.cache/skein"
 rename_dir "$HOME/.config/quickshell/omadora" "$HOME/.config/quickshell/skein"
 
-units="$HOME/.config/systemd/user"
+# Files the installer copied from the checkout's config/ into ~/.config (not links, so they are the
+# user's own copies) name the old commands, binding keys and paths: rewrite them in place.
 checkout="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+backup="$HOME/.config/skein-backup/names-$(date +%Y%m%d%H%M%S)"
+rewrite_names() {
+  local file="$1" rel="$2"
+  [[ -f $file && ! -L $file ]] || return 0
+  grep -qE 'omadora|OMADORA|Omadora|omactl|OMACTL' "$file" 2>/dev/null || return 0
+  mkdir -p "$backup/$(dirname "$rel")"
+  cp -a "$file" "$backup/$rel"
+  sed -i.tmp -e 's/OMADORA/SKEIN/g' -e 's/Omadora/Skein/g' -e 's/OMACTL/SKEINCTL/g' \
+    -e 's/omactl/skeinctl/g' -e 's/omadora/skein/g' "$file" && rm -f "$file.tmp"
+  echo "Rewrote the old names in $file"
+}
+while IFS= read -r -d '' src; do
+  rel="${src#"$checkout"/config/}"
+  rewrite_names "$HOME/.config/$rel" "$rel"
+done < <(find "$checkout/config" -type f -print0)
+rewrite_names "$HOME/.bashrc" bashrc
+
+units="$HOME/.config/systemd/user"
 declare -A was_enabled=()
 if [[ -d $units ]]; then
   for unit in "$units"/omadora-*; do
