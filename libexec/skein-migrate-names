@@ -28,15 +28,32 @@ rename_dir "$HOME/.cache/omadora" "$HOME/.cache/skein"
 rename_dir "$HOME/.config/quickshell/omadora" "$HOME/.config/quickshell/skein"
 
 units="$HOME/.config/systemd/user"
+checkout="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+declare -A was_enabled=()
 if [[ -d $units ]]; then
   for unit in "$units"/omadora-*; do
     [[ -e $unit || -L $unit ]] || continue
+    name="$(basename "$unit")"
+    systemctl --user is-enabled --quiet "$name" 2>/dev/null && was_enabled["${name#omadora-}"]=1
     # no --now: the running session keeps its units until the next login
-    systemctl --user disable "$(basename "$unit")" 2>/dev/null || true
+    systemctl --user disable "$name" 2>/dev/null || true
     rm -f "$unit"
-    echo "Removed the old unit $(basename "$unit")"
+    echo "Removed the old unit $name"
   done
   # enablement links that pointed at the removed units
-  find "$units" -type l -name 'omadora-*' -xtype l -delete
-  systemctl --user daemon-reload 2>/dev/null || true
+  find "$units" -type l -name 'omadora-*' ! -exec test -e {} \; -delete
 fi
+
+# The installer isn't run again for an existing checkout, so put the renamed units and the Quickshell
+# config in place the way it does (cp -R config/. ~/.config/), and enable what was enabled before.
+if ((${#was_enabled[@]})); then
+  mkdir -p "$units" "$HOME/.config/quickshell"
+  cp -R "$checkout/config/systemd/user/." "$units/"
+  cp -R "$checkout/config/quickshell/skein" "$HOME/.config/quickshell/"
+  systemctl --user daemon-reload 2>/dev/null || true
+  for suffix in "${!was_enabled[@]}"; do
+    systemctl --user enable "skein-$suffix" 2>/dev/null && echo "Enabled skein-$suffix" \
+      || echo "skein-migrate-names: couldn't enable skein-$suffix" >&2
+  done
+fi
+systemctl --user daemon-reload 2>/dev/null || true
