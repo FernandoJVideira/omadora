@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# On PATH through Omadora's bin directory; the script itself lives in libexec.
-exec "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libexec/omadora-greeter omadora-remove-kde" "$@"
