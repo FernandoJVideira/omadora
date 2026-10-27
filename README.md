@@ -22,7 +22,7 @@ Read more about Omarchy itself at [omarchy.org](https://omarchy.org).
 ## What's different on this branch
 
 - **Quickshell shell**: one Quickshell config provides the top bar and its panels (audio, network, Bluetooth, weather, calendar, display, agents), notifications, OSD, launcher and menus, lock screen, and the theme and wallpaper switchers. It replaces Waybar, wofi, mako and hyprlock.
-- **SDDM login**: SDDM is the display manager, with an `omadora` theme whose colors and wallpaper follow the active Omadora theme. Pick the login theme from the Style menu (Login Screen), or run `omactl theme login sync`. Syncing needs sudo; the automatic sync on theme change only runs when sudo needs no password.
+- **Quickshell login screen**: greetd with a Quickshell greeter styled after Omarchy's login (the Omadora logo, a lock and an entry box that fills with bullets), in `default/greeter`. It runs in cage, lays the monitors out itself (the form goes on the main one), takes the active theme's colors and follows theme changes, and unlocks the GNOME Keyring at login. SDDM stays installed but disabled; `omadora-greeter rollback` switches back, and `OMADORA_KEEP_LOGIN_MANAGER=1` at install time keeps SDDM with its `omadora` theme as the login screen (Style menu, Login Screen, or `omactl theme login sync`).
 - **Default agent and crash diagnosis**: set a default coding agent with `omadora-default-agent`, and get notified with a diagnosis when an app crashes.
 - **More themes**: Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine and others (see [themes/THIRD_PARTY.md](themes/THIRD_PARTY.md)).
 
@@ -54,7 +54,7 @@ Run `~/.local/share/omadora/install.sh` to install; it reboots at the end.
 
 ## Usage
 
-Log in at SDDM and keep the **Hyprland (uwsm-managed)** session selected.
+Log in at the Quickshell greeter (it starts the **Hyprland (uwsm-managed)** session itself; with SDDM kept, keep that session selected).
 
 Open the menu with `omactl menu` (or its keybinding) to change the theme, wallpaper, login screen, defaults and more. Everything is also available from the CLI: run `omactl` for the list of commands.
 
