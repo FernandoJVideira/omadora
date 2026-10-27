@@ -7,7 +7,8 @@
 # in place, since they name commands, keys and paths (a copy is kept in ~/.config/skein-backup). The old user units (omadora-*.service, timers, targets) are disabled and removed;
 # the installer then enables the skein-* ones. A running session keeps its old units until you log
 # out, so log out or reboot afterwards. (~/.local/share/omadora, the checkout itself, is moved by
-# whoever runs the new checkout: the dotfiles installers do.)
+# whoever runs the new checkout: the dotfiles installers do.) The agent skill that was called omadora
+# is now skein: its old links (~/.claude/skills/omadora, ...) are removed and the skills linked again.
 set -euo pipefail
 
 rename_dir() {
@@ -47,6 +48,21 @@ while IFS= read -r -d '' src; do
   rewrite_names "$HOME/.config/$rel" "$rel"
 done < <(find "$checkout/config" -type f -print0)
 rewrite_names "$HOME/.bashrc" bashrc
+
+# The agent skill was called omadora (default/agents/skills/omadora, linked into each agent's skills
+# folder): its links now dangle, so remove them and link the skills again under their new names.
+relink_skills=0
+for skills in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.pi/agent/skills" "$HOME/.gemini/config/skills"; do
+  if [[ -L $skills/omadora ]]; then
+    rm -f "$skills/omadora"
+    relink_skills=1
+    echo "Removed the old skill link $skills/omadora"
+  fi
+done
+if ((relink_skills)); then
+  SKEIN_PATH="$checkout" "$checkout/libexec/skein-agent-skills-link"
+  echo "Linked the skein skills"
+fi
 
 units="$HOME/.config/systemd/user"
 declare -A was_enabled=()
