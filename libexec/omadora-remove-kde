@@ -103,6 +103,44 @@ cmd_status() {
   return 0
 }
 
+# Fedora's KDE packages protect themselves from removal (plasma-desktop.conf in protected.d), which
+# makes dnf refuse the whole transaction. Take the packages being removed out of those lists for the
+# duration, and put the lists back if the removal doesn't happen.
+PROTECTED_DIRS=(/etc/dnf/protected.d /usr/share/dnf5/protected.d)
+LIFTED=()
+
+lift_protection() {
+  local dir f
+  for dir in "${PROTECTED_DIRS[@]}"; do
+    for f in "$dir"/*.conf; do
+      [[ -f $f && $f != "$PROTECTED_FILE" ]] || continue
+      grep -vE '^[[:space:]]*(#|$)' "$f" | sed 's/[[:space:]]*$//' | grep -qxFf <(printf '%s\n' "$@") || continue
+      local keep
+      keep=$(grep -vE '^[[:space:]]*(#|$)' "$f" | sed 's/[[:space:]]*$//' | grep -vxFf <(printf '%s\n' "$@") || true)
+      log "Lifting dnf's protection of the packages in $f"
+      as_root cp -p "$f" "$f.omadora-lifted"
+      if [[ -n $keep ]]; then printf '%s\n' "$keep" | as_root tee "$f" >/dev/null; else as_root rm -f "$f"; fi
+      LIFTED+=("$f")
+    done
+  done
+}
+
+restore_protection() {
+  local f
+  for f in "${LIFTED[@]}"; do
+    [[ -f $f.omadora-lifted ]] && as_root mv -f "$f.omadora-lifted" "$f"
+  done
+  LIFTED=()
+}
+
+# the packages are gone: drop the saved copies
+settle_protection() {
+  local f
+  for f in "${LIFTED[@]}"; do as_root rm -f "$f.omadora-lifted"; done
+  LIFTED=()
+}
+trap restore_protection EXIT
+
 # Protect what must stay: dnf then refuses a transaction that would remove any of it.
 write_protected() {
   keep_names | as_root tee "$PROTECTED_FILE" >/dev/null
@@ -115,6 +153,10 @@ preview_names() {
 
 check_preview() {
   local output="$1" hit
+  if grep -qE 'Failed to resolve|^[[:space:]]*(1\. )?Problem' <<<"$output"; then
+    printf '\033[31mdnf could not resolve the transaction (see above).\033[0m\n' >&2
+    return 1
+  fi
   hit=$(comm -12 <(preview_names "$output") <(keep_names | sort -u))
   if [[ -n $hit ]]; then
     printf '\033[31mThe preview would remove packages that must stay:\033[0m\n%s\n' "$hit" >&2
@@ -156,8 +198,10 @@ cmd_remove() {
   log "${#packages[@]} packages selected:"
   printf '  %s\n' "${packages[@]}"
   write_protected
+  lift_protection "${packages[@]}"
 
-  run_transaction "removal" remove "${packages[@]}" || return 0
+  run_transaction "removal" remove "${packages[@]}" || { restore_protection; return 0; }
+  settle_protection
 
   if ((!YES)); then
     log "The Plasma libraries it leaves behind (Qt/KF6) are mostly still needed by Quickshell and other apps."
