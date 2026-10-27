@@ -208,4 +208,8 @@ reload opencode &
 ("$OMADORA_LIBEXEC_DIR/omadora-login-theme" sync --auto >/dev/null 2>&1 ||
   warn "login screen wallpaper sync failed") &
 
+# Keep the greeter's colors in step (a no-op unless the greeter is installed).
+("$OMADORA_LIBEXEC_DIR/omadora-greeter" sync --auto >/dev/null 2>&1 ||
+  warn "greeter theme sync failed") &
+
 info "Theme applied: $theme_name"
