@@ -1,8 +1,8 @@
-omadora-exec omadora-refresh-applications
+skein-exec skein-refresh-applications
 update-desktop-database ~/.local/share/applications
 
 # Keep the default apps already chosen in the existing desktop on Nobara
-[[ -n "${OMADORA_NOBARA:-}" ]] && return 0
+[[ -n "${SKEIN_NOBARA:-}" ]] && return 0
 
 # Open directories in file manager
 xdg-mime default org.gnome.Nautilus.desktop inode/directory

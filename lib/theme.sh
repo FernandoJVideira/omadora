@@ -1,10 +1,10 @@
-readonly OMADORA_USER_THEMES_DIR="${OMADORA_CONFIG_HOME}/themes"
-readonly OMADORA_CURRENT_THEME_DIR="${OMADORA_CONFIG_HOME}/current/theme"
-readonly OMADORA_NEXT_THEME_DIR="${OMADORA_CONFIG_HOME}/current/next-theme"
-readonly OMADORA_THEME_NAME_FILE="${OMADORA_CONFIG_HOME}/current/theme.name"
-readonly OMADORA_THEME_LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/omadora-theme-set.lock"
-readonly OMADORA_USER_BACKGROUNDS_DIR="${OMADORA_CONFIG_HOME}/backgrounds"
-readonly OMADORA_CURRENT_BACKGROUND_LINK="${OMADORA_CONFIG_HOME}/current/background"
+readonly SKEIN_USER_THEMES_DIR="${SKEIN_CONFIG_HOME}/themes"
+readonly SKEIN_CURRENT_THEME_DIR="${SKEIN_CONFIG_HOME}/current/theme"
+readonly SKEIN_NEXT_THEME_DIR="${SKEIN_CONFIG_HOME}/current/next-theme"
+readonly SKEIN_THEME_NAME_FILE="${SKEIN_CONFIG_HOME}/current/theme.name"
+readonly SKEIN_THEME_LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/skein-theme-set.lock"
+readonly SKEIN_USER_BACKGROUNDS_DIR="${SKEIN_CONFIG_HOME}/backgrounds"
+readonly SKEIN_CURRENT_BACKGROUND_LINK="${SKEIN_CONFIG_HOME}/current/background"
 
 theme_name_normalize() {
   echo "$1" |
@@ -26,14 +26,14 @@ theme_exists() {
 }
 
 theme_current() {
-  [[ -s "$OMADORA_THEME_NAME_FILE" ]] || return 1
-  head -n 1 -- "$OMADORA_THEME_NAME_FILE"
+  [[ -s "$SKEIN_THEME_NAME_FILE" ]] || return 1
+  head -n 1 -- "$SKEIN_THEME_NAME_FILE"
 }
 
 theme_list_user() {
-  [[ -d "$OMADORA_USER_THEMES_DIR" ]] || return 0
+  [[ -d "$SKEIN_USER_THEMES_DIR" ]] || return 0
 
-  find "$OMADORA_USER_THEMES_DIR" \
+  find "$SKEIN_USER_THEMES_DIR" \
     -mindepth 1 \
     -maxdepth 1 \
     -type d \
@@ -42,9 +42,9 @@ theme_list_user() {
 }
 
 theme_list_system() {
-  [[ -d "$OMADORA_THEMES_DIR" ]] || return 0
+  [[ -d "$SKEIN_THEMES_DIR" ]] || return 0
 
-  find "$OMADORA_THEMES_DIR" \
+  find "$SKEIN_THEMES_DIR" \
     -mindepth 1 \
     -maxdepth 1 \
     -type d \
@@ -62,7 +62,7 @@ theme_list_all() {
 theme_list_backgrounds() {
   local theme_name="$1"
 
-  local backgrounds_dir="${OMADORA_USER_BACKGROUNDS_DIR}/${theme_name}"
+  local backgrounds_dir="${SKEIN_USER_BACKGROUNDS_DIR}/${theme_name}"
 
   [[ -d "$backgrounds_dir" ]] || return 0
 
@@ -76,15 +76,15 @@ theme_list_backgrounds() {
 theme_set_gnome() {
   command -v gsettings >/dev/null 2>&1 || return 1
 
-  local colors_file="${OMADORA_CURRENT_THEME_DIR}/colors.toml"
-  local icons_file="${OMADORA_CURRENT_THEME_DIR}/icons.theme"
+  local colors_file="${SKEIN_CURRENT_THEME_DIR}/colors.toml"
+  local icons_file="${SKEIN_CURRENT_THEME_DIR}/icons.theme"
   local mode
 
   local gtk_theme="adw-gtk3-dark"
   local icon_theme="Yaru-blue"
   local color_scheme="prefer-dark"
 
-  mode="$("$OMADORA_LIBEXEC_DIR/omadora-theme-color" --file "$colors_file" mode)" || return 1
+  mode="$("$SKEIN_LIBEXEC_DIR/skein-theme-color" --file "$colors_file" mode)" || return 1
 
   if [[ $mode == "light" ]]; then
     color_scheme="prefer-light"
@@ -101,5 +101,5 @@ theme_set_gnome() {
 }
 
 theme_apply_background() {
-  hyprctl hyprpaper wallpaper ,"$OMADORA_CURRENT_BACKGROUND_LINK"
+  hyprctl hyprpaper wallpaper ,"$SKEIN_CURRENT_BACKGROUND_LINK"
 }

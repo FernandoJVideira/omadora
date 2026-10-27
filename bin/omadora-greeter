@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
-# On PATH through Omadora's bin directory; the script itself lives in libexec.
-exec "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libexec/omadora-greeter" "$@"
+# The old name of skein-greeter, kept so existing scripts and habits keep working. OMADORA_* variables
+# still reach the new commands as SKEIN_*.
+here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+while IFS= read -r var; do
+  new="SKEIN_${var#OMADORA_}"
+  [[ -n ${!new+x} ]] || export "$new=${!var}"
+done < <(compgen -e | grep '^OMADORA_' || true)
+exec "$here/skein-greeter" "$@"

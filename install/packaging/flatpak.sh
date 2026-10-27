@@ -11,5 +11,5 @@ sudo flatpak install --system --noninteractive -y flathub org.gtk.Gtk3theme.adw-
 flatpak override --user --filesystem=home --filesystem=/tmp/localsend org.localsend.localsend_app
 
 # Install cli wrappers
-omadora-exec omadora-flatpak-cmd-install org.localsend.localsend_app localsend
-omadora-exec omadora-flatpak-cmd-install com.dec05eba.gpu_screen_recorder gpu-screen-recorder
+skein-exec skein-flatpak-cmd-install org.localsend.localsend_app localsend
+skein-exec skein-flatpak-cmd-install com.dec05eba.gpu_screen_recorder gpu-screen-recorder

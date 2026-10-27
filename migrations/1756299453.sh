@@ -1,39 +1,39 @@
 echo "Ensure packages installed"
-source $OMADORA_PATH/install/packages.sh
+source $SKEIN_PATH/install/packages.sh
 
 echo "Add fontconfig"
 if [[ ! -d $HOME/.config/fontconfig ]]; then
-  cp -r $OMADORA_PATH/config/fontconfig $HOME/.config/
+  cp -r $SKEIN_PATH/config/fontconfig $HOME/.config/
 fi
 
 echo "Add starship config"
 if [[ ! -f $HOME/.config/starship.toml ]]; then
-  cp $OMADORA_PATH/config/starship.toml $HOME/.config/
+  cp $SKEIN_PATH/config/starship.toml $HOME/.config/
 fi
 
 echo "Add brave-flags.conf"
 if [[ ! -f $HOME/.config/brave-flags.conf ]]; then
-  cp $OMADORA_PATH/config/brave-flags.conf $HOME/.config/
+  cp $SKEIN_PATH/config/brave-flags.conf $HOME/.config/
 fi
 
 echo "Copy screensaver logo"
-mkdir -p $HOME/.config/omadora/branding
-cp $OMADORA_PATH/logo.txt $HOME/.config/omadora/branding/screensaver.txt
+mkdir -p $HOME/.config/skein/branding
+cp $SKEIN_PATH/logo.txt $HOME/.config/skein/branding/screensaver.txt
 
 echo "Update fastfetch"
-mkdir -p $HOME/.config/omadora/branding
-cp $OMADORA_PATH/icon.txt $HOME/.config/omadora/branding/about.txt
-omadora-refresh-config fastfetch/config.jsonc
+mkdir -p $HOME/.config/skein/branding
+cp $SKEIN_PATH/icon.txt $HOME/.config/skein/branding/about.txt
+skein-refresh-config fastfetch/config.jsonc
 
 echo "Update configs"
-omadora-refresh-config hypr/bindings.conf
-omadora-refresh-hyprland
-omadora-refresh-hyprlock
-omadora-refresh-hypridle
-omadora-refresh-walker
-omadora-refresh-wofi
-omadora-refresh-bar
-omadora-refresh-applications
+skein-refresh-config hypr/bindings.conf
+skein-refresh-hyprland
+skein-refresh-hyprlock
+skein-refresh-hypridle
+skein-refresh-walker
+skein-refresh-wofi
+skein-refresh-bar
+skein-refresh-applications
 
 echo "Remove old desktop files and icons"
 rm -f $HOME/.local/share/applications/About.desktop

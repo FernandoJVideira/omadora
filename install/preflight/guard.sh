@@ -1,5 +1,5 @@
 abort() {
-  echo -e "\e[31mOmadora install requires: $1\e[0m"
+  echo -e "\e[31mSkein install requires: $1\e[0m"
   echo
 
   read -rp "Proceed anyway on your own accord and without assistance? [y/N] " response
@@ -26,7 +26,7 @@ if [ "$(uname -m)" != "x86_64" ] && [ "$(uname -m)" != "aarch64" ]; then
 fi
 
 # Should be a core only install (Nobara installs alongside its existing desktop)
-if [[ -z "${OMADORA_NOBARA:-}" ]]; then
+if [[ -z "${SKEIN_NOBARA:-}" ]]; then
   groups=$(dnf group list --installed --hidden -q | awk 'NR>1 {print $1}')
   [ "$groups" != "core" ] && abort "Core only Fedora install"
 fi

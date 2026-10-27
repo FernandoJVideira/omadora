@@ -1,5 +1,5 @@
 # Setup login keyring
-configure_omadora_login_keyring() {
+configure_skein_login_keyring() {
   local keyrings_dir="$HOME/.local/share/keyrings"
   local default_keyring="login"
 
@@ -7,7 +7,7 @@ configure_omadora_login_keyring() {
   chmod 700 "$keyrings_dir"
   printf '%s\n' "$default_keyring" >"$keyrings_dir/default"
 
-  local profile_name="omadora"
+  local profile_name="skein"
   local profile_id="custom/$profile_name"
   local profile_dir="/etc/authselect/custom/$profile_name"
   local postlogin="$profile_dir/postlogin"
@@ -30,7 +30,7 @@ configure_omadora_login_keyring() {
 }
 
 # Nobara uses KWallet via its display manager; keep its authselect profile/features
-if [[ -z "${OMADORA_NOBARA:-}" ]]; then
-  configure_omadora_login_keyring
+if [[ -z "${SKEIN_NOBARA:-}" ]]; then
+  configure_skein_login_keyring
 fi
-unset -f configure_omadora_login_keyring
+unset -f configure_skein_login_keyring

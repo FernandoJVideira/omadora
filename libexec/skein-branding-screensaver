@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Edit, set, or reset screensaver branding
+
+set -euo pipefail
+
+case "${1:-}" in
+image)
+  image=$(skein_run skein-menu-file "Logo image" "$HOME" "svg png")
+  if [[ -n $image ]] && skein_run skein-transcode-ascii "$image" ~/.config/skein/branding/screensaver.txt; then
+    skein_run skein-launch-screensaver force >/dev/null 2>&1
+  fi
+  ;;
+text)
+  skein_run skein-launch-editor ~/.config/skein/branding/screensaver.txt >/dev/null 2>&1 && skein_run skein-launch-screensaver force >/dev/null 2>&1
+  ;;
+reset)
+  cp "$SKEIN_PATH/logo.txt" ~/.config/skein/branding/screensaver.txt && skein_run skein-launch-screensaver force >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: skein-branding-screensaver <image|text|reset>" >&2
+  exit 1
+  ;;
+esac

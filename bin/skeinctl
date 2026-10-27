@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+skeinctl_init_fast_paths() {
+  if [[ -z "${SKEIN_ROOT:-}" ]]; then
+    SKEIN_ROOT="$(
+      cd -- "$(dirname "${BASH_SOURCE[0]}")/.." &&
+        pwd
+    )"
+  fi
+
+  SKEIN_LIBEXEC_DIR="$SKEIN_ROOT/libexec"
+}
+
+skeinctl_exec_libexec() {
+  local command="$1"
+  shift
+
+  skeinctl_init_fast_paths
+
+  local script="$SKEIN_LIBEXEC_DIR/$command"
+  [[ -x "$script" ]] || return 1
+
+  exec "$script" "$@"
+}
+
+skeinctl_fast_path() {
+  local group="${1:-}"
+  local command="${2:-}"
+
+  case "$group" in
+  menu)
+    case "$command" in
+    "")
+      shift "$#"
+      skeinctl_exec_libexec skein-menu
+      ;;
+    main)
+      shift 2
+      skeinctl_exec_libexec skein-menu "$@"
+      ;;
+    apps | theme | share | capture | power | system | font)
+      skeinctl_exec_libexec skein-menu "$command"
+      ;;
+    keybindings)
+      skeinctl_exec_libexec skein-menu-keybindings
+      ;;
+    esac
+    ;;
+
+  launch)
+    case "$command" in
+    about) skeinctl_exec_libexec skein-launch-about ;;
+    system-monitor) skeinctl_exec_libexec skein-launch-system-monitor ;;
+    wifi) skeinctl_exec_libexec skein-launch-wifi ;;
+    audio) skeinctl_exec_libexec skein-launch-audio ;;
+    bluetooth) skeinctl_exec_libexec skein-launch-bluetooth ;;
+    editor)
+      shift 2
+      skeinctl_exec_libexec skein-launch-editor "$@"
+      ;;
+    browser)
+      shift 2
+      skeinctl_exec_libexec skein-launch-browser "$@"
+      ;;
+    picker)
+      shift 2
+      skeinctl_exec_libexec skein-launch-picker "$@"
+      ;;
+    floating-window)
+      shift 2
+      skeinctl_exec_libexec skein-launch-floating-terminal-with-presentation "$@"
+      ;;
+    terminal)
+      shift 2
+      exec uwsm-app -- xdg-terminal-exec "$@"
+      ;;
+    terminal-cwd)
+      shift 2
+      skeinctl_init_fast_paths
+      exec uwsm-app -- xdg-terminal-exec --dir="$("$SKEIN_LIBEXEC_DIR/skein-cmd-terminal-cwd")" "$@"
+      ;;
+    file-explorer)
+      exec uwsm-app -- nautilus --new-window
+      ;;
+    file-explorer-cwd)
+      skeinctl_init_fast_paths
+      exec uwsm-app -- nautilus --new-window "$("$SKEIN_LIBEXEC_DIR/skein-cmd-terminal-cwd")"
+      ;;
+    webapp)
+      shift 2
+      skeinctl_exec_libexec skein-launch-webapp "$@"
+      ;;
+    webapp-or-focus)
+      shift 2
+      skeinctl_exec_libexec skein-launch-or-focus-webapp "$@"
+      ;;
+    tui)
+      shift 2
+      skeinctl_exec_libexec skein-launch-tui "$@"
+      ;;
+    tui-or-focus)
+      shift 2
+      skeinctl_exec_libexec skein-launch-or-focus-tui "$@"
+      ;;
+    esac
+    ;;
+  esac
+
+  return 1
+}
+
+if ! skeinctl_fast_path "$@"; then
+  :
+fi
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# shellcheck source=lib/common/cli.sh
+source "$SKEIN_LIB_DIR/common/cli.sh"
+
+cli_root_main "$@"

@@ -1,3 +1,3 @@
 # Set first-run mode marker
-mkdir -p ~/.local/state/omadora
-touch ~/.local/state/omadora/first-run.mode
+mkdir -p ~/.local/state/skein
+touch ~/.local/state/skein/first-run.mode

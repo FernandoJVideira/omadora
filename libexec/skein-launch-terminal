@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Launch a terminal in the active terminal's current directory
+
+exec setsid uwsm-app -- xdg-terminal-exec --dir="$(skein-exec skein-cmd-terminal-cwd)" "$@"

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+require_cmd git
+
+# Pull over HTTPS when origin is a GitHub SSH remote: the update terminal is
+# started by the Hyprland session, which has no SSH agent, and the repo is
+# public. Pushing keeps using the SSH remote. Fall back to the plain remote.
+git -C "$SKEIN_ROOT" -c url."https://github.com/".insteadOf="git@github.com:" pull --autostash ||
+  git -C "$SKEIN_ROOT" pull --autostash ||
+  die "failed to pull git updates"
+
+git -C "$SKEIN_ROOT" --no-pager diff --check ||
+  git -C "$SKEIN_ROOT" reset --merge

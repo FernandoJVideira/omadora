@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# shellcheck source=lib/theme.sh
+source "$SKEIN_LIB_DIR/theme.sh"
+
+# shellcheck source=lib/service.sh
+source "$SKEIN_LIB_DIR/service.sh"
+
+[[ $# -eq 1 ]] || die "missing theme name"
+
+theme_name="$(theme_name_normalize "$1")"
+local_theme_path="${SKEIN_USER_THEMES_DIR}/${theme_name}"
+system_theme_path="${SKEIN_THEMES_DIR}/${theme_name}"
+
+# What a theme installed from a git repo may not ship, because these run code.
+installed_theme_denied=(alacritty.toml foot.ini ghostty.conf kitty.conf vscode.json)
+ignored_theme_files=()
+
+is_denied_installed_file() {
+  local name="$1"
+  local denied
+
+  [[ $name == *.lua ]] && return 0
+
+  for denied in "${installed_theme_denied[@]}"; do
+    [[ $name == "$denied" ]] && return 0
+  done
+
+  return 1
+}
+
+# Themes older than colors.toml still get their palette, but their
+# alacritty.toml never reaches the staged theme.
+stage_installed_colors_from_alacritty() {
+  local source="$1"
+  local scratch
+
+  if [[ -f $SKEIN_NEXT_THEME_DIR/colors.toml ]]; then
+    return
+  fi
+
+  if [[ ! -f $source/alacritty.toml || -L $source/alacritty.toml ]]; then
+    return
+  fi
+
+  scratch="$(mktemp -d)"
+  cp "$source/alacritty.toml" "$scratch/alacritty.toml"
+  "$SKEIN_LIBEXEC_DIR/skein-theme-colors-from-alacritty" "$scratch"
+
+  if [[ -f $scratch/colors.toml ]]; then
+    cp "$scratch/colors.toml" "$SKEIN_NEXT_THEME_DIR/colors.toml"
+  fi
+
+  rm -rf "$scratch"
+}
+
+# Copy a directory without following symlinks from an installed theme.
+stage_installed_dir() {
+  local source="$1"
+  local dest="$2"
+  local entry name
+
+  mkdir -p "$dest"
+
+  for entry in "$source"/*; do
+    [[ -e $entry && ! -L $entry ]] || continue
+    name="${entry##*/}"
+
+    if [[ -d $entry ]]; then
+      stage_installed_dir "$entry" "$dest/$name"
+    else
+      cp "$entry" "$dest/$name"
+    fi
+  done
+}
+
+# A .git directory identifies a theme installed from a third-party repository.
+# Local themes and official Omarchy snapshots are trusted and copied intact.
+theme_came_from_a_repo() {
+  local source="$1"
+
+  [[ -d $source/.git ]]
+}
+
+stage_installed_theme() {
+  local source="$1"
+  local entry name
+
+  [[ -d $source ]] || return 0
+
+  for entry in "$source"/*; do
+    [[ -e $entry ]] || continue
+    name="${entry##*/}"
+
+    if [[ -L $entry ]] || is_denied_installed_file "$name"; then
+      case "${name,,}" in
+      readme* | license* | changelog* | *.md | *.txt) ;;
+      *) ignored_theme_files+=("$name") ;;
+      esac
+    elif [[ -d $entry ]]; then
+      stage_installed_dir "$entry" "$SKEIN_NEXT_THEME_DIR/$name"
+    else
+      cp "$entry" "$SKEIN_NEXT_THEME_DIR/$name"
+    fi
+  done
+
+  stage_installed_colors_from_alacritty "$source"
+
+  [[ -f $SKEIN_NEXT_THEME_DIR/colors.toml ]] ||
+    die "installed theme must provide colors.toml or a complete alacritty.toml palette"
+}
+
+report_ignored_theme_files() {
+  ((${#ignored_theme_files[@]} > 0)) || return 0
+
+  warn "Ignored in $local_theme_path: ${ignored_theme_files[*]}"
+  warn "A theme installed from a git repo cannot supply Lua or an executable application config."
+}
+
+if ! theme_name_is_safe "$theme_name"; then
+  die "invalid theme name: $1"
+fi
+
+info "Applying theme: $theme_name"
+
+# Serialize changes to the shared staging and current-theme directories.
+exec 9>"$SKEIN_THEME_LOCK_FILE"
+flock 9
+
+# Check only after taking the lock so an installer or remover cannot change
+# the source theme between this check and the staging copy.
+if [[ ! -d $local_theme_path && ! -d $system_theme_path ]]; then
+  die "theme not found: $theme_name"
+fi
+
+# Setup clean next theme directory (for atomic theme config swapping).
+rm -rf "$SKEIN_NEXT_THEME_DIR"
+ensure_dir "$SKEIN_NEXT_THEME_DIR"
+
+# Copy the system theme first, then overlay user customizations.
+if [[ -d $system_theme_path ]]; then
+  cp -r "$system_theme_path/." "$SKEIN_NEXT_THEME_DIR/"
+fi
+
+if theme_came_from_a_repo "$local_theme_path"; then
+  stage_installed_theme "$local_theme_path"
+  report_ignored_theme_files
+elif [[ -d $local_theme_path ]]; then
+  cp -r "$local_theme_path/." "$SKEIN_NEXT_THEME_DIR/"
+fi
+
+# Generate colors.toml from alacritty.toml if the theme is missing one.
+if [[ ! -f $SKEIN_NEXT_THEME_DIR/colors.toml && -f $SKEIN_NEXT_THEME_DIR/alacritty.toml ]]; then
+  "$SKEIN_LIBEXEC_DIR/skein-theme-colors-from-alacritty" "$SKEIN_NEXT_THEME_DIR"
+fi
+
+# Generate dynamic configs.
+"$SKEIN_LIBEXEC_DIR/skein-theme-set-templates" ||
+  die "failed to generate themed templates"
+
+# Swap next theme in as current.
+rm -rf "$SKEIN_CURRENT_THEME_DIR"
+mv "$SKEIN_NEXT_THEME_DIR" "$SKEIN_CURRENT_THEME_DIR"
+
+# Store theme name for reference.
+printf '%s\n' "$theme_name" >"$SKEIN_THEME_NAME_FILE"
+
+# Select and apply the new background while the theme state remains locked.
+if [[ "${SKEIN_THEME_SKIP_BACKGROUND:-}" != "1" ]]; then
+  "$SKEIN_LIBEXEC_DIR/skein-theme-bg-next" ||
+    warn "failed to apply theme background"
+fi
+
+# Slow application reloads do not need to hold the theme-state lock.
+flock -u 9
+
+# Change app-specific themes.
+theme_set_gnome ||
+  warn "failed to apply GNOME theme settings"
+
+# Restart components to apply new theme.
+reload() {
+  local fn="service_reload_$1"
+
+  if ! "$fn"; then
+    warn "Failed to reload: ${fn}"
+  fi
+}
+
+reload hyprland
+reload alacritty &
+reload ghostty &
+reload kitty &
+reload bar &
+wait
+reload btop &
+reload opencode &
+
+# Call hook on theme set.
+("$SKEIN_LIBEXEC_DIR/skein-hook" theme-set "$theme_name" ||
+  warn "theme-set hook failed") &
+
+# Keep the login screen wallpaper in step (a no-op unless it uses the skein one).
+("$SKEIN_LIBEXEC_DIR/skein-login-theme" sync --auto >/dev/null 2>&1 ||
+  warn "login screen wallpaper sync failed") &
+
+# Keep the greeter's colors in step (a no-op unless the greeter is installed).
+("$SKEIN_LIBEXEC_DIR/skein-greeter" sync --auto >/dev/null 2>&1 ||
+  warn "greeter theme sync failed") &
+
+info "Theme applied: $theme_name"

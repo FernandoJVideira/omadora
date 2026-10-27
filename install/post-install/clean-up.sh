@@ -1,12 +1,12 @@
 # Nobara keeps its desktop, NetworkManager and multimedia groups
-[[ -n "${OMADORA_NOBARA:-}" ]] && return 0
+[[ -n "${SKEIN_NOBARA:-}" ]] && return 0
 
 # Remove unwanted groups
-mapfile -t groups < <(grep -v '^#' "$OMADORA_INSTALL/omadora-removed.groups" | grep -v '^$')
+mapfile -t groups < <(grep -v '^#' "$SKEIN_INSTALL/skein-removed.groups" | grep -v '^$')
 sudo dnf group remove -y "${groups[@]}"
 
 # Remove unwanted packages
-mapfile -t packages < <(grep -v '^#' "$OMADORA_INSTALL/omadora-removed.packages" | grep -v '^$')
+mapfile -t packages < <(grep -v '^#' "$SKEIN_INSTALL/skein-removed.packages" | grep -v '^$')
 sudo dnf remove -y "${packages[@]}"
 
 # Remove NetworkManager configuration

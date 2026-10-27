@@ -1,9 +1,9 @@
 echo "Update waybar config"
-omadora-refresh-bar
+skein-refresh-bar
 
 echo "Update Hyprland configs"
-omadora-refresh-config hypr/bindings.conf
-omadora-refresh-config hypr/input.conf
+skein-refresh-config hypr/bindings.conf
+skein-refresh-config hypr/input.conf
 
 echo "Fix DHCP DNS to allow VPN DNS override"
 if [ -f /etc/systemd/resolved.conf ]; then

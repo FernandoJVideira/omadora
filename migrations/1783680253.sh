@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-migration_log="$HOME/omadora-lua-migration.log"
+migration_log="$HOME/skein-lua-migration.log"
 exec > >(tee -a "$migration_log") 2>&1
 
 echo "Logging migration output to: $migration_log"
@@ -9,9 +9,9 @@ echo "Starting Hyprland Lua migration at $(date -Is)"
 echo "Migrate Hyprland user config from Hyprlang to Lua..."
 
 hypr_config_dir="$HOME/.config/hypr"
-omadora_hypr_config_dir="$OMADORA_PATH/config/hypr"
-toggle_state_dir="$HOME/.local/state/omadora/toggles/hypr"
-toggle_defaults_dir="$OMADORA_PATH/default/hypr/toggles"
+skein_hypr_config_dir="$SKEIN_PATH/config/hypr"
+toggle_state_dir="$HOME/.local/state/skein/toggles/hypr"
+toggle_defaults_dir="$SKEIN_PATH/default/hypr/toggles"
 timestamp=$(date +%s)
 lua_backups=()
 config_backups=()
@@ -50,23 +50,23 @@ mkdir -p "$hypr_config_dir" "$toggle_state_dir"
 
 # Stage the complete replacement set before changing any live configuration.
 shopt -s nullglob
-lua_sources=("$omadora_hypr_config_dir"/*.lua)
+lua_sources=("$skein_hypr_config_dir"/*.lua)
 shopt -u nullglob
-lua_sources+=("$omadora_hypr_config_dir/.luarc.json")
+lua_sources+=("$skein_hypr_config_dir/.luarc.json")
 
 for required_config in autostart bindings hyprland input looknfeel monitors; do
-  required_path="$omadora_hypr_config_dir/$required_config.lua"
+  required_path="$skein_hypr_config_dir/$required_config.lua"
   [[ -f $required_path ]] || {
     echo "Missing required Hyprland Lua config: $required_path" >&2
     exit 1
   }
 done
-[[ -f $omadora_hypr_config_dir/.luarc.json ]] || {
-  echo "Missing required Hyprland Lua metadata: $omadora_hypr_config_dir/.luarc.json" >&2
+[[ -f $skein_hypr_config_dir/.luarc.json ]] || {
+  echo "Missing required Hyprland Lua metadata: $skein_hypr_config_dir/.luarc.json" >&2
   exit 1
 }
 
-staging_dir=$(mktemp -d "$hypr_config_dir/.omadora-lua-migration.XXXXXX")
+staging_dir=$(mktemp -d "$hypr_config_dir/.skein-lua-migration.XXXXXX")
 trap 'rm -rf -- "$staging_dir"' EXIT
 
 for lua_config in "${lua_sources[@]}"; do
@@ -145,9 +145,9 @@ done
 
 echo
 echo "Reapply current theme to generate updated theme configuration..."
-current_theme=$("$OMADORA_PATH/libexec/omadora-theme-current" 2>/dev/null || true)
+current_theme=$("$SKEIN_PATH/libexec/skein-theme-current" 2>/dev/null || true)
 
-if [[ -n $current_theme ]] && "$OMADORA_PATH/libexec/omadora-theme-set" "$current_theme"; then
+if [[ -n $current_theme ]] && "$SKEIN_PATH/libexec/skein-theme-set" "$current_theme"; then
   echo "Reapplied current theme: $current_theme"
 else
   if [[ -n $current_theme ]]; then
@@ -156,14 +156,14 @@ else
     echo "Warning: no current theme was found. Falling back to Rose Pine Darker." >&2
   fi
 
-  if ! "$OMADORA_PATH/libexec/omadora-theme-set" "Rose Pine Darker"; then
+  if ! "$SKEIN_PATH/libexec/skein-theme-set" "Rose Pine Darker"; then
     echo "Warning: failed to apply fallback theme 'Rose Pine Darker'. Continuing the migration; reapply a theme manually afterward." >&2
   fi
 fi
 
 if ((${#lua_backups[@]})); then
   echo
-  echo "Existing Lua configs were replaced with new Omadora defaults and backed up:"
+  echo "Existing Lua configs were replaced with new Skein defaults and backed up:"
   printf '  %s\n' "${lua_backups[@]}"
 fi
 

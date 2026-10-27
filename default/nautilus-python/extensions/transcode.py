@@ -26,12 +26,12 @@ SUPPORTED_EXTENSIONS = {
     ".avi",
 }
 
-OMADORA_ROOT = Path(os.environ.get("OMADORA_PATH", Path.home() / ".local/share/omadora"))
-OMADORA_LIBEXEC = OMADORA_ROOT / "libexec"
+SKEIN_ROOT = Path(os.environ.get("SKEIN_PATH", Path.home() / ".local/share/skein"))
+SKEIN_LIBEXEC = SKEIN_ROOT / "libexec"
 
 
-def omadora_tool(name):
-    path = OMADORA_LIBEXEC / name
+def skein_tool(name):
+    path = SKEIN_LIBEXEC / name
     if path.is_file() and os.access(path, os.X_OK):
         return str(path)
     return None
@@ -39,8 +39,8 @@ def omadora_tool(name):
 
 class TranscodeAction(GObject.GObject, Nautilus.MenuProvider):
     def _launch_transcode(self, paths):
-        wrapper = omadora_tool("omadora-launch-floating-terminal-with-presentation")
-        binary = omadora_tool("omadora-transcode")
+        wrapper = skein_tool("skein-launch-floating-terminal-with-presentation")
+        binary = skein_tool("skein-transcode")
         if not wrapper or not binary:
             return
 
@@ -88,7 +88,7 @@ class TranscodeAction(GObject.GObject, Nautilus.MenuProvider):
     def _make_item(self, paths):
         label = "Transcode" if len(paths) == 1 else f"Transcode {len(paths)} items"
         item = Nautilus.MenuItem(
-            name="OmadoraTranscodeNautilus::transcode",
+            name="SkeinTranscodeNautilus::transcode",
             label=label,
             icon="media-playback-start",
         )
@@ -100,8 +100,8 @@ class TranscodeAction(GObject.GObject, Nautilus.MenuProvider):
 
     def _tools_available(self):
         return bool(
-            omadora_tool("omadora-launch-floating-terminal-with-presentation")
-            and omadora_tool("omadora-transcode")
+            skein_tool("skein-launch-floating-terminal-with-presentation")
+            and skein_tool("skein-transcode")
         )
 
     def get_file_items(self, *args):

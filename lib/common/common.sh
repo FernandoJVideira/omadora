@@ -1,23 +1,23 @@
 # shellcheck shell=bash
 
-: "${OMADORA_APP_NAME:=${0##*/}}"
+: "${SKEIN_APP_NAME:=${0##*/}}"
 
-: "${OMADORA_DEBUG:=0}"
-: "${OMADORA_ASSUME_YES:=0}"
-: "${OMADORA_NO_COLOR:=0}"
-: "${OMADORA_QUIET:=0}"
+: "${SKEIN_DEBUG:=0}"
+: "${SKEIN_ASSUME_YES:=0}"
+: "${SKEIN_NO_COLOR:=0}"
+: "${SKEIN_QUIET:=0}"
 
 error() {
-  printf '%s: error: %s\n' "$OMADORA_APP_NAME" "$*" >&2
+  printf '%s: error: %s\n' "$SKEIN_APP_NAME" "$*" >&2
 }
 
 warn() {
-  ((OMADORA_QUIET)) && return 0
-  printf '%s: warning: %s\n' "$OMADORA_APP_NAME" "$*" >&2
+  ((SKEIN_QUIET)) && return 0
+  printf '%s: warning: %s\n' "$SKEIN_APP_NAME" "$*" >&2
 }
 
 info() {
-  ((OMADORA_QUIET)) && return 0
+  ((SKEIN_QUIET)) && return 0
   printf '%s\n' "$*"
 }
 
@@ -26,8 +26,8 @@ info_heading() {
 }
 
 debug() {
-  ((OMADORA_DEBUG)) || return 0
-  printf '%s: debug: %s\n' "$OMADORA_APP_NAME" "$*" >&2
+  ((SKEIN_DEBUG)) || return 0
+  printf '%s: debug: %s\n' "$SKEIN_APP_NAME" "$*" >&2
 }
 
 die() {
@@ -47,11 +47,11 @@ require_cmd() {
   done
 }
 
-omadora_run() {
+skein_run() {
   local command="$1"
   shift
 
-  local script="$OMADORA_LIBEXEC_DIR/$command"
+  local script="$SKEIN_LIBEXEC_DIR/$command"
 
   if [[ -x "$script" ]]; then
     "$script" "$@"
@@ -60,27 +60,27 @@ omadora_run() {
   fi
 }
 
-omadora_exec() {
+skein_exec() {
   local command="$1"
   shift
 
-  local script="$OMADORA_LIBEXEC_DIR/$command"
+  local script="$SKEIN_LIBEXEC_DIR/$command"
 
   if [[ -x "$script" ]]; then
     exec "$script" "$@"
   fi
 
-  die "omadora command not found: $command"
+  die "skein command not found: $command"
 }
 
-omadora_command() {
+skein_command() {
   local command="$1"
   shift
 
-  local script="$OMADORA_LIBEXEC_DIR/$command"
+  local script="$SKEIN_LIBEXEC_DIR/$command"
 
   if [[ ! -x "$script" ]]; then
-    die "omadora command not found: $command"
+    die "skein command not found: $command"
   fi
 
   printf '%q' "$script"
@@ -103,7 +103,7 @@ confirm() {
   local prompt=${1:-"Continue?"}
   local reply
 
-  ((OMADORA_ASSUME_YES)) && return 0
+  ((SKEIN_ASSUME_YES)) && return 0
   is_interactive || return 1
 
   if has_cmd gum; then

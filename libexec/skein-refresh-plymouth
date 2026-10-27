@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Overwrite the user config for the Plymouth theme with the default and rebuild it.
+
+echo "Refreshing default plymouth theme..."
+sudo mkdir -p /usr/share/plymouth/themes/sliced
+sudo cp ~/.local/share/skein/default/plymouth/* /usr/share/plymouth/themes/sliced/
+sudo plymouth-set-default-theme -R sliced

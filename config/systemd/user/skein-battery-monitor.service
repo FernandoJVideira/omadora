@@ -1,0 +1,10 @@
+[Unit]
+Description=Skein Battery Monitor Check
+PartOf=skein-session.target
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecCondition=%h/.local/share/skein/libexec/skein-battery-present
+ExecStart=%h/.local/share/skein/libexec/systemd/skein-battery-monitor
+LogLevelMax=warning

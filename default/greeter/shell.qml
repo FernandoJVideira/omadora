@@ -8,7 +8,7 @@ import Quickshell.Services.Greetd
 ShellRoot {
   id: root
 
-  // the Omadora session, same command as /usr/share/wayland-sessions/omadora.desktop
+  // the Skein session, same command as /usr/share/wayland-sessions/skein.desktop
   readonly property var sessionCommand: ["uwsm", "start", "-e", "-D", "Hyprland", "-N", "Hyprland", "--", "/usr/bin/start-hyprland"]
 
   property string notice: ""

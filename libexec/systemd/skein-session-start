@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
+
+info "Skein session start"
+
+skein_run skein-state clear relaunch-required

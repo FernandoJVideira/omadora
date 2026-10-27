@@ -1,12 +1,12 @@
 # Ensure system boots to GUI-capable state
 sudo systemctl set-default graphical.target
 
-# Enable Omadora systemd units
-systemctl --user enable omadora-session.target
-systemctl --user enable omadora-recover-internal-monitor.service
+# Enable Skein systemd units
+systemctl --user enable skein-session.target
+systemctl --user enable skein-recover-internal-monitor.service
 
 # Let PAM unlock a user-manager-owned keyring daemon before a graphical session starts
 # (Nobara uses KWallet instead)
-if [[ -z "${OMADORA_NOBARA:-}" ]]; then
+if [[ -z "${SKEIN_NOBARA:-}" ]]; then
   systemctl --user enable gnome-keyring-daemon.socket
 fi

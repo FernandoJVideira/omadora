@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
+
+# shellcheck source=lib/common/cli.sh
+source "$SKEIN_LIB_DIR/common/cli.sh"
+
+# -----------------------------------------------------------------------------
+# CLI Definition
+# -----------------------------------------------------------------------------
+
+CLI_GROUP="info"
+CLI_SUMMARY="Print info for use in notifications etc."
+
+CLI_NAMESPACES=()
+
+CLI_COMMANDS=(
+  "battery||Print battery status|run_battery||"
+  "weather||Print weather status|run_weather||"
+  "version||Print the current Skein version|run_version||"
+  "branch||Print the current Skein branch|run_branch||"
+)
+
+# -----------------------------------------------------------------------------
+# Commands
+# -----------------------------------------------------------------------------
+
+run_battery() {
+  skein_exec skein-battery-status
+}
+
+run_weather() {
+  skein_exec skein-weather-status
+}
+
+run_version() {
+  skein_exec skein-version
+}
+
+run_branch() {
+  skein_exec skein-version-branch
+}
+
+# -----------------------------------------------------------------------------
+# Completion
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+cli_main "$@"

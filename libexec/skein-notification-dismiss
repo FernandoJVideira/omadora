@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Dismiss a notification on the basis of its summary. Used by the first-run notifications to dismiss them after clicking for action.
+
+if (($# == 0)); then
+  echo "Usage: skein-notification-dismiss <summary>"
+  exit 1
+fi
+
+qs -c skein ipc call notifications dismissBySummary "$1"

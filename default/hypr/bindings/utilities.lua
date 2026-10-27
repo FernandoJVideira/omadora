@@ -1,97 +1,97 @@
 -- Menus.
-o.bind("SUPER + SPACE", "Launch apps", o.libexec("omadora-menu apps"))
-o.bind("SUPER + CTRL + C", "Capture menu", o.libexec("omadora-menu capture"))
-o.bind("SUPER + CTRL + O", "Toggle menu", o.libexec("omadora-menu toggle"))
-o.bind("SUPER + CTRL + H", "Hardware menu", o.libexec("omadora-menu hardware"))
-o.bind("SUPER + ALT + SPACE", "Omadora menu", o.libexec("omadora-menu"))
-o.bind("SUPER + SHIFT + code:201", "Omadora menu", o.libexec("omadora-menu"))
-o.bind("SUPER + ESCAPE", "System menu", o.libexec("omadora-menu system"))
-o.bind("XF86PowerOff", "Power menu", o.libexec("omadora-menu system"), { locked = true })
-o.bind("SUPER + K", "Show key bindings", o.libexec("omadora-menu-keybindings"))
-o.bind("SUPER + ALT + K", "Show Tmux key bindings", o.libexec("omadora-menu-tmux-keybindings"))
+o.bind("SUPER + SPACE", "Launch apps", o.libexec("skein-menu apps"))
+o.bind("SUPER + CTRL + C", "Capture menu", o.libexec("skein-menu capture"))
+o.bind("SUPER + CTRL + O", "Toggle menu", o.libexec("skein-menu toggle"))
+o.bind("SUPER + CTRL + H", "Hardware menu", o.libexec("skein-menu hardware"))
+o.bind("SUPER + ALT + SPACE", "Skein menu", o.libexec("skein-menu"))
+o.bind("SUPER + SHIFT + code:201", "Skein menu", o.libexec("skein-menu"))
+o.bind("SUPER + ESCAPE", "System menu", o.libexec("skein-menu system"))
+o.bind("XF86PowerOff", "Power menu", o.libexec("skein-menu system"), { locked = true })
+o.bind("SUPER + K", "Show key bindings", o.libexec("skein-menu-keybindings"))
+o.bind("SUPER + ALT + K", "Show Tmux key bindings", o.libexec("skein-menu-tmux-keybindings"))
 o.bind("XF86Calculator", "Calculator", "gnome-calculator")
 
 -- Aesthetics.
-o.bind("SUPER + SHIFT + SPACE", "Toggle top bar", "omactl ui toggle bar")
-o.bind("SUPER + CTRL + SPACE", "Next theme background", o.libexec("omadora-theme-bg-next"))
-o.bind("SUPER + SHIFT + CTRL + SPACE", "Theme menu", o.libexec("omadora-menu theme"))
-o.bind("SUPER + CTRL + ALT + SPACE", "Background switcher", "qs -c omadora ipc call wallpapers open")
+o.bind("SUPER + SHIFT + SPACE", "Toggle top bar", "skeinctl ui toggle bar")
+o.bind("SUPER + CTRL + SPACE", "Next theme background", o.libexec("skein-theme-bg-next"))
+o.bind("SUPER + SHIFT + CTRL + SPACE", "Theme menu", o.libexec("skein-menu theme"))
+o.bind("SUPER + CTRL + ALT + SPACE", "Background switcher", "qs -c skein ipc call wallpapers open")
 o.bind(
   "SUPER + BACKSPACE",
   "Toggle window transparency",
-  o.libexec("omadora-hyprland-window-transparency-toggle")
+  o.libexec("skein-hyprland-window-transparency-toggle")
 )
 o.bind(
   "SUPER + SHIFT + BACKSPACE",
   "Toggle window gaps",
-  o.libexec("omadora-hyprland-window-gaps-toggle")
+  o.libexec("skein-hyprland-window-gaps-toggle")
 )
 o.bind(
   "SUPER + CTRL + BACKSPACE",
   "Toggle single-window square aspect",
-  o.libexec("omadora-hyprland-window-single-square-aspect-toggle")
+  o.libexec("skein-hyprland-window-single-square-aspect-toggle")
 )
 
 -- Notifications.
-o.bind("SUPER + COMMA", "Dismiss last notification", "qs -c omadora ipc call notifications dismiss")
-o.bind("SUPER + SHIFT + COMMA", "Dismiss all notifications", "qs -c omadora ipc call notifications dismissAll")
+o.bind("SUPER + COMMA", "Dismiss last notification", "qs -c skein ipc call notifications dismiss")
+o.bind("SUPER + SHIFT + COMMA", "Dismiss all notifications", "qs -c skein ipc call notifications dismissAll")
 o.bind(
   "SUPER + CTRL + COMMA",
   "Toggle silencing notifications",
-  o.libexec("omadora-toggle-notification-silencing")
+  o.libexec("skein-toggle-notification-silencing")
 )
-o.bind("SUPER + ALT + COMMA", "Invoke last notification", "qs -c omadora ipc call notifications invokeLast")
-o.bind("SUPER + SHIFT + ALT + COMMA", "Restore last notification", "qs -c omadora ipc call notifications restoreLast")
+o.bind("SUPER + ALT + COMMA", "Invoke last notification", "qs -c skein ipc call notifications invokeLast")
+o.bind("SUPER + SHIFT + ALT + COMMA", "Restore last notification", "qs -c skein ipc call notifications restoreLast")
 
 -- Toggles.
-o.bind("SUPER + SHIFT + W", "Toggle weather", o.libexec("omadora-toggle-weather-check"))
-o.bind("SUPER + CTRL + I", "Toggle locking on idle", o.libexec("omadora-toggle-idle"))
-o.bind("SUPER + CTRL + N", "Toggle nightlight", o.libexec("omadora-toggle-nightlight"))
+o.bind("SUPER + SHIFT + W", "Toggle weather", o.libexec("skein-toggle-weather-check"))
+o.bind("SUPER + CTRL + I", "Toggle locking on idle", o.libexec("skein-toggle-idle"))
+o.bind("SUPER + CTRL + N", "Toggle nightlight", o.libexec("skein-toggle-nightlight"))
 o.bind(
   "SUPER + CTRL + Delete",
   "Toggle laptop display",
-  o.libexec("omadora-hyprland-monitor-internal toggle")
+  o.libexec("skein-hyprland-monitor-internal toggle")
 )
 o.bind(
   "SUPER + CTRL + ALT + Delete",
   "Toggle laptop display mirroring",
-  o.libexec("omadora-hyprland-monitor-internal-mirror toggle")
+  o.libexec("skein-hyprland-monitor-internal-mirror toggle")
 )
 o.bind(
   "switch:on:Lid Switch",
   nil,
-  o.libexec("omadora-hw-external-monitors")
+  o.libexec("skein-hw-external-monitors")
     .. " && "
-    .. o.libexec("omadora-hyprland-monitor-internal off"),
+    .. o.libexec("skein-hyprland-monitor-internal off"),
   { locked = true }
 )
 o.bind(
   "switch:off:Lid Switch",
   nil,
-  o.libexec("omadora-hyprland-monitor-internal on"),
+  o.libexec("skein-hyprland-monitor-internal on"),
   { locked = true }
 )
 
 -- Captures.
-o.bind("PRINT", "Screenshot with editing", o.libexec("omadora-capture-screenshot"))
-o.bind("ALT + PRINT", "Screenrecording", o.libexec("omadora-menu screenrecord"))
+o.bind("PRINT", "Screenshot with editing", o.libexec("skein-capture-screenshot"))
+o.bind("ALT + PRINT", "Screenrecording", o.libexec("skein-menu screenrecord"))
 o.bind("SUPER + PRINT", "Color picker", "pkill hyprpicker || hyprpicker -a")
 o.bind(
   "SUPER + CTRL + PRINT",
   "Extract text (OCR) from screenshot",
-  o.libexec("omadora-capture-text-extraction")
+  o.libexec("skein-capture-text-extraction")
 )
-o.bind("SUPER + CTRL + S", "Share", o.libexec("omadora-menu share"))
+o.bind("SUPER + CTRL + S", "Share", o.libexec("skein-menu share"))
 o.bind(
   "SUPER + CTRL + PERIOD",
   "Transcode",
-  o.libexec("omadora-launch-floating-terminal-with-presentation omadora-exec omadora-transcode")
+  o.libexec("skein-launch-floating-terminal-with-presentation skein-exec skein-transcode")
 )
 
 -- Reminders.
-o.bind("SUPER + CTRL + R", "Set reminder", o.libexec("omadora-menu reminder-set"))
-o.bind("SUPER + CTRL + ALT + R", "Show reminders", o.libexec("omadora-reminder show"))
-o.bind("SUPER + SHIFT + CTRL + R", "Clear reminders", o.libexec("omadora-reminder clear"))
+o.bind("SUPER + CTRL + R", "Set reminder", o.libexec("skein-menu reminder-set"))
+o.bind("SUPER + CTRL + ALT + R", "Show reminders", o.libexec("skein-reminder show"))
+o.bind("SUPER + SHIFT + CTRL + R", "Clear reminders", o.libexec("skein-reminder clear"))
 
 -- Information without a bar.
 o.bind(
@@ -102,20 +102,20 @@ o.bind(
 o.bind(
   "SUPER + CTRL + ALT + B",
   "Show battery remaining",
-  'notify-send -u low "$(' .. o.libexec("omadora-battery-status") .. ')"'
+  'notify-send -u low "$(' .. o.libexec("skein-battery-status") .. ')"'
 )
 o.bind(
   "SUPER + CTRL + ALT + W",
   "Show weather",
-  'notify-send -u low "$(' .. o.libexec("omadora-weather-status") .. ')"'
+  'notify-send -u low "$(' .. o.libexec("skein-weather-status") .. ')"'
 )
 
 -- Control panels.
-o.bind("SUPER + CTRL + A", "Audio controls", "qs -c omadora ipc call bar panel audio")
-o.bind("SUPER + SHIFT + CTRL + A", "Agent", o.libexec("omadora-agent --pick"))
-o.bind("SUPER + CTRL + B", "Bluetooth controls", "qs -c omadora ipc call bar panel bluetooth")
-o.bind("SUPER + CTRL + W", "Wifi controls", "qs -c omadora ipc call bar panel network")
-o.bind("SUPER + CTRL + T", "Activity", o.libexec("omadora-launch-system-monitor"))
+o.bind("SUPER + CTRL + A", "Audio controls", "qs -c skein ipc call bar panel audio")
+o.bind("SUPER + SHIFT + CTRL + A", "Agent", o.libexec("skein-agent --pick"))
+o.bind("SUPER + CTRL + B", "Bluetooth controls", "qs -c skein ipc call bar panel bluetooth")
+o.bind("SUPER + CTRL + W", "Wifi controls", "qs -c skein ipc call bar panel network")
+o.bind("SUPER + CTRL + T", "Activity", o.libexec("skein-launch-system-monitor"))
 
 -- Zoom.
 o.bind("SUPER + CTRL + Z", "Zoom in", function()
@@ -128,4 +128,4 @@ o.bind("SUPER + CTRL + ALT + Z", "Reset zoom", function()
 end)
 
 -- Lock system.
-o.bind("SUPER + CTRL + L", "Lock system", o.libexec("omadora-system-lock"))
+o.bind("SUPER + CTRL + L", "Lock system", o.libexec("skein-system-lock"))

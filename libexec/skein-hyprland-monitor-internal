@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Enable, disable, toggle, or recover the internal laptop display
+
+TOGGLE="internal-monitor-disable"
+TOGGLE_FLAG="$HOME/.local/state/skein/toggles/hypr/$TOGGLE.lua"
+MIRROR_TOGGLE="internal-monitor-mirror"
+
+# Get internal monitor name dynamically
+INTERNAL=$(hyprctl monitors -j | jq -r '.[] | select(.name | contains("eDP")).name' | head -n 1)
+
+on() {
+  if skein_run skein-hyprland-toggle-enabled "$TOGGLE"; then
+    skein_run skein-hyprland-toggle "$TOGGLE" off
+    notify-send -u low "󰍹    Laptop display enabled"
+  fi
+}
+
+off() {
+  if ! skein_run skein-hw-external-monitors; then
+    notify-send -u low "󰍹    Can't disable the only active display"
+    exit 1
+  fi
+  if skein_run skein-hyprland-toggle-disabled "$TOGGLE" && skein_run skein-hyprland-toggle-disabled "$MIRROR_TOGGLE"; then
+    mkdir -p "$(dirname "$TOGGLE_FLAG")"
+    printf 'hl.monitor({ output = "%s", disabled = true })\n' "$INTERNAL" >"$TOGGLE_FLAG"
+    notify-send -u low "󰍹    Laptop display disabled"
+    hyprctl reload
+  fi
+}
+
+recover() {
+  if ! skein_run skein-hw-external-monitors && skein_run skein-hyprland-toggle-enabled "$TOGGLE"; then
+    skein_run skein-hyprland-toggle "$TOGGLE" off
+  fi
+}
+
+case "$1" in
+on) on ;;
+off) off ;;
+toggle) if skein_run skein-hyprland-toggle-enabled "$TOGGLE"; then on; else off; fi ;;
+recover) recover ;;
+*)
+  echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
+  exit 1
+  ;;
+esac

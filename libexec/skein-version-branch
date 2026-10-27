@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Print the current Skein git branch
+
+git -C "$SKEIN_PATH" rev-parse --abbrev-ref HEAD

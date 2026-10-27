@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $(qs -c skein ipc call notifications isSilenced 2>/dev/null) == true ]]; then
+  echo '{"text": "󰂛", "tooltip": "Notifications silenced", "class": "active"}'
+else
+  echo '{"text": ""}'
+fi

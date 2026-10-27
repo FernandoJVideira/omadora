@@ -1,8 +1,8 @@
 # Allow pam_gnome_keyring in a virtual-terminal login to reach the packaged
 # user-level GNOME Keyring socket without granting access to other user sockets.
-install_omadora_keyring_policy() {
-  local policy_name="local_omadora_gnome_keyring"
-  local install_root="${OMADORA_INSTALL:-$OMADORA_PATH/install}"
+install_skein_keyring_policy() {
+  local policy_name="local_skein_gnome_keyring"
+  local install_root="${SKEIN_INSTALL:-$SKEIN_PATH/install}"
   local policy_source="$install_root/login/selinux/$policy_name.te"
   local policy_makefile="/usr/share/selinux/devel/Makefile"
   local policy_build_dir
@@ -38,6 +38,6 @@ install_omadora_keyring_policy() {
 
 # Skip when SELinux is disabled (the Nobara default)
 if [[ "$(getenforce 2>/dev/null)" != "Disabled" ]]; then
-  install_omadora_keyring_policy
+  install_skein_keyring_policy
 fi
-unset -f install_omadora_keyring_policy
+unset -f install_skein_keyring_policy

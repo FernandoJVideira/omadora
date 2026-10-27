@@ -1,0 +1,17 @@
+[Unit]
+Description=Skein Polkit Authentication Agent
+PartOf=skein-session.target
+After=graphical-session.target
+# Wants= from skein-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+ExecStart=/usr/libexec/xfce-polkit
+Slice=session.slice
+TimeoutStopSec=5sec
+Restart=on-failure
+
+[Install]
+WantedBy=skein-session.target

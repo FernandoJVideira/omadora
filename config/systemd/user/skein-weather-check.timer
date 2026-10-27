@@ -1,0 +1,15 @@
+[Unit]
+Description=Skein Weather Check Timer
+PartOf=skein-session.target
+# Wants= from skein-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+ConditionPathExists=!%h/.local/state/skein/toggles/weather-check-off
+
+[Timer]
+OnActiveSec=5s
+OnUnitActiveSec=15m
+AccuracySec=1s
+
+[Install]
+WantedBy=skein-session.target

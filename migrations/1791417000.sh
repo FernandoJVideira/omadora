@@ -7,12 +7,12 @@ echo "Set up the default agent and crash diagnosis..."
 units="$HOME/.config/systemd/user"
 
 # Agent skills for the coding agents on this machine
-"$OMADORA_PATH/libexec/omadora-agent-skills-link"
+"$SKEIN_PATH/libexec/skein-agent-skills-link"
 
 # Crash watcher
-cp "$OMADORA_PATH/config/systemd/user/omadora-crash-watch.service" "$OMADORA_PATH/config/systemd/user/omadora-session.target" "$units/"
+cp "$SKEIN_PATH/config/systemd/user/skein-crash-watch.service" "$SKEIN_PATH/config/systemd/user/skein-session.target" "$units/"
 systemctl --user daemon-reload
-systemctl --user start omadora-crash-watch.service || true
+systemctl --user start skein-crash-watch.service || true
 
 # Core dumps are only recorded when systemd-coredump is installed
 if ! rpm -q systemd-coredump >/dev/null 2>&1; then

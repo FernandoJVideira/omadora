@@ -1,4 +1,4 @@
 echo "Update modified configs"
 
-omadora-refresh-fastfetch
-omadora-refresh-hypridle 
+skein-refresh-fastfetch
+skein-refresh-hypridle 

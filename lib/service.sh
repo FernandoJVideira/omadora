@@ -1,6 +1,6 @@
 service_reload_bar() {
-  if systemctl --quiet --user is-active omadora-bar.service; then
-    qs -c omadora ipc call bar reloadTheme >/dev/null 2>&1 || true
+  if systemctl --quiet --user is-active skein-bar.service; then
+    qs -c skein ipc call bar reloadTheme >/dev/null 2>&1 || true
   fi
 }
 

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Print the installed Skein version
+
+git -C "$SKEIN_PATH" describe --tags "$(git -C "$SKEIN_PATH" rev-list --tags --max-count=1)"

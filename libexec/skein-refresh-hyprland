@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Overwrite all the user Hyprland Lua configs in ~/.config/hypr with the Skein defaults.
+
+skein_run skein-refresh-config hypr/.luarc.json
+skein_run skein-refresh-config hypr/autostart.lua
+skein_run skein-refresh-config hypr/bindings.lua
+skein_run skein-refresh-config hypr/input.lua
+skein_run skein-refresh-config hypr/looknfeel.lua
+skein_run skein-refresh-config hypr/hyprland.lua
+skein_run skein-refresh-config hypr/monitors.lua
+bash "$SKEIN_PATH/install/config/skein-toggles.sh"
+bash "$SKEIN_PATH/install/config/detect-keyboard-layout.sh"

@@ -4,9 +4,9 @@ state_flag_validate() {
 }
 
 state_list() {
-  [[ -d "$OMADORA_STATE_HOME" ]] || return 0
+  [[ -d "$SKEIN_STATE_HOME" ]] || return 0
 
-  find "$OMADORA_STATE_HOME" \
+  find "$SKEIN_STATE_HOME" \
     -maxdepth 1 \
     -type f \
     -printf '%f\n' |
@@ -18,8 +18,8 @@ state_set() {
 
   state_flag_validate "$flag" || return 1
 
-  ensure_dir "$OMADORA_STATE_HOME"
-  touch -- "$OMADORA_STATE_HOME/$flag"
+  ensure_dir "$SKEIN_STATE_HOME"
+  touch -- "$SKEIN_STATE_HOME/$flag"
 }
 
 state_clear() {
@@ -27,19 +27,19 @@ state_clear() {
 
   state_flag_validate "$flag" || return 1
 
-  rm -f -- "$OMADORA_STATE_HOME/$flag"
+  rm -f -- "$SKEIN_STATE_HOME/$flag"
 }
 
 state_exists() {
   local flag="${1:-}"
 
-  [[ -f "$OMADORA_STATE_HOME/$flag" ]]
+  [[ -f "$SKEIN_STATE_HOME/$flag" ]]
 }
 
 state_toggles_list() {
-  [[ -d "$OMADORA_STATE_HOME" ]] || return 0
+  [[ -d "$SKEIN_STATE_HOME" ]] || return 0
 
-  find "$OMADORA_STATE_HOME/toggles" \
+  find "$SKEIN_STATE_HOME/toggles" \
     -maxdepth 1 \
     -type f \
     -printf '%f\n' |
@@ -51,8 +51,8 @@ state_toggles_set() {
 
   state_flag_validate "$toggle" || return 1
 
-  ensure_dir "$OMADORA_STATE_HOME/toggles"
-  touch -- "$OMADORA_STATE_HOME/toggles/$toggle"
+  ensure_dir "$SKEIN_STATE_HOME/toggles"
+  touch -- "$SKEIN_STATE_HOME/toggles/$toggle"
 }
 
 state_toggles_clear() {
@@ -60,11 +60,11 @@ state_toggles_clear() {
 
   state_flag_validate "$toggle" || return 1
 
-  rm -f -- "$OMADORA_STATE_HOME/toggles/$toggle"
+  rm -f -- "$SKEIN_STATE_HOME/toggles/$toggle"
 }
 
 state_toggles_exists() {
   local toggle="${1:-}"
 
-  [[ -f "$OMADORA_STATE_HOME/toggles/$toggle" ]]
+  [[ -f "$SKEIN_STATE_HOME/toggles/$toggle" ]]
 }

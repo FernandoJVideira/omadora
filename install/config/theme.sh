@@ -10,16 +10,16 @@ gsettings set org.gnome.desktop.interface document-font-name "Adwaita Sans 12"
 gsettings set org.gnome.desktop.interface monospace-font-name "JetBrains Mono 10.5"
 
 # Setup user theme folder
-mkdir -p ~/.config/omadora/themes
+mkdir -p ~/.config/skein/themes
 
 # Set initial theme
-omadora-exec omadora-theme-set "Rose Pine Darker" 2>/dev/null
+skein-exec skein-theme-set "Rose Pine Darker" 2>/dev/null
 
 # Set specific app links for current theme
-ln -snf ~/.config/omadora/current/theme/neovim.lua ~/.config/nvim/lua/plugins/omadora-theme.lua
+ln -snf ~/.config/skein/current/theme/neovim.lua ~/.config/nvim/lua/plugins/skein-theme.lua
 
 mkdir -p ~/.config/btop/themes
-ln -snf ~/.config/omadora/current/theme/btop.theme ~/.config/btop/themes/current.theme
+ln -snf ~/.config/skein/current/theme/btop.theme ~/.config/btop/themes/current.theme
 
 # Screensaver
 pipx install terminaltexteffects==0.14.2

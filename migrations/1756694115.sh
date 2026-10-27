@@ -1,3 +1,3 @@
 echo "Update for added timezone selection"
 
-omadora-refresh-bar
+skein-refresh-bar

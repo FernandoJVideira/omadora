@@ -2,4 +2,4 @@
 set -euo pipefail
 
 echo "Refreshing wofi style.css..."
-omadora-exec omadora-refresh-wofi
+skein-exec skein-refresh-wofi

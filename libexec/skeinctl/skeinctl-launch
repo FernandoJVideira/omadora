@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
+
+# shellcheck source=lib/common/cli.sh
+source "$SKEIN_LIB_DIR/common/cli.sh"
+
+# -----------------------------------------------------------------------------
+# CLI Definition
+# -----------------------------------------------------------------------------
+
+CLI_GROUP="launch"
+CLI_SUMMARY="Launch Skein windows and apps"
+
+CLI_NAMESPACES=()
+
+CLI_COMMANDS=(
+  "about||Open the about window|run_about||"
+  "system-monitor||Open the system monitor window|run_system_monitor||"
+  "wifi||Open the wifi window|run_wifi||"
+  "audio||Open the audio window|run_audio||"
+  "bluetooth||Open the bluetooth window|run_bluetooth||"
+  "editor||Open an editor window|run_editor||"
+  "browser||Open a browser window|run_browser||"
+  "picker||Open the picker|run_picker||"
+  "floating-window||Launch a command in a floating window|run_floating||"
+  "tui||Launch a TUI|run_tui||"
+  "tui-or-focus||Launch or focus a TUI|run_tui_or_focus||"
+  "terminal||Launch a default terminal|run_terminal||"
+  "terminal-cwd||Launch a default terminal in the CWD|run_terminal_cwd||"
+  "file-explorer||Launch a file explorer window|run_file_explorer||"
+  "file-explorer-cwd||Launch a file explorer window in the CWD|run_file_explorer_cwd||"
+  "webapp||Launch a webapp|run_webapp||"
+  "webapp-or-focus||Launch or focus a webapp|run_webapp_or_focus||"
+)
+
+# -----------------------------------------------------------------------------
+# Commands
+# -----------------------------------------------------------------------------
+
+run_about() {
+  skein_exec skein-launch-about
+}
+
+run_system_monitor() {
+  skein_exec skein-launch-system-monitor
+}
+
+run_wifi() {
+  skein_exec skein-launch-wifi
+}
+
+run_audio() {
+  skein_exec skein-launch-audio
+}
+
+run_bluetooth() {
+  skein_exec skein-launch-bluetooth
+}
+
+run_editor() {
+  skein_exec skein-launch-editor "$@"
+}
+
+run_browser() {
+  skein_exec skein-launch-browser "$@"
+}
+
+run_picker() {
+  skein_exec skein-launch-picker "$@"
+}
+
+run_floating() {
+  skein_exec skein-launch-floating-terminal-with-presentation "$@"
+}
+
+run_terminal() {
+  exec uwsm-app -- xdg-terminal-exec "$@"
+}
+
+run_terminal_cwd() {
+  skein_exec skein-launch-terminal "$@"
+}
+
+run_file_explorer() {
+  exec uwsm-app -- nautilus --new-window
+}
+
+run_file_explorer_cwd() {
+  exec uwsm-app -- nautilus --new-window "$(skein_run skein-cmd-terminal-cwd)"
+}
+
+run_webapp() {
+  skein_exec skein-launch-webapp "$@"
+}
+
+run_webapp_or_focus() {
+  skein_exec skein-launch-or-focus-webapp "$@"
+}
+
+run_tui() {
+  skein_exec skein-launch-tui "$@"
+}
+
+run_tui_or_focus() {
+  skein_exec skein-launch-or-focus-tui "$@"
+}
+
+# -----------------------------------------------------------------------------
+# Completion
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+cli_main "$@"

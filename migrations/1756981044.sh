@@ -1,4 +1,4 @@
 echo "Update wofi and hyprlock config"
 
-omadora-refresh-hyprlock
-omadora-refresh-wofi
+skein-refresh-hyprlock
+skein-refresh-wofi

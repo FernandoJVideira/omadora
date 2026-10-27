@@ -1,1 +1,1 @@
-for f in "$OMADORA_PATH"/default/bash/fns/*; do source "$f"; done
+for f in "$SKEIN_PATH"/default/bash/fns/*; do source "$f"; done

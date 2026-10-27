@@ -4,16 +4,16 @@ echo "Migrate to new theme setup"
 sudo dnf install -y yq
 
 # Copy in user theme template example
-cp -r "$OMADORA_PATH/config/omadora/themed" "$HOME/.config/omadora/themed"
+cp -r "$SKEIN_PATH/config/skein/themed" "$HOME/.config/skein/themed"
 
-# Move user-added backgrounds from omadora theme folders to user config
-OMADORA_DIR="$HOME/.local/share/omadora"
-USER_BACKGROUNDS_DIR="$HOME/.config/omadora/backgrounds"
+# Move user-added backgrounds from skein theme folders to user config
+SKEIN_DIR="$HOME/.local/share/skein"
+USER_BACKGROUNDS_DIR="$HOME/.config/skein/backgrounds"
 
-if [[ -d "$OMADORA_DIR/themes" ]]; then
-  cd "$OMADORA_DIR" || exit 1
+if [[ -d "$SKEIN_DIR/themes" ]]; then
+  cd "$SKEIN_DIR" || exit 1
 
-  # Get list of git-tracked background files (relative to omadora dir)
+  # Get list of git-tracked background files (relative to skein dir)
   mapfile -t TRACKED_BACKGROUNDS < <(git ls-files --cached 'themes/*/backgrounds/*' 2>/dev/null)
 
   # Find all background files and check if they're untracked (user-added)
@@ -46,24 +46,24 @@ if [[ -d "$OMADORA_DIR/themes" ]]; then
   done
 fi
 
-THEMES_DIR="$HOME/.config/omadora/themes"
-CURRENT_THEME_LINK="$HOME/.config/omadora/current/theme"
+THEMES_DIR="$HOME/.config/skein/themes"
+CURRENT_THEME_LINK="$HOME/.config/skein/current/theme"
 
 # Get current theme name from symlink before removing anything
 CURRENT_THEME_NAME=""
 if [[ -L $CURRENT_THEME_LINK ]]; then
   CURRENT_THEME_NAME=$(basename "$(readlink "$CURRENT_THEME_LINK")")
-elif [[ -f "$HOME/.config/omadora/current/theme.name" ]]; then
-  CURRENT_THEME_NAME=$(cat "$HOME/.config/omadora/current/theme.name")
+elif [[ -f "$HOME/.config/skein/current/theme.name" ]]; then
+  CURRENT_THEME_NAME=$(cat "$HOME/.config/skein/current/theme.name")
 fi
 
-# Remove all symlinks from ~/.config/omadora/themes
+# Remove all symlinks from ~/.config/skein/themes
 find "$THEMES_DIR" -mindepth 1 -maxdepth 1 -type l -delete
 
 # Re-apply the current theme with the new system
 if [[ -n $CURRENT_THEME_NAME ]]; then
-  omadora-theme-set "$CURRENT_THEME_NAME"
+  skein-theme-set "$CURRENT_THEME_NAME"
 else
   # Backup to ensure a theme is set if we can't deduce the name
-  omadora-theme-set "Rose Pine Darker"
+  skein-theme-set "Rose Pine Darker"
 fi

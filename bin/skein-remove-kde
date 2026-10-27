@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# On PATH through Skein's bin directory; the script itself lives in libexec.
+exec "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libexec/skein-remove-kde" "$@"

@@ -1,0 +1,23 @@
+[Unit]
+Description=Skein Session Target
+PartOf=graphical-session.target
+After=graphical-session.target xdg-desktop-portal.service
+# Only start inside Hyprland, not other desktops sharing graphical-session.target (e.g. Plasma)
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+
+Wants=skein-session.service
+Wants=skein-fcitx5.service
+Wants=skein-hyprland-monitor.service
+Wants=skein-polkitagent.service
+Wants=skein-crash-watch.service
+Wants=skein-battery-monitor.timer
+Wants=skein-update-check.timer
+Wants=skein-weather-check.timer
+
+Wants=hypridle.service
+Wants=hyprpaper.service
+Wants=hyprsunset.service
+Wants=skein-bar.service
+
+[Install]
+WantedBy=graphical-session.target

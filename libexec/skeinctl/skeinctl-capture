@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
+
+# shellcheck source=lib/common/cli.sh
+source "$SKEIN_LIB_DIR/common/cli.sh"
+
+# -----------------------------------------------------------------------------
+# CLI Definition
+# -----------------------------------------------------------------------------
+
+CLI_GROUP="capture"
+CLI_SUMMARY="Screen capture functions"
+
+CLI_NAMESPACES=()
+
+CLI_COMMANDS=(
+  "screenshot||Capture a screenshot|run_screenshot||"
+  "screenrecording||Start/stop a screen recording|run_screenrecording||"
+  "text-extraction||Extract text from a screenshot|run_text_extraction||"
+)
+
+# -----------------------------------------------------------------------------
+# Commands
+# -----------------------------------------------------------------------------
+
+run_screenshot() {
+  skein_exec skein-capture-screenshot "$@"
+}
+
+run_screenrecording() {
+  skein_exec skein-capture-screenrecording "$@"
+}
+
+run_text_extraction() {
+  skein_exec skein-capture-text-extraction "$@"
+}
+
+# -----------------------------------------------------------------------------
+# Completion
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+cli_main "$@"

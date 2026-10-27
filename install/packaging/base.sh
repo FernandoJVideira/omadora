@@ -1,15 +1,15 @@
 # Install base groups (Nobara already ships a full desktop and its own multimedia stack,
 # but still needs the development headers for the cargo builds)
-if [[ -n "${OMADORA_NOBARA:-}" ]]; then
+if [[ -n "${SKEIN_NOBARA:-}" ]]; then
   sudo dnf group install -y development-libs
 else
-  mapfile -t groups < <(grep -v '^#' "$OMADORA_INSTALL/omadora-base.groups" | grep -v '^$')
+  mapfile -t groups < <(grep -v '^#' "$SKEIN_INSTALL/skein-base.groups" | grep -v '^$')
   sudo dnf group install -y "${groups[@]}"
 fi
 
 # Install base packages
-mapfile -t packages < <(grep -v '^#' "$OMADORA_INSTALL/omadora-base.packages" | grep -v '^$')
-if [[ -n "${OMADORA_NOBARA:-}" ]]; then
+mapfile -t packages < <(grep -v '^#' "$SKEIN_INSTALL/skein-base.packages" | grep -v '^$')
+if [[ -n "${SKEIN_NOBARA:-}" ]]; then
   # Keep NetworkManager instead of iwd/systemd-networkd, Nobara's cardwire
   # conflicts with switcheroo-control, and KWallet already provides the
   # secret service (GNOME Keyring would compete with it in Plasma)
@@ -18,5 +18,5 @@ fi
 sudo dnf install -y "${packages[@]}"
 
 # Install copr packages
-mapfile -t packages < <(grep -v '^#' "$OMADORA_INSTALL/omadora-copr.packages" | grep -v '^$')
+mapfile -t packages < <(grep -v '^#' "$SKEIN_INSTALL/skein-copr.packages" | grep -v '^$')
 sudo dnf install -y "${packages[@]}"

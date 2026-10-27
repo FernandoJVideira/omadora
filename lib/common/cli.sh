@@ -3,13 +3,13 @@
 cli_group_name() {
   local file="$1"
 
-  printf '%s\n' "${file##*/omactl-}"
+  printf '%s\n' "${file##*/skeinctl-}"
 }
 
 cli_group_files() {
   local file
 
-  for file in "$OMADORA_LIBEXEC_DIR"/omactl/omactl-*; do
+  for file in "$SKEIN_LIBEXEC_DIR"/skeinctl/skeinctl-*; do
     [[ -x "$file" ]] || continue
     printf '%s\n' "$file"
   done | sort
@@ -17,7 +17,7 @@ cli_group_files() {
 
 cli_group_summary() {
   local group="$1"
-  local script="$OMADORA_LIBEXEC_DIR/omactl/omactl-$group"
+  local script="$SKEIN_LIBEXEC_DIR/skeinctl/skeinctl-$group"
   local summary
 
   if [[ -x "$script" ]]; then
@@ -33,7 +33,7 @@ cli_root_usage() {
 
   cat <<'EOF'
 Usage:
-  omactl <command>
+  skeinctl <command>
 
 Commands:
 EOF
@@ -80,13 +80,13 @@ cli_root_main() {
 
     command="$1"
     shift
-    script="$OMADORA_LIBEXEC_DIR/omactl/omactl-$command"
+    script="$SKEIN_LIBEXEC_DIR/skeinctl/skeinctl-$command"
     [[ -x "$script" ]] && "$script" __complete "$cur" "$@" 2>/dev/null
     ;;
 
   *)
     shift
-    script="$OMADORA_LIBEXEC_DIR/omactl/omactl-$command"
+    script="$SKEIN_LIBEXEC_DIR/skeinctl/skeinctl-$command"
 
     if [[ ! -x "$script" ]]; then
       cli_root_usage >&2
@@ -238,7 +238,7 @@ cli_usage() {
   local entry path args summary child command rel
 
   printf 'Usage:\n'
-  printf '  omactl %s' "$CLI_GROUP"
+  printf '  skeinctl %s' "$CLI_GROUP"
   [[ -n "$prefix" ]] && printf ' %s' "$prefix"
   printf ' <command>\n\n'
   printf 'Commands:\n'
@@ -277,7 +277,7 @@ cli_command_usage() {
   summary="$(cli_command_summary "$entry")"
 
   printf 'Usage:\n'
-  printf '  omactl %s %s' "$CLI_GROUP" "$path"
+  printf '  skeinctl %s %s' "$CLI_GROUP" "$path"
   [[ -n "$args" ]] && printf ' %s' "$args"
   printf '\n'
 
@@ -318,7 +318,7 @@ cli_complete_options() {
   local option
 
   for option in $compopts; do
-    printf '__omactl_compopt:%s\n' "$option"
+    printf '__skeinctl_compopt:%s\n' "$option"
   done
 }
 

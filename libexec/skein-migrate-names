@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Move an existing install from Omadora's names to Skein's (run once; safe to repeat):
+#   ~/.config|.local/state|.cache/omadora  and  ~/.config/quickshell/omadora  ->  .../skein
+# Each old path stays behind as a symlink to the new one, so configs that still mention the old name
+# keep working. The old user units (omadora-*.service, timers, targets) are disabled and removed;
+# the installer then enables the skein-* ones. A running session keeps its old units until you log
+# out, so log out or reboot afterwards. (~/.local/share/omadora, the checkout itself, is moved by
+# whoever runs the new checkout: the dotfiles installers do.)
+set -euo pipefail
+
+rename_dir() {
+  local old="$1" new="$2"
+  [[ -e $old && ! -L $old ]] || return 0
+  if [[ -e $new ]]; then
+    echo "skein-migrate-names: $new already exists, leaving $old alone" >&2
+    return 0
+  fi
+  mkdir -p "$(dirname "$new")"
+  mv "$old" "$new"
+  ln -s "$new" "$old"
+  echo "Moved $old -> $new"
+}
+
+rename_dir "$HOME/.config/omadora" "$HOME/.config/skein"
+rename_dir "$HOME/.local/state/omadora" "$HOME/.local/state/skein"
+rename_dir "$HOME/.cache/omadora" "$HOME/.cache/skein"
+rename_dir "$HOME/.config/quickshell/omadora" "$HOME/.config/quickshell/skein"
+
+units="$HOME/.config/systemd/user"
+if [[ -d $units ]]; then
+  for unit in "$units"/omadora-*; do
+    [[ -e $unit || -L $unit ]] || continue
+    # no --now: the running session keeps its units until the next login
+    systemctl --user disable "$(basename "$unit")" 2>/dev/null || true
+    rm -f "$unit"
+    echo "Removed the old unit $(basename "$unit")"
+  done
+  # enablement links that pointed at the removed units
+  find "$units" -type l -name 'omadora-*' -xtype l -delete
+  systemctl --user daemon-reload 2>/dev/null || true
+fi
