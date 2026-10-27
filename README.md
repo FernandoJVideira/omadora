@@ -23,7 +23,7 @@ Read more about Omarchy itself at [omarchy.org](https://omarchy.org).
 ## What's different on this branch
 
 - **Quickshell shell**: one Quickshell config provides the top bar and its panels (audio, network, Bluetooth, weather, calendar, display, agents), notifications, OSD, launcher and menus, lock screen, and the theme and wallpaper switchers. It replaces Waybar, wofi, mako and hyprlock.
-- **Plasma Login Manager**: Plasma Login Manager (Nobara's login screen) is enabled by default, and only two sessions are offered: **Plasma** and **Omadora**.
+- **Plasma Login Manager**: Plasma Login Manager (Nobara's login screen) is enabled by default, and only two sessions are offered: **Plasma** and **Omadora**. If greetd is already the enabled login manager (for a custom greeter, with KDE removed), the installer leaves it alone and doesn't install Plasma Login Manager.
 - **Login screen theme**: choose the login wallpaper from the Style menu (Login Screen), including an `omadora` wallpaper that follows the active Omadora theme.
 - **Default agent and crash diagnosis**: set a default coding agent with `omadora-default-agent`, and get notified with a diagnosis when an app crashes.
 - **More themes**: Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine and others (see [themes/THIRD_PARTY.md](themes/THIRD_PARTY.md)).

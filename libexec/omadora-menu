@@ -316,6 +316,11 @@ show_theme_menu() {
 
 show_login_theme_menu() {
   local choice
+  if [[ ! -d /usr/share/plasmalogin/wallpapers ]]; then
+    notify-send "Login Screen" "Plasma Login Manager isn't installed, so there is no login wallpaper to set."
+    back_to show_style_menu
+    return
+  fi
   choice=$(menu "Login Screen" "󰸌  Match Omadora Theme\n$(omadora_run omadora-login-theme list)" "--width 350" "$(omadora_run omadora-login-theme current)")
   if [[ $choice == "CNCLD" || -z $choice ]]; then
     back_to show_style_menu

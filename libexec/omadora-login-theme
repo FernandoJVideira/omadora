@@ -58,6 +58,13 @@ sync() {
   echo "Installed login wallpaper omadora from $(cat "$current_dir/theme.name" 2>/dev/null)"
 }
 
+# Without Plasma Login Manager (greetd, say) there is no login wallpaper to manage
+if [[ ! -d $wallpapers_dir ]]; then
+  [[ ${1:-} == sync && ${2:-} == --auto ]] && exit 0
+  echo "Plasma Login Manager isn't installed, so there is no login wallpaper to set." >&2
+  exit 1
+fi
+
 case "${1:-list}" in
 sync)
   auto=0

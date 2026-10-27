@@ -1,17 +1,24 @@
-# Nobara logs in through Plasma Login Manager: make sure it is installed and the
+# Nobara logs in through Plasma Login Manager (unless greetd has replaced it): make sure it is installed and the
 # active display manager, and offer only "Plasma" and "Omadora" sessions. A dnf action
 # re-applies the session filter whenever the session packages update. The
 # helper is copied to a root-owned location so dnf (running as root) never
 # executes a user-writable file.
 if [[ -n "${OMADORA_NOBARA:-}" ]]; then
-  sudo dnf install -y plasma-login-manager
-  sudo systemctl enable --force plasmalogin.service
+  # With greetd as the login manager (a Quickshell greeter, e.g. from the dotfiles' remove-kde.sh)
+  # Plasma Login Manager must stay out: installing it again would pull KDE back, and enabling it
+  # would replace greetd at the next boot.
+  if systemctl is-enabled --quiet greetd.service 2>/dev/null; then
+    echo "greetd is the login manager, leaving Plasma Login Manager alone."
+  else
+    sudo dnf install -y plasma-login-manager
+    sudo systemctl enable --force plasmalogin.service
 
-  sudo install -Dm755 "$OMADORA_PATH/libexec/omadora-login-sessions" /usr/local/libexec/omadora-login-sessions
-  printf '%s\n' \
-    'post_transaction:hyprland*:in::/usr/local/libexec/omadora-login-sessions' \
-    'post_transaction:plasma-workspace*:in::/usr/local/libexec/omadora-login-sessions' \
-    'post_transaction:plasma-login-manager*:in::/usr/local/libexec/omadora-login-sessions' |
-    sudo tee /etc/dnf/libdnf5-plugins/actions.d/omadora-sessions.actions >/dev/null
-  sudo /usr/local/libexec/omadora-login-sessions
+    sudo install -Dm755 "$OMADORA_PATH/libexec/omadora-login-sessions" /usr/local/libexec/omadora-login-sessions
+    printf '%s\n' \
+      'post_transaction:hyprland*:in::/usr/local/libexec/omadora-login-sessions' \
+      'post_transaction:plasma-workspace*:in::/usr/local/libexec/omadora-login-sessions' \
+      'post_transaction:plasma-login-manager*:in::/usr/local/libexec/omadora-login-sessions' |
+      sudo tee /etc/dnf/libdnf5-plugins/actions.d/omadora-sessions.actions >/dev/null
+    sudo /usr/local/libexec/omadora-login-sessions
+  fi
 fi
