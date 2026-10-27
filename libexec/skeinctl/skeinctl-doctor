@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
+
+# shellcheck source=lib/common/cli.sh
+source "$SKEIN_LIB_DIR/common/cli.sh"
+
+# -----------------------------------------------------------------------------
+# CLI Definition
+# -----------------------------------------------------------------------------
+
+CLI_GROUP="doctor"
+CLI_SUMMARY="Run debug functions"
+
+CLI_NAMESPACES=(
+  "follow|Follow Journal entries"
+)
+
+CLI_COMMANDS=(
+  "status||Show the Skein session status|run_status||"
+  "follow session||Follow the Skein session units|run_follow_session||"
+)
+
+# -----------------------------------------------------------------------------
+# Commands
+# -----------------------------------------------------------------------------
+
+run_status() {
+  printf "Skein Session Target Status:\n------------------------------\n"
+  systemctl --user --legend=false --no-pager status skein-session.target
+  printf "\nSkein Session Dependencies:\n-----------------------------\n"
+  systemctl --user --legend=false --no-pager list-dependencies skein-session.target
+  printf "\nSkein Session Units:\n----------------------\n"
+  systemctl --user --legend=false --no-pager --all list-units 'skein-*'
+  printf "\nSkein Session Timers:\n-----------------------\n"
+  systemctl --user --legend=false --no-pager --all list-timers 'skein-*'
+}
+
+run_follow_session() {
+  journalctl --user -fu skein-*
+}
+
+# -----------------------------------------------------------------------------
+# Completion
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+cli_main "$@"

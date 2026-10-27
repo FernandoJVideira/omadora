@@ -1,0 +1,19 @@
+[Unit]
+Description=Skein Session Service
+PartOf=skein-session.target
+After=graphical-session.target
+# Wants= from skein-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=%h/.local/share/skein/libexec/systemd/skein-session-start
+ExecStop=%h/.local/share/skein/libexec/systemd/skein-session-stop
+
+TimeoutStopSec=10
+
+[Install]
+WantedBy=skein-session.target

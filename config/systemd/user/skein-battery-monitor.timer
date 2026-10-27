@@ -1,0 +1,14 @@
+[Unit]
+Description=Skein Battery Monitor Timer
+PartOf=skein-session.target
+# Wants= from skein-session.target does not inherit its condition, so
+# repeat it here to stop this from starting under non-Hyprland sessions.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
+
+[Timer]
+OnBootSec=15sec
+OnUnitActiveSec=1min
+AccuracySec=10sec
+
+[Install]
+WantedBy=skein-session.target

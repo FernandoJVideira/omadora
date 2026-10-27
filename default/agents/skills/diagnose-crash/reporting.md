@@ -1,31 +1,31 @@
-# Reporting a Crash Upstream to Omadora
+# Reporting a Crash Upstream to Skein
 
-Read this only after concluding that a crash is genuinely Omadora's to fix.
+Read this only after concluding that a crash is genuinely Skein's to fix.
 
-## Is it even Omadora's bug?
+## Is it even Skein's bug?
 
-Be strict here. Omadora is a configuration layer over Fedora (Nobara), so a crash
+Be strict here. Skein is a configuration layer over Fedora (Nobara), so a crash
 inside a third-party application — a file manager, a browser, a GNOME or Qt
-library — is almost always an upstream bug in **that** project, not in Omadora.
+library — is almost always an upstream bug in **that** project, not in Skein.
 
-Omadora's sphere of control is roughly:
+Skein's sphere of control is roughly:
 
-- the `omadora-*` commands
+- the `skein-*` commands
 - the Quickshell shell and its plugins
 - the Hyprland and terminal configuration it ships
 - its themes
 - its install and migration scripts
 - how it packages and configures what it installs
 
-A crash in a program Omadora merely installs is **not** an Omadora bug unless
-Omadora's own packaging or configuration is implicated.
+A crash in a program Skein merely installs is **not** an Skein bug unless
+Skein's own packaging or configuration is implicated.
 
-If it is not Omadora's, say so and stop. Suggesting the right upstream project is
+If it is not Skein's, say so and stop. Suggesting the right upstream project is
 useful; filing there yourself is not part of this.
 
 ## Three conditions, all required
 
-1. **It is a verified bug in Omadora's sphere**, established on evidence. Issues
+1. **It is a verified bug in Skein's sphere**, established on evidence. Issues
    are for verified bugs only. An "is this even a bug?" and feature ideas belong in GitHub Discussions.
 2. **The user has explicitly agreed.** Show them the exact title and body you
    propose, and wait for a yes. Never file unprompted.
@@ -84,8 +84,8 @@ gh issue create --repo elpritchos/omadora --title "..." --body "..."
 ```
 
 Include what happened, what was expected, steps to reproduce, system details from
-`git -C "$OMADORA_PATH" log -1 --oneline`, and diagnostics from `omadora-debug --no-sudo --print`
-(which also writes `/tmp/omadora-debug.log`; attach the relevant parts).
+`git -C "$SKEIN_PATH" log -1 --oneline`, and diagnostics from `skein-debug --no-sudo --print`
+(which also writes `/tmp/skein-debug.log`; attach the relevant parts).
 
 `gh` cannot attach media. If a screenshot would help, save one and give the user
 the path to drag into the web form.

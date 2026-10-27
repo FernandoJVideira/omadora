@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Launch the screensaver in a terminal with the correct font configuration.
+
+require_cmd tte
+
+# Exit early if screensave is already running
+pgrep -f org.skein.screensaver && exit 0
+
+# Allow screensaver to be turned off but also force started
+if skein_run skein-toggle-enabled screensaver-off && [[ $1 != "force" ]]; then
+  exit 1
+fi
+
+focused=$(skein_run skein-hyprland-monitor-focused)
+
+hypr_focus_monitor() {
+  hyprctl dispatch "hl.dsp.focus({ monitor = \"$1\" })" >/dev/null 2>&1 || hyprctl dispatch focusmonitor "$1" >/dev/null
+}
+
+hypr_exec() {
+  local command="$1"
+  hyprctl dispatch "hl.dsp.exec_cmd([[$command]])" >/dev/null 2>&1 || hyprctl dispatch exec -- bash -lc "$command" >/dev/null
+}
+
+for m in $(hyprctl monitors -j | jq -r '.[] | .name'); do
+  hypr_focus_monitor "$m"
+  hypr_exec "kitty --class=org.skein.screensaver --override font_size=12 --override window_padding_width=0 --override cursor=#000000 --override cursor_trail=0 -e "$SKEIN_LIBEXEC_DIR/skein-screensaver""
+done
+
+hypr_focus_monitor "$focused"

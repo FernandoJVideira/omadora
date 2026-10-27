@@ -3,33 +3,33 @@
 ## How do I perform a WiFi only install?
 
 During `archinstall`, choose **NetworkManager** as the network configuration and connect to your WiFi (`nmcli device wifi connect <ssid> --ask` from the live environment or after first boot).
-The Omadora installer enables NetworkManager and disables `systemd-networkd`, so the connection carries over.
+The Skein installer enables NetworkManager and disables `systemd-networkd`, so the connection carries over.
 
 After installation, use `nmcli`, `nmtui` or the Wiremix/network panel in the bar to manage connections.
 
 > **NOTE:** If WiFi hardware isn't detected after the Arch install, install the matching firmware package (for example `linux-firmware`, or a vendor package such as `broadcom-wl`) from a chroot or a wired connection.
 
-## Where is the documentation for Omadora?
+## Where is the documentation for Skein?
 
-In general, Omadora reimplements much of the same functionality, keybindings, etc., that is in Omarchy, and therefore the [The Omarchy Manual](https://learn.omacom.io/) can be used as a guide for Omadora.
+In general, Skein reimplements much of the same functionality, keybindings, etc., that is in Omarchy, and therefore the [The Omarchy Manual](https://learn.omacom.io/) can be used as a guide for Skein.
 
 The [Hyprland Wiki](https://wiki.hypr.land) is also great reference documentation for the configuration of Hyprland.
 
-However, the best resource for understanding Omadora is to read and understand the scripts within this repository.
+However, the best resource for understanding Skein is to read and understand the scripts within this repository.
 
-## How do I run the Omadora scripts?
+## How do I run the Skein scripts?
 
-In comparison to Omarchy, Omadora doesn't expose all scripts to the user to avoid cluttering bash completion.
-Instead, any of the scripts can be executed by using the exposed `omadora-exec` tool, e.g. `omadora-exec omadora-update`, which also has bash completion to help.
+In comparison to Omarchy, Skein doesn't expose all scripts to the user to avoid cluttering bash completion.
+Instead, any of the scripts can be executed by using the exposed `skein-exec` tool, e.g. `skein-exec skein-update`, which also has bash completion to help.
 
-There is also an exposed `omactl` frontend CLI tool which is intended to be used to interact with most Omadora functionality, however it's still a WIP which I'll continue to improve upon.
+There is also an exposed `skeinctl` frontend CLI tool which is intended to be used to interact with most Skein functionality, however it's still a WIP which I'll continue to improve upon.
 This also has help and bash completion to make things a bit nicer.
 
-## How do I keep Omadora updated?
+## How do I keep Skein updated?
 
 There is an update indicator which appears in the top right of the bar that indicates update status; clicking this will pop a terminal and execute the update script.
-The script can be manually run via `omactl update`, and will update Omadora to the latest version, along with system packages, firmware, flatpaks, and cargo-installed binaries.
-The update check will be performed a few times per day, however you can force an update check with `omactl update check`.
+The script can be manually run via `skeinctl update`, and will update Skein to the latest version, along with system packages, firmware, flatpaks, and cargo-installed binaries.
+The update check will be performed a few times per day, however you can force an update check with `skeinctl update check`.
 
 ## Where are all the apps that are provided by default in Omarchy?
 
@@ -37,24 +37,24 @@ This is a conscious decision not to include all the applications and configurati
 
 ## How do I install the official Omarchy themes?
 
-Run `omactl theme install-omarchy`, then use `omactl theme list` and `omactl theme set <name>` to select an installed `omarchy-*` theme.
+Run `skeinctl theme install-omarchy`, then use `skeinctl theme list` and `skeinctl theme set <name>` to select an installed `omarchy-*` theme.
 The command installs the tested Omarchy Quattro theme set by default; pass `--latest` to use the latest themes from the Quattro branch instead.
 
 ## Do I have to use the LazyVim Neovim starter?
 
 No, not at all.
-You can still use the [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager configured to disable the 'LazyVim/LazyVim' plugin, and ensure the theme plugin from `~/.config/omadora/current/theme/neovim.lua` is symlinked to the your lazy plugins directory.
+You can still use the [lazy.nvim](https://github.com/folke/lazy.nvim) plugin manager configured to disable the 'LazyVim/LazyVim' plugin, and ensure the theme plugin from `~/.config/skein/current/theme/neovim.lua` is symlinked to the your lazy plugins directory.
 Other than that, just use the same plugins from the `default/nvim` directory in your Neovim configuration.
 
 Theme hot reload is provided by a forked version of the [Aether.nvim](https://github.com/bjarneo/aether.nvim) plugin, and my forked version can be seen [here](https://github.com/elpritchos/aether.nvim).
 
 ## How do I turn off the weather updates?
 
-You can use the default keybinding <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>, or run `omactl toggle weather` to disable/enable the weather feature.
+You can use the default keybinding <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>, or run `skeinctl toggle weather` to disable/enable the weather feature.
 
 ## How do I configure the weather location and units?
 
-Weather uses an approximate IP-derived location by default, however if needed, add a configuration like the example below to `~/.config/omadora/config.json` to use an exact location without an IP lookup:
+Weather uses an approximate IP-derived location by default, however if needed, add a configuration like the example below to `~/.config/skein/config.json` to use an exact location without an IP lookup:
 
 ```json
 {
@@ -70,16 +70,16 @@ Weather uses an approximate IP-derived location by default, however if needed, a
 ```
 
 Weather units may be `metric`, `imperial`, or `auto`.
-If omitted or set to `auto`, Omadora derives the measurement system from your system locale.
+If omitted or set to `auto`, Skein derives the measurement system from your system locale.
 
-Forecast data is provided by [Open-Meteo](https://open-meteo.com/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and is summarized by Omadora.
+Forecast data is provided by [Open-Meteo](https://open-meteo.com/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and is summarized by Skein.
 
 ## I can't see the login keyring?
 
 Try logging out and back in again.
 This should recreate the `login` keyring if it doesn't already exist in `~/.local/share/keyrings`.
 
-## Where is the Omadora default plymouth theme from?
+## Where is the Skein default plymouth theme from?
 
 The default plymouth theme installed is from the great theme collection at [adi1090x/plymouth-themes](https://github.com/adi1090x/plymouth-themes).
 I've modified the theme to ensure it displays correctly on multi-monitor setups.

@@ -1,4 +1,4 @@
-title="  Welcome to Omadora!"
+title="  Welcome to Skein!"
 
 message=$(
   cat <<'EOF'

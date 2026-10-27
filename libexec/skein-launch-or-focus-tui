@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Launch a TUI or focus an existing terminal window for it
+
+if (($# == 0)); then
+  echo "Usage: skein-launch-or-focus-tui <command> [args...]" >&2
+  exit 1
+fi
+
+APP_ID="org.skein.$(basename "$1")"
+
+skein_exec skein-launch-or-focus "$APP_ID" -- "$SKEIN_LIBEXEC_DIR/skein-launch-tui" "$@"

@@ -1,4 +1,4 @@
--- Shared path constants for Omadora's Hyprland Lua modules.
+-- Shared path constants for Skein's Hyprland Lua modules.
 -- Lua files loaded with require() have separate local scopes, so modules that
 -- need these paths import this table instead of repeating os.getenv() lookups.
 
@@ -8,5 +8,5 @@ return {
   home = home,
   config_home = os.getenv("XDG_CONFIG_HOME") or (home .. "/.config"),
   state_home = os.getenv("XDG_STATE_HOME") or (home .. "/.local/state"),
-  omadora_path = os.getenv("OMADORA_PATH") or (home .. "/.local/share/omadora"),
+  skein_path = os.getenv("SKEIN_PATH") or (home .. "/.local/share/skein"),
 }

@@ -3,7 +3,7 @@
 set -e
 
 # Set install mode to online since boot.sh is used for curl installations
-export OMADORA_ONLINE_INSTALL=true
+export SKEIN_ONLINE_INSTALL=true
 
 ansi_art='
 ▄██████▄    ▄▄▄▄███▄▄▄▄      ▄████████ ████████▄   ▄██████▄     ▄████████    ▄████████
@@ -19,19 +19,19 @@ ansi_art='
 clear
 echo -e "\n$ansi_art\n"
 
-echo "Installing git to clone the Omadora repo..."
+echo "Installing git to clone the Skein repo..."
 sudo pacman -Sy --needed --noconfirm git
 
 # Use custom repo if specified, otherwise default
-OMADORA_REPO="${OMADORA_REPO:-FernandoJVideira/omadora}"
+SKEIN_REPO="${SKEIN_REPO:-FernandoJVideira/skein}"
 
 # Use custom branch if instructed, otherwise default to master
-OMADORA_REF="${OMADORA_REF:-arch}"
+SKEIN_REF="${SKEIN_REF:-arch}"
 
-echo -e "\nCloning Omadora from: https://github.com/${OMADORA_REPO}.git"
-echo -e "\e[32mUsing ref: $OMADORA_REF\e[0m"
-rm -rf ~/.local/share/omadora/
-git clone --depth 1 --branch "$OMADORA_REF" "https://github.com/${OMADORA_REPO}.git" ~/.local/share/omadora >/dev/null
+echo -e "\nCloning Skein from: https://github.com/${SKEIN_REPO}.git"
+echo -e "\e[32mUsing ref: $SKEIN_REF\e[0m"
+rm -rf ~/.local/share/skein/
+git clone --depth 1 --branch "$SKEIN_REF" "https://github.com/${SKEIN_REPO}.git" ~/.local/share/skein >/dev/null
 
 echo -e "\nInstallation starting..."
-source ~/.local/share/omadora/install.sh
+source ~/.local/share/skein/install.sh

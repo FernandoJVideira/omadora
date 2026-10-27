@@ -1,36 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Migrate to Omadora v3.8.2"
+echo "Migrate to Skein v3.8.2"
 
-export OMADORA_PATH="${OMADORA_PATH:-$HOME/.local/share/omadora}"
-export OMADORA_INSTALL="${OMADORA_INSTALL:-$OMADORA_PATH/install}"
-export PATH="$OMADORA_PATH/bin:$PATH"
+export SKEIN_PATH="${SKEIN_PATH:-$HOME/.local/share/skein}"
+export SKEIN_INSTALL="${SKEIN_INSTALL:-$SKEIN_PATH/install}"
+export PATH="$SKEIN_PATH/bin:$PATH"
 
-migration_log="$HOME/omadora-v3.8.2-migration.log"
+migration_log="$HOME/skein-v3.8.2-migration.log"
 exec > >(tee -a "$migration_log") 2>&1
 echo "Logging migration output to: $migration_log"
-echo "Starting Omadora v3.8.2 migration at $(date -Is)"
+echo "Starting Skein v3.8.2 migration at $(date -Is)"
 
-omadora() {
+skein() {
   local command="$1"
   shift
 
   if command -v "$command" >/dev/null 2>&1; then
     "$command" "$@"
   else
-    omadora-exec "$command" "$@"
+    skein-exec "$command" "$@"
   fi
 }
 
 refresh_config() {
-  omadora omadora-refresh-config "$1"
+  skein skein-refresh-config "$1"
 }
 
 source_install_script() {
   local script="$1"
   # shellcheck source=/dev/null
-  source "$OMADORA_INSTALL/$script"
+  source "$SKEIN_INSTALL/$script"
 }
 
 echo "Enable new package sources"
@@ -88,17 +88,17 @@ unset -f remove_old_networkd_file
 source_install_script config/hardware/network.sh
 
 echo "Refresh application launchers and MIME associations"
-omadora omadora-refresh-applications
+skein skein-refresh-applications
 source_install_script config/mimetypes.sh
 
-echo "Refresh Omadora configs"
-omadora omadora-refresh-fastfetch
-omadora omadora-refresh-hypridle
-omadora omadora-refresh-hyprland
-omadora omadora-refresh-hyprlock
-omadora omadora-refresh-hyprsunset
-omadora omadora-refresh-bar
-omadora omadora-refresh-wofi
+echo "Refresh Skein configs"
+skein skein-refresh-fastfetch
+skein skein-refresh-hypridle
+skein skein-refresh-hyprland
+skein skein-refresh-hyprlock
+skein skein-refresh-hyprsunset
+skein skein-refresh-bar
+skein skein-refresh-wofi
 
 for config in \
   alacritty/alacritty.toml \
@@ -110,23 +110,23 @@ for config in \
   hypr/windows.conf \
   kitty/kitty.conf \
   opencode/opencode.json \
-  systemd/user/hypridle.service.d/omadora.conf \
-  systemd/user/hyprpaper.service.d/omadora.conf \
-  systemd/user/hyprsunset.service.d/omadora.conf \
-  systemd/user/mako.service.d/omadora.conf \
-  systemd/user/omadora-battery-monitor.service \
-  systemd/user/omadora-battery-monitor.timer \
-  systemd/user/omadora-fcitx5.service \
-  systemd/user/omadora-hyprland-monitor.service \
-  systemd/user/omadora-hyprlock.service \
-  systemd/user/omadora-polkitagent.service \
-  systemd/user/omadora-recover-internal-monitor.service \
-  systemd/user/omadora-session.service \
-  systemd/user/omadora-session.target \
-  systemd/user/omadora-update-check.service \
-  systemd/user/omadora-update-check.timer \
-  systemd/user/omadora-weather-check.service \
-  systemd/user/omadora-weather-check.timer \
+  systemd/user/hypridle.service.d/skein.conf \
+  systemd/user/hyprpaper.service.d/skein.conf \
+  systemd/user/hyprsunset.service.d/skein.conf \
+  systemd/user/mako.service.d/skein.conf \
+  systemd/user/skein-battery-monitor.service \
+  systemd/user/skein-battery-monitor.timer \
+  systemd/user/skein-fcitx5.service \
+  systemd/user/skein-hyprland-monitor.service \
+  systemd/user/skein-hyprlock.service \
+  systemd/user/skein-polkitagent.service \
+  systemd/user/skein-recover-internal-monitor.service \
+  systemd/user/skein-session.service \
+  systemd/user/skein-session.target \
+  systemd/user/skein-update-check.service \
+  systemd/user/skein-update-check.timer \
+  systemd/user/skein-weather-check.service \
+  systemd/user/skein-weather-check.timer \
   starship.toml \
   tmux/tmux.conf \
   uwsm/default \
@@ -136,9 +136,9 @@ for config in \
   refresh_config "$config"
 done
 
-echo "Install Nautilus extensions and Omadora toggle defaults"
+echo "Install Nautilus extensions and Skein toggle defaults"
 source_install_script config/nautilus-python.sh
-source_install_script config/omadora-toggles.sh
+source_install_script config/skein-toggles.sh
 
 echo "Backup removed environment.d config"
 if [[ -e "$HOME/.config/environment.d" || -L "$HOME/.config/environment.d" ]]; then
@@ -167,7 +167,7 @@ if [[ -e "$HOME/.bashrc" || -L "$HOME/.bashrc" ]]; then
   mv "$HOME/.bashrc" "$bashrc_backup"
   echo "Moved existing .bashrc to $bashrc_backup"
 fi
-cp "$OMADORA_PATH/default/bashrc" "$HOME/.bashrc"
+cp "$SKEIN_PATH/default/bashrc" "$HOME/.bashrc"
 unset bashrc_backup
 
 echo "Configure Mise work defaults"
@@ -188,21 +188,21 @@ if [[ -e "$HOME/.config/nvim" || -L "$HOME/.config/nvim" ]]; then
   echo "Moved existing Neovim config to $nvim_backup"
 fi
 source_install_script packaging/nvim.sh
-ln -snf "$HOME/.config/omadora/current/theme/neovim.lua" "$HOME/.config/nvim/lua/plugins/omadora-theme.lua"
+ln -snf "$HOME/.config/skein/current/theme/neovim.lua" "$HOME/.config/nvim/lua/plugins/skein-theme.lua"
 unset nvim_backup
 
 echo "Install and reapply themes"
-current_theme="$(omadora omadora-theme-current 2>/dev/null || true)"
-omadora omadora-theme-install-omarchy -y
-if [[ -n "$current_theme" ]] && omadora omadora-theme-list | grep -qxF "$current_theme"; then
-  omadora omadora-theme-set "$current_theme"
+current_theme="$(skein skein-theme-current 2>/dev/null || true)"
+skein skein-theme-install-omarchy -y
+if [[ -n "$current_theme" ]] && skein skein-theme-list | grep -qxF "$current_theme"; then
+  skein skein-theme-set "$current_theme"
 else
-  omadora omadora-theme-set "Rose Pine Darker"
+  skein skein-theme-set "Rose Pine Darker"
 fi
 mkdir -p "$HOME/.config/btop/themes" "$HOME/.config/mako"
-ln -snf "$HOME/.config/omadora/current/theme/btop.theme" "$HOME/.config/btop/themes/current.theme"
-ln -snf "$HOME/.config/omadora/current/theme/mako.ini" "$HOME/.config/mako/config"
-ln -snf "$HOME/.config/omadora/current/theme/neovim.lua" "$HOME/.config/nvim/lua/plugins/omadora-theme.lua"
+ln -snf "$HOME/.config/skein/current/theme/btop.theme" "$HOME/.config/btop/themes/current.theme"
+ln -snf "$HOME/.config/skein/current/theme/mako.ini" "$HOME/.config/mako/config"
+ln -snf "$HOME/.config/skein/current/theme/neovim.lua" "$HOME/.config/nvim/lua/plugins/skein-theme.lua"
 unset current_theme
 
 echo "Set GNOME font defaults"
@@ -221,10 +221,10 @@ for dir in Desktop Documents Downloads Music Pictures Public Templates Videos; d
 done
 
 echo "Copy hook samples"
-mkdir -p "$HOME/.config/omadora/hooks"
-cp -rn "$OMADORA_PATH"/config/omadora/hooks/. "$HOME/.config/omadora/hooks/"
-cp -rn "$OMADORA_PATH"/config/omadora/extensions "$HOME/.config/omadora/"
-cp -rn "$OMADORA_PATH"/config/omadora/themed "$HOME/.config/omadora/"
+mkdir -p "$HOME/.config/skein/hooks"
+cp -rn "$SKEIN_PATH"/config/skein/hooks/. "$HOME/.config/skein/hooks/"
+cp -rn "$SKEIN_PATH"/config/skein/extensions "$HOME/.config/skein/"
+cp -rn "$SKEIN_PATH"/config/skein/themed "$HOME/.config/skein/"
 
 echo "Enable updated login and user services"
 systemctl --user daemon-reload || true
@@ -233,7 +233,7 @@ source_install_script login/login-keyring.sh
 systemctl --user daemon-reload || true
 
 echo "Refresh Plymouth theme"
-omadora omadora-refresh-plymouth
+skein skein-refresh-plymouth
 
 echo "Mark reboot required"
 sudo touch /run/reboot-required
@@ -244,11 +244,11 @@ cat <<'EOF'
 *                                                          *
 *                    REBOOT REQUIRED                       *
 *                                                          *
-*        Omadora v3.8.2 migration has completed, but       *
+*        Skein v3.8.2 migration has completed, but       *
 *      these changes require a system reboot to apply.     *
 *                                                          *
 ************************************************************
 
 EOF
 
-echo "Completed Omadora v3.8.2 migration at $(date -Is)"
+echo "Completed Skein v3.8.2 migration at $(date -Is)"

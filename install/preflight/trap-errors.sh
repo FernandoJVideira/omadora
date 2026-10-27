@@ -2,15 +2,15 @@
 catch_errors() {
   local exit_code=$?
 
-  echo -e "\n\e[31mOmadora installation failed!\e[0m"
+  echo -e "\n\e[31mSkein installation failed!\e[0m"
   echo
   echo "This command halted with exit code $exit_code:"
   echo "$BASH_COMMAND"
   echo
   if command -v gum >/dev/null && gum confirm "Retry installation?"; then
-    bash ~/.local/share/omadora/install.sh
+    bash ~/.local/share/skein/install.sh
   else
-    echo "You can retry later by running: bash ~/.local/share/omadora/install.sh"
+    echo "You can retry later by running: bash ~/.local/share/skein/install.sh"
   fi
 }
 

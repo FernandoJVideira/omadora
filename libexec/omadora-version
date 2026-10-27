@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# Print the installed Omadora version
-
-git -C "$OMADORA_PATH" describe --tags "$(git -C "$OMADORA_PATH" rev-list --tags --max-count=1)"

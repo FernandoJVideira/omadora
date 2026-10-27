@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
+
+# shellcheck source=lib/common/cli.sh
+source "$SKEIN_LIB_DIR/common/cli.sh"
+
+# -----------------------------------------------------------------------------
+# CLI Definition
+# -----------------------------------------------------------------------------
+
+CLI_GROUP="restart"
+CLI_SUMMARY="Restart Skein session components"
+
+CLI_NAMESPACES=()
+
+CLI_COMMANDS=(
+  "bar||Restart the top bar|run_bar||"
+  "hypridle||Restart Hypridle|run_hypridle||"
+  "hyprpaper||Restart Hyprpaper|run_hyprpaper||"
+  "hyprsunset||Restart Hyprsunset|run_hyprsunset||"
+  "fcitx5||Restart Fcitx5|run_fcitx5||"
+  "polkitagent||Restart the polkit authentication agent|run_polkitagent||"
+  "session||Restart the full Skein session target|run_session||"
+  "skein-session||Restart the full Skein session target|run_session||"
+  "skein-session.target||Restart the full Skein session target|run_session||"
+)
+
+# -----------------------------------------------------------------------------
+# Commands
+# -----------------------------------------------------------------------------
+
+restart_unit() {
+  local unit="$1"
+
+  systemctl --user restart "$unit"
+}
+
+run_bar() {
+  skein_exec skein-restart-bar
+}
+
+run_hypridle() {
+  restart_unit hypridle.service
+}
+
+run_hyprpaper() {
+  restart_unit hyprpaper.service
+}
+
+run_hyprsunset() {
+  restart_unit hyprsunset.service
+}
+
+run_fcitx5() {
+  restart_unit skein-fcitx5.service
+}
+
+run_polkitagent() {
+  restart_unit skein-polkitagent.service
+}
+
+run_session() {
+  restart_unit skein-session.target
+}
+
+# -----------------------------------------------------------------------------
+# Completion
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+
+cli_main "$@"

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Toggle notification do-not-disturb mode
+
+if [[ $(qs -c skein ipc call notifications toggleSilenced) == true ]]; then
+  notify-send -u low "󰂛    Silenced notifications"
+else
+  notify-send -u low "󰂚    Enabled notifications"
+fi
+
+"$(dirname "${BASH_SOURCE[0]}")/skein-bar-refresh" notification-silencing

@@ -1,4 +1,4 @@
-omadora-exec omadora-refresh-applications
+skein-exec skein-refresh-applications
 update-desktop-database ~/.local/share/applications
 
 

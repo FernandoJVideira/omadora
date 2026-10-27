@@ -1,9 +1,0 @@
-#!/bin/bash
-
-# Close the picker or active window.
-
-if [[ $(qs -c omadora ipc call picker isOpen 2>/dev/null) == true ]]; then
-  qs -c omadora ipc call picker close
-else
-  hyprctl dispatch 'hl.dsp.window.close()' || hyprctl dispatch killactive
-fi

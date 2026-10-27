@@ -2,8 +2,8 @@
 set -euo pipefail
 
 echo "Refreshing the weather timer..."
-omactl config restore-path systemd/user/omadora-weather-check.timer
+skeinctl config restore-path systemd/user/skein-weather-check.timer
 
 echo "Restarting weather checks..."
-omactl service daemon-reload
-omactl service restart omadora-weather-check.timer
+skeinctl service daemon-reload
+skeinctl service restart skein-weather-check.timer

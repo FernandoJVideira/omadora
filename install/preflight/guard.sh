@@ -1,5 +1,5 @@
 abort() {
-  echo -e "\e[31mOmadora install requires: $1\e[0m"
+  echo -e "\e[31mSkein install requires: $1\e[0m"
   echo
 
   read -rp "Proceed anyway on your own accord and without assistance? [y/N] " response

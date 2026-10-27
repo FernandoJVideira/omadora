@@ -1,2 +1,2 @@
-source "$OMADORA_PATH"/completions/omactl-completion.bash
-source "$OMADORA_PATH"/completions/omadora-exec-completion.bash
+source "$SKEIN_PATH"/completions/skeinctl-completion.bash
+source "$SKEIN_PATH"/completions/skein-exec-completion.bash

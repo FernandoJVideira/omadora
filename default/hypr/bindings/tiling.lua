@@ -1,5 +1,5 @@
-o.bind("SUPER + W", "Close window", o.libexec("omadora-hyprland-window-killactive"))
-o.bind("CTRL + ALT + DELETE", "Close all windows", o.libexec("omadora-hyprland-window-close-all"))
+o.bind("SUPER + W", "Close window", o.libexec("skein-hyprland-window-killactive"))
+o.bind("CTRL + ALT + DELETE", "Close all windows", o.libexec("skein-hyprland-window-close-all"))
 
 o.bind("SUPER + J", "Toggle window split", hl.dsp.layout("togglesplit"))
 o.bind("SUPER + P", "Pseudo window", hl.dsp.window.pseudo())
@@ -11,11 +11,11 @@ o.bind(
   hl.dsp.window.fullscreen_state({ internal = 0, client = 2 })
 )
 o.bind("SUPER + ALT + F", "Full width", hl.dsp.window.fullscreen({ mode = "maximized" }))
-o.bind("SUPER + O", "Pop window out (float & pin)", o.libexec("omadora-hyprland-window-pop"))
+o.bind("SUPER + O", "Pop window out (float & pin)", o.libexec("skein-hyprland-window-pop"))
 o.bind(
   "SUPER + L",
   "Toggle workspace layout",
-  o.libexec("omadora-hyprland-workspace-layout-toggle")
+  o.libexec("skein-hyprland-workspace-layout-toggle")
 )
 
 o.bind("SUPER + LEFT", "Focus on left window", hl.dsp.focus({ direction = "l" }))
@@ -200,10 +200,10 @@ end
 o.bind(
   "SUPER + code:61",
   "Cycle monitor scaling",
-  o.libexec("omadora-hyprland-monitor-scaling-cycle")
+  o.libexec("skein-hyprland-monitor-scaling-cycle")
 )
 o.bind(
   "SUPER + ALT + code:61",
   "Cycle monitor scaling backwards",
-  o.libexec("omadora-hyprland-monitor-scaling-cycle --reverse")
+  o.libexec("skein-hyprland-monitor-scaling-cycle --reverse")
 )

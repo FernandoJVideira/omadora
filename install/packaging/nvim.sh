@@ -4,5 +4,5 @@ if [[ ! -d "$HOME/.config/nvim" ]]; then
 
   rm -rf "$HOME"/.config/nvim/.git
 
-  cp -r "$HOME"/.local/share/omadora/default/nvim/* "$HOME"/.config/nvim
+  cp -r "$HOME"/.local/share/skein/default/nvim/* "$HOME"/.config/nvim
 fi

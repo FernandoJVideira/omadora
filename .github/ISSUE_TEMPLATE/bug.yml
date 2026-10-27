@@ -6,7 +6,7 @@ body:
     id: system-details
     attributes:
       label: System details
-      placeholder: e.g. Omadora v2.1.0, NVIDIA 5090, etc.
+      placeholder: e.g. Skein v2.1.0, NVIDIA 5090, etc.
     validations:
       required: true
 

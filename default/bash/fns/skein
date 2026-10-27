@@ -1,0 +1,6 @@
+# Start Skein/Hyprland
+skein() {
+  if uwsm check may-start -v; then
+    exec uwsm start -e -D Hyprland -N Hyprland -- /usr/bin/start-hyprland
+  fi
+}

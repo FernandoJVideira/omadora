@@ -7,7 +7,7 @@ export MANROFFOPT="-c"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # Update environment
-export OMADORA_PATH=$HOME/.local/share/omadora
+export SKEIN_PATH=$HOME/.local/share/skein
 _prepend_path() {
   local dir="$1"
   case ":$PATH:" in
@@ -16,7 +16,7 @@ _prepend_path() {
   esac
 }
 [[ -d "$HOME/.cargo/bin" ]] && _prepend_path "$HOME/.cargo/bin"
-[[ -d "$OMADORA_PATH/bin" ]] && _prepend_path "$OMADORA_PATH/bin"
+[[ -d "$SKEIN_PATH/bin" ]] && _prepend_path "$SKEIN_PATH/bin"
 [[ -d "$HOME/.local/bin" ]] && _prepend_path "$HOME/.local/bin"
 unset -f _prepend_path
 

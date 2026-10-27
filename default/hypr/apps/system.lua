@@ -1,7 +1,7 @@
 o.window({ tag = "floating-window" }, { float = true, center = true, size = { 875, 600 } })
 
 o.window(
-  "(org.omadora.bluetui|org.omadora.impala|org.omadora.wiremix|org.omadora.btop|org.omadora.terminal|org.omadora.bash|org.codeberg.dnkl.foot|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omadora|About|TUI.float|imv|mpv)",
+  "(org.skein.bluetui|org.skein.impala|org.skein.wiremix|org.skein.btop|org.skein.terminal|org.skein.bash|org.codeberg.dnkl.foot|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Skein|About|TUI.float|imv|mpv)",
   { tag = "+floating-window" }
 )
 o.window({
@@ -11,7 +11,7 @@ o.window({
 o.window("org.gnome.Calculator", { float = true })
 
 -- Screen saver should always cover the screen and not be tiled.
-o.window("org.omadora.screensaver", {
+o.window("org.skein.screensaver", {
   fullscreen = true,
   float = true,
   no_anim = true,

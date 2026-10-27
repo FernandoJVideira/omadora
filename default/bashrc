@@ -5,9 +5,9 @@ if [ -f /etc/bashrc ]; then
   . /etc/bashrc
 fi
 
-# Source the default Omadora bash config
+# Source the default Skein bash config
 # (don't mess with these directly, just overwrite them in ~/.bashrc.d)
-. ~/.local/share/omadora/default/bash/rc
+. ~/.local/share/skein/default/bash/rc
 
 # Source user bash config
 if [ -d "$HOME"/.bashrc.d ]; then

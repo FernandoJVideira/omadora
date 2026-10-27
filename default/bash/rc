@@ -1,6 +1,6 @@
-source ~/.local/share/omadora/default/bash/envs
-source ~/.local/share/omadora/default/bash/shell
-source ~/.local/share/omadora/default/bash/init
-source ~/.local/share/omadora/default/bash/aliases
-source ~/.local/share/omadora/default/bash/functions
-[[ $- == *i* ]] && bind -f ~/.local/share/omadora/default/bash/inputrc
+source ~/.local/share/skein/default/bash/envs
+source ~/.local/share/skein/default/bash/shell
+source ~/.local/share/skein/default/bash/init
+source ~/.local/share/skein/default/bash/aliases
+source ~/.local/share/skein/default/bash/functions
+[[ $- == *i* ]] && bind -f ~/.local/share/skein/default/bash/inputrc

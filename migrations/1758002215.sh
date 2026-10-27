@@ -1,2 +1,2 @@
 echo "Update ghostty config"
-omadora-refresh-config ghostty/config
+skein-refresh-config ghostty/config

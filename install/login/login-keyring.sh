@@ -1,6 +1,6 @@
 # Unlock the GNOME Keyring at login. Arch has no authselect, so add the PAM
 # lines to the TTY and display-manager stacks directly (idempotent).
-configure_omadora_login_keyring() {
+configure_skein_login_keyring() {
   local keyrings_dir="$HOME/.local/share/keyrings"
   mkdir -p "$keyrings_dir"
   chmod 700 "$keyrings_dir"
@@ -18,5 +18,5 @@ configure_omadora_login_keyring() {
   done
 }
 
-configure_omadora_login_keyring
-unset -f configure_omadora_login_keyring
+configure_skein_login_keyring
+unset -f configure_skein_login_keyring

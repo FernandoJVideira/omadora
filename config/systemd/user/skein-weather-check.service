@@ -1,0 +1,21 @@
+[Unit]
+Description=Skein Weather Check Service
+PartOf=skein-session.target
+After=graphical-session.target network-online.target
+
+[Service]
+Type=oneshot
+Environment=SKEIN_STATE_HOME=%S/skein
+Environment=SKEIN_CACHE_HOME=%C/skein
+ExecStart=%h/.local/share/skein/libexec/systemd/skein-weather-check
+
+# hardening (safe, minimal)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+StateDirectory=skein/weather
+CacheDirectory=skein/weather
+
+Nice=10
+TimeoutStartSec=45s

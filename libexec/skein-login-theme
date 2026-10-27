@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Login screen theme (SDDM on the Arch branch): skein-login-theme [list|current|set <name>|sync [--auto]]
+# Thin wrapper over skein-sddm-theme so the menu, "skeinctl theme login" and the
+# theme-set hook keep working. "sync --auto" (run on every theme change) only
+# follows the theme when the skein login theme is in use and sudo needs no password.
+
+here="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+sddm="$here/skein-sddm-theme"
+
+if [[ ${1:-} == sync && ${2:-} == --auto ]]; then
+  [[ $("$sddm" current) == skein ]] || exit 0
+  sudo -n true 2>/dev/null || exit 0
+  exec "$sddm" sync
+fi
+
+exec "$sddm" "$@"

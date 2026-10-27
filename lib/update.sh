@@ -1,20 +1,20 @@
-readonly OMADORA_UPDATE_STATE_DIR="${OMADORA_STATE_HOME}/update"
-readonly OMADORA_UPDATE_CACHE_DIR="${OMADORA_CACHE_HOME}/update"
+readonly SKEIN_UPDATE_STATE_DIR="${SKEIN_STATE_HOME}/update"
+readonly SKEIN_UPDATE_CACHE_DIR="${SKEIN_CACHE_HOME}/update"
 
-readonly OMADORA_UPDATE_LOCK_FILE="${OMADORA_RUNTIME_DIR}/update.lock"
+readonly SKEIN_UPDATE_LOCK_FILE="${SKEIN_RUNTIME_DIR}/update.lock"
 
-readonly OMADORA_UPDATE_STATE_FILE="$OMADORA_UPDATE_STATE_DIR/state.json"
+readonly SKEIN_UPDATE_STATE_FILE="$SKEIN_UPDATE_STATE_DIR/state.json"
 
-readonly OMADORA_UPDATE_DNF_UPGRADES_LIST="$OMADORA_UPDATE_CACHE_DIR/dnf-upgrades.txt"
-readonly OMADORA_UPDATE_DNF_ADVISORIES_JSON="$OMADORA_UPDATE_CACHE_DIR/dnf-advisories.json"
-readonly OMADORA_UPDATE_FWUPD_JSON="$OMADORA_UPDATE_CACHE_DIR/fwupd.json"
-readonly OMADORA_UPDATE_FLATPAK_UPGRADES_LIST="$OMADORA_UPDATE_CACHE_DIR/flatpak-upgrades.txt"
-readonly OMADORA_UPDATE_CARGO_UPGRADES_LIST="$OMADORA_UPDATE_CACHE_DIR/cargo-upgrades.txt"
+readonly SKEIN_UPDATE_DNF_UPGRADES_LIST="$SKEIN_UPDATE_CACHE_DIR/dnf-upgrades.txt"
+readonly SKEIN_UPDATE_DNF_ADVISORIES_JSON="$SKEIN_UPDATE_CACHE_DIR/dnf-advisories.json"
+readonly SKEIN_UPDATE_FWUPD_JSON="$SKEIN_UPDATE_CACHE_DIR/fwupd.json"
+readonly SKEIN_UPDATE_FLATPAK_UPGRADES_LIST="$SKEIN_UPDATE_CACHE_DIR/flatpak-upgrades.txt"
+readonly SKEIN_UPDATE_CARGO_UPGRADES_LIST="$SKEIN_UPDATE_CACHE_DIR/cargo-upgrades.txt"
 
-omadora_update=0
-omadora_current_version=""
-omadora_latest_version=""
-omadora_status="ok"
+skein_update=0
+skein_current_version=""
+skein_latest_version=""
+skein_status="ok"
 dnf_package_total=0
 dnf_advisory_total=0
 dnf_security_total=0
@@ -44,14 +44,14 @@ write_atomic() {
 
 update_dirs_init() {
   ensure_dir \
-    "$OMADORA_UPDATE_STATE_DIR" \
-    "$OMADORA_UPDATE_CACHE_DIR" \
-    "$OMADORA_RUNTIME_DIR"
+    "$SKEIN_UPDATE_STATE_DIR" \
+    "$SKEIN_UPDATE_CACHE_DIR" \
+    "$SKEIN_RUNTIME_DIR"
 }
 
-update_collect_omadora() {
-  omadora_latest_version="$(
-    git -C "$OMADORA_ROOT" ls-remote --tags origin |
+update_collect_skein() {
+  skein_latest_version="$(
+    git -C "$SKEIN_ROOT" ls-remote --tags origin |
       grep -v "{}" |
       awk '{print $2}' |
       sed 's#refs/tags/##' |
@@ -59,22 +59,22 @@ update_collect_omadora() {
       tail -n 1
   )"
   # A remote without release tags (e.g. a fork) has nothing to compare against.
-  if [[ -z "$omadora_latest_version" ]]; then
+  if [[ -z "$skein_latest_version" ]]; then
     return 0
   fi
 
-  omadora_current_version="$(
-    git -C "$OMADORA_ROOT" describe --tags \
-      "$(git -C "$OMADORA_ROOT" rev-list --tags --max-count=1)"
+  skein_current_version="$(
+    git -C "$SKEIN_ROOT" describe --tags \
+      "$(git -C "$SKEIN_ROOT" rev-list --tags --max-count=1)"
   )"
-  if [[ -z "$omadora_current_version" ]]; then
-    omadora_status="error"
+  if [[ -z "$skein_current_version" ]]; then
+    skein_status="error"
     with_errors=true
     return 1
   fi
 
-  if [[ "$omadora_current_version" != "$omadora_latest_version" ]]; then
-    omadora_update=1
+  if [[ "$skein_current_version" != "$skein_latest_version" ]]; then
+    skein_update=1
   fi
 }
 
@@ -99,14 +99,14 @@ update_collect_dnf() {
   fi
 
   awk 'NF >= 4 && $2 ~ /^[0-9a-zA-Z]/ { print $1 }' <<<"$out" |
-    sort -u >"$OMADORA_UPDATE_DNF_UPGRADES_LIST"
+    sort -u >"$SKEIN_UPDATE_DNF_UPGRADES_LIST"
 
   dnf_package_total="$(
-    grep -cve '^[[:space:]]*$' "$OMADORA_UPDATE_DNF_UPGRADES_LIST" ||
+    grep -cve '^[[:space:]]*$' "$SKEIN_UPDATE_DNF_UPGRADES_LIST" ||
       true
   )"
 
-  printf '[]\n' >"$OMADORA_UPDATE_DNF_ADVISORIES_JSON"
+  printf '[]\n' >"$SKEIN_UPDATE_DNF_ADVISORIES_JSON"
 }
 
 update_collect_cargo() {
@@ -123,7 +123,7 @@ update_collect_cargo() {
   fi
 
   if ! cargo install-update --list \
-    >"$OMADORA_UPDATE_CARGO_UPGRADES_LIST"; then
+    >"$SKEIN_UPDATE_CARGO_UPGRADES_LIST"; then
     cargo_status="error"
     with_errors=true
     return 1
@@ -131,7 +131,7 @@ update_collect_cargo() {
 
   cargo_total="$(
     grep -cE '[[:space:]]Yes$' \
-      "$OMADORA_UPDATE_CARGO_UPGRADES_LIST" ||
+      "$SKEIN_UPDATE_CARGO_UPGRADES_LIST" ||
       true
   )"
 }
@@ -159,10 +159,10 @@ update_collect_flatpak() {
       sub(/[[:space:]].*$/, "", line)
       print line
     }
-  ' <<<"$output" >"$OMADORA_UPDATE_FLATPAK_UPGRADES_LIST"
+  ' <<<"$output" >"$SKEIN_UPDATE_FLATPAK_UPGRADES_LIST"
 
   flatpak_total="$(
-    grep -cve '^[[:space:]]*$' "$OMADORA_UPDATE_FLATPAK_UPGRADES_LIST" ||
+    grep -cve '^[[:space:]]*$' "$SKEIN_UPDATE_FLATPAK_UPGRADES_LIST" ||
       true
   )"
 }
@@ -183,7 +183,7 @@ update_collect_firmware() {
 
   if ! fwupdmgr get-updates \
     --json \
-    >"$OMADORA_UPDATE_FWUPD_JSON" 2>/dev/null; then
+    >"$SKEIN_UPDATE_FWUPD_JSON" 2>/dev/null; then
     firmware_status="error"
     with_errors=true
     return 1
@@ -196,7 +196,7 @@ update_collect_firmware() {
         | select(has("Releases"))
       ]
       | length
-    ' "$OMADORA_UPDATE_FWUPD_JSON"
+    ' "$SKEIN_UPDATE_FWUPD_JSON"
   )"
 }
 
@@ -210,17 +210,17 @@ update_write_state() {
 
   dnf_items="$(
     jq -Rsc 'split("\n") | map(select(length > 0))' \
-      "$OMADORA_UPDATE_DNF_UPGRADES_LIST" 2>/dev/null ||
+      "$SKEIN_UPDATE_DNF_UPGRADES_LIST" 2>/dev/null ||
       printf '[]'
   )"
   flatpak_items="$(
     jq -Rsc 'split("\n") | map(select(length > 0)) | unique' \
-      "$OMADORA_UPDATE_FLATPAK_UPGRADES_LIST" 2>/dev/null ||
+      "$SKEIN_UPDATE_FLATPAK_UPGRADES_LIST" 2>/dev/null ||
       printf '[]'
   )"
   cargo_items="$(
     awk '$NF == "Yes" { print $1 }' \
-      "$OMADORA_UPDATE_CARGO_UPGRADES_LIST" 2>/dev/null |
+      "$SKEIN_UPDATE_CARGO_UPGRADES_LIST" 2>/dev/null |
       jq -Rsc 'split("\n") | map(select(length > 0)) | unique'
   )"
   firmware_items="$(
@@ -231,7 +231,7 @@ update_write_state() {
         | (.Name // .DeviceId // "Firmware update")
       ]
       | unique
-    ' "$OMADORA_UPDATE_FWUPD_JSON" 2>/dev/null ||
+    ' "$SKEIN_UPDATE_FWUPD_JSON" 2>/dev/null ||
       printf '[]'
   )"
   dnf_advisories="$(
@@ -245,12 +245,12 @@ update_write_state() {
             severity: .Severity
           }
       ]
-    ' "$OMADORA_UPDATE_DNF_ADVISORIES_JSON" 2>/dev/null ||
+    ' "$SKEIN_UPDATE_DNF_ADVISORIES_JSON" 2>/dev/null ||
       printf '[]'
   )"
 
   total_updates=$((\
-    omadora_update + \
+    skein_update + \
     dnf_package_total + \
     flatpak_total + \
     cargo_total + \
@@ -258,10 +258,10 @@ update_write_state() {
 
   jq -n \
     --argjson with_errors "$with_errors" \
-    --argjson omadora_update "${omadora_update}" \
-    --arg omadora_current_version "$omadora_current_version" \
-    --arg omadora_latest_version "$omadora_latest_version" \
-    --arg omadora_status "$omadora_status" \
+    --argjson skein_update "${skein_update}" \
+    --arg skein_current_version "$skein_current_version" \
+    --arg skein_latest_version "$skein_latest_version" \
+    --arg skein_status "$skein_status" \
     --argjson total_updates "$total_updates" \
     --argjson dnf_package_total "$dnf_package_total" \
     --argjson dnf_items "$dnf_items" \
@@ -295,11 +295,11 @@ update_write_state() {
   updates: {
     total: $total_updates,
 
-    omadora: {
-      count: $omadora_update,
-      status: $omadora_status,
-      current_version: $omadora_current_version,
-      latest_version: $omadora_latest_version
+    skein: {
+      count: $skein_update,
+      status: $skein_status,
+      current_version: $skein_current_version,
+      latest_version: $skein_latest_version
     },
 
     dnf: {
@@ -340,5 +340,5 @@ update_write_state() {
     }
   }
 }
-' | write_atomic "$OMADORA_UPDATE_STATE_FILE"
+' | write_atomic "$SKEIN_UPDATE_STATE_FILE"
 }

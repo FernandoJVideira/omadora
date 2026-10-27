@@ -62,7 +62,7 @@ hl.config({
 })
 
 hl.layer_rule({
-  match = { namespace = "omadora-picker" },
+  match = { namespace = "skein-picker" },
   animation = "popin",
 })
 

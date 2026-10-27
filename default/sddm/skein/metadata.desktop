@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=Skein
+Description=Login screen that follows the active Skein theme
+Author=Skein
+License=MIT
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=skein
+Theme-API=2.0
+QtVersion=6

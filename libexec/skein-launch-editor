@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# Launch the default editor as determined by $EDITOR (set via ~/.config/uwsm/default) (or nvim if missing).
+# Starts suitable editors in a terminal window and otherwise as a regular application.
+
+EDITOR="$(skein_run skein-default-editor)"
+skein_run skein-cmd-present "${EDITOR%% *}" || EDITOR=nvim
+
+case "$EDITOR" in
+nvim | vim | nano | micro | hx | helix | fresh)
+  skein_exec skein-launch-tui "$EDITOR" "$@"
+  ;;
+*)
+  # shellcheck disable=SC2086 # the editor may be a command with arguments, like "flatpak run <app>"
+  exec uwsm-app -S both -- $EDITOR "$@"
+  ;;
+esac
