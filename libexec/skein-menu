@@ -316,6 +316,12 @@ show_theme_menu() {
 
 show_login_theme_menu() {
   local choice
+  # with the greeter there is no login wallpaper or theme to pick: it follows the active theme itself
+  if systemctl is-enabled --quiet greetd.service 2>/dev/null; then
+    notify-send "Login Screen" "The login screen is the Quickshell greeter; it follows the active theme on its own."
+    back_to show_style_menu
+    return
+  fi
   choice=$(menu "Login Screen" "󰸌  Match Skein Theme\n$(skein_run skein-login-theme list)" "--width 350" "$(skein_run skein-login-theme current)")
   if [[ $choice == "CNCLD" || -z $choice ]]; then
     back_to show_style_menu
