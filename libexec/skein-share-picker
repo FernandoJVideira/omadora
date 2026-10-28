@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# The screen-share picker, in Skein's own style. xdg-desktop-portal-hyprland runs this whenever an app asks
+# to share the screen (its "custom_picker_binary" setting). It hands over the monitors and windows in
+# environment variables and reads the choice from our output:
+#   [SELECTION]<r if "remember">/screen:<monitor> | window:<handle> | region:<monitor>@x,y,w,h
+# Nothing printed means "cancelled". If the shell is not running, the standard picker takes over, so
+# sharing never breaks.
+#
+#   skein-share-picker enable    use this picker for screen sharing (writes ~/.config/hypr/xdph.conf)
+#   skein-share-picker disable   go back to the standard picker
+#   skein-share-picker status    print "enabled" or "disabled"
+
+self="$(readlink -f "${BASH_SOURCE[0]}")"
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/xdph.conf"
+marker="# skein-share-picker"
+
+restart_portal() { systemctl --user restart xdg-desktop-portal-hyprland 2>/dev/null || true; }
+
+case "${1:-}" in
+enable)
+  mkdir -p "$(dirname "$conf")"
+  if [[ -f $conf ]] && grep -q 'custom_picker_binary' "$conf" && ! grep -q "$marker" "$conf"; then
+    echo "$conf already sets another picker; leaving it alone" >&2
+    exit 1
+  fi
+  printf '%s\nscreencopy {\n  custom_picker_binary = %s\n}\n' "$marker" "$self" >"$conf"
+  restart_portal
+  exit 0
+  ;;
+disable)
+  if [[ -f $conf ]] && grep -q "$marker" "$conf"; then
+    rm -f "$conf"
+    restart_portal
+  fi
+  exit 0
+  ;;
+status)
+  if [[ -f $conf ]] && grep -q "$marker" "$conf"; then echo enabled; else echo disabled; fi
+  exit 0
+  ;;
+esac
+
+# --- the picker itself ---
+
+fallback() { exec hyprland-share-picker "$@"; }
+
+command -v qs >/dev/null && command -v jq >/dev/null && command -v grim >/dev/null || fallback "$@"
+qs -c skein ipc call sharepicker isOpen >/dev/null 2>&1 || fallback "$@"
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+# Monitors arrive as "id:name:x:y:w:h;" and windows as "handle[HC>]class[HT>]title[HE>]address[HA>]"
+outputs="$(jq -cn --arg list "${XDPH_OUTPUT_SHARING_LIST:-}" '
+  $list | split(";") | map(select(. != "") | split(":")) |
+  map({id: .[0], name: .[1], x: (.[2] | tonumber), y: (.[3] | tonumber), w: (.[4] | tonumber), h: (.[5] | tonumber)}) |
+  map(. + {main: (.x == 0 and .y == 0)}) |
+  # The main display (at 0,0) comes first, then the others from left to right
+  sort_by([(if .main then 0 else 1 end), .x, .y])')"
+
+windows="$(jq -cn --arg list "${XDPH_WINDOW_SHARING_LIST:-}" '
+  $list | split("[HA>]") | map(select(. != "")) |
+  map((split("[HC>]")) as $a | ($a[1] | split("[HT>]")) as $b | ($b[1] | split("[HE>]")) as $c |
+      {handle: $a[0], class: $b[0], title: $c[0], address: ($c[1] // "")})')"
+
+# Where each window is, and whether its workspace is on screen (only those can be photographed)
+clients="$(hyprctl clients -j 2>/dev/null || echo '[]')"
+monitors="$(hyprctl monitors -j 2>/dev/null || echo '[]')"
+
+# Previews: one snapshot of every monitor, and of every window that is showing
+while IFS= read -r name; do
+  [[ -n $name ]] && grim -o "$name" -s 0.3 "$work/out-$name.png" 2>/dev/null &
+done < <(jq -r '.[].name' <<<"$outputs")
+
+# Match by address: the portal gives it in decimal, Hyprland in hex
+windows="$(jq -c --argjson clients "$clients" --argjson monitors "$monitors" '
+  def hex2dec: ltrimstr("0x") | explode | map(if . >= 97 then . - 87 else . - 48 end) | reduce .[] as $d (0; . * 16 + $d);
+  map(. as $w |
+    ($clients | map(select(.address | hex2dec | tostring == $w.address)) | .[0]) as $c |
+    if $c == null then $w + {shown: false}
+    else
+      ($monitors | map(select(.id == $c.monitor)) | .[0]) as $m |
+      $w + {x: $c.at[0], y: $c.at[1], w: $c.size[0], h: $c.size[1],
+            shown: ($m != null and $m.activeWorkspace.id == $c.workspace.id)}
+    end)' <<<"$windows")"
+
+while IFS=$'\t' read -r handle x y w h; do
+  [[ -n $handle ]] && grim -g "${x},${y} ${w}x${h}" -s 0.4 "$work/win-$handle.png" 2>/dev/null &
+done < <(jq -r '.[] | select(.shown == true) | [.handle, .x, .y, .w, .h] | @tsv' <<<"$windows")
+wait
+
+jq -n --argjson outputs "$outputs" --argjson windows "$windows" --arg dir "$work" '{
+  outputs: ($outputs | map(. + {preview: "\($dir)/out-\(.name).png"})),
+  windows: ($windows | map(. + {preview: (if .shown then "\($dir)/win-\(.handle).png" else "" end)}))
+}' >"$work/data.json"
+
+mkfifo "$work/answer"
+qs -c skein ipc call sharepicker open "$work/data.json" "$work/answer" >/dev/null 2>&1 || fallback "$@"
+
+# The shell writes "<remember 0|1>\t<screen:NAME | window:HANDLE | region>"; nothing means cancelled
+# The answer has no trailing newline, which makes read report failure even though it got the data
+IFS=$'\t' read -r remember choice <"$work/answer" || true
+[[ -n ${choice:-} ]] || exit 0
+
+flag=""
+[[ ${remember:-0} == 1 ]] && flag="r"
+
+if [[ $choice == region ]]; then
+  # Draw the area on the screen itself, like the standard picker
+  choice="region:$(slurp -f '%o@%x,%y,%w,%h' 2>/dev/null)" || exit 0
+  [[ $choice != "region:" ]] || exit 0
+fi
+
+printf '[SELECTION]%s/%s' "$flag" "$choice"

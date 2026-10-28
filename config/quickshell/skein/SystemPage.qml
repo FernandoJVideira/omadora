@@ -1,14 +1,37 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 // Settings > System: background services, updates and session actions.
 SettingsPage {
   id: root
 
   readonly property var sys: backend?.sysState ?? ({})
+  readonly property string sharePickerTool: `${Skein.skeinPath}/libexec/skein-share-picker`
+  property bool sharePicker: false
+
+  Process {
+    id: shareStatus
+
+    command: [root.sharePickerTool, "status"]
+    running: true
+    stdout: StdioCollector {
+      onStreamFinished: root.sharePicker = text.trim() === "enabled"
+    }
+  }
 
   SettingsSection {
     title: "Services"
+
+    SwitchRow {
+      label: "Screen-share picker"
+      description: "Choose what to share in Skein's own window, with previews of your monitors and windows"
+      checked: root.sharePicker
+      onToggled: value => {
+        root.sharePicker = value;
+        Quickshell.execDetached([root.sharePickerTool, value ? "enable" : "disable"]);
+      }
+    }
 
     SwitchRow {
       label: "Weather"
