@@ -194,7 +194,7 @@ mark_keepers() {
   mapfile -t keep < <(matching starship jetbrainsmono-nerd-fonts 'papirus-icon-theme*')
   ((${#keep[@]})) || return 0
   log "Keeping ${keep[*]} (marked as installed on purpose)"
-  as_root dnf mark user "${keep[@]}" >/dev/null
+  as_root dnf mark user -y "${keep[@]}" >/dev/null
 }
 
 cmd_list() {
