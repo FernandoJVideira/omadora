@@ -97,10 +97,10 @@ Panel {
   }
 
   component Caption: Text {
-    color: Qt.alpha(Skein.foreground, 0.6)
-    font.family: root.mono
-    font.pointSize: Skein.fontSize - 2.5
-    font.letterSpacing: 1
+    color: Qt.alpha(Skein.foreground, 0.55)
+    font.family: Skein.fontFamily
+    font.pointSize: Skein.fontSize - 1
+    font.weight: Font.Medium
   }
 
   component Track: Rectangle {
@@ -167,7 +167,7 @@ Panel {
 
   Caption {
     visible: root.providers.length === 0
-    text: "NO AGENTS FOUND"
+    text: "No agents found"
   }
 
   // Header
@@ -226,7 +226,7 @@ Panel {
 
       Caption {
         visible: root.hasLimits
-        text: "LIMITS"
+        text: "Limits"
       }
 
       Repeater {
@@ -286,7 +286,7 @@ Panel {
       Divider {}
 
       Caption {
-        text: "TOKENS BY DAY"
+        text: "Tokens by day"
       }
 
       Column {
@@ -339,7 +339,7 @@ Panel {
       Divider {}
 
       Caption {
-        text: "TOKENS BY MODEL"
+        text: "Tokens by model"
       }
 
       Column {
@@ -390,7 +390,7 @@ Panel {
 
       Caption {
         visible: (root.provider?.models ?? []).length === 0
-        text: "NO USAGE IN THE LAST 7 DAYS"
+        text: "No usage in the last 7 days"
       }
     }
   }

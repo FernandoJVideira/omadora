@@ -14,8 +14,8 @@ SettingsRow {
   Rectangle {
     width: btnText.implicitWidth + 24
     height: Math.round(24 * Skein.textScale)
-    radius: 6
-    color: mouse.containsMouse ? Qt.alpha(Skein.accent, 0.25) : Qt.alpha(Skein.foreground, 0.06)
+    radius: height / 2
+    color: mouse.containsMouse ? Qt.alpha(Skein.foreground, 0.14) : Qt.alpha(Skein.foreground, 0.07)
 
     Behavior on color {
       ColorAnimation {
@@ -23,7 +23,7 @@ SettingsRow {
       }
     }
     border.width: 1
-    border.color: Qt.alpha(Skein.accent, 0.6)
+    border.color: Qt.alpha(Skein.foreground, 0.16)
 
     Text {
       id: btnText

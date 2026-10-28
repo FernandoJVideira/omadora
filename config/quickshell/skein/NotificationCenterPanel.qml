@@ -67,10 +67,10 @@ Panel {
           visible: isDnd || root.notifications.length > 0
           width: label.implicitWidth + 22
           height: 26
-          radius: 8
-          color: isDnd && Skein.silenced ? Qt.alpha(Skein.accent, 0.35) : (mouse.containsMouse ? Qt.alpha(Skein.accent, 0.25) : Qt.alpha(Skein.foreground, 0.06))
+          radius: height / 2
+          color: isDnd && Skein.silenced ? Qt.alpha(Skein.accent, 0.9) : (mouse.containsMouse ? Qt.alpha(Skein.foreground, 0.14) : Qt.alpha(Skein.foreground, 0.07))
           border.width: 1
-          border.color: Qt.alpha(Skein.accent, 0.6)
+          border.color: isDnd && Skein.silenced ? Qt.alpha(Skein.accent, 0.9) : Qt.alpha(Skein.foreground, 0.16)
 
           Text {
             id: label
@@ -131,10 +131,10 @@ Panel {
 
           width: list.width
           height: cardBody.implicitHeight + 22
-          radius: 12
+          radius: 16
           color: cardMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.1) : Qt.alpha(Skein.foreground, 0.06)
           border.width: 1
-          border.color: Qt.alpha(Skein.accent, modelData.urgency === 2 ? 0.8 : 0.25)
+          border.color: modelData.urgency === 2 ? Qt.alpha(Skein.accent, 0.8) : Qt.alpha(Skein.foreground, 0.12)
 
           MouseArea {
             id: cardMouse
@@ -170,7 +170,7 @@ Panel {
                 width: parent.width
                 elide: Text.ElideRight
                 visible: text !== ""
-                text: card.modelData.appName.toUpperCase()
+                text: card.modelData.appName
                 textFormat: Text.PlainText
                 color: Qt.alpha(Skein.foreground, 0.55)
                 font.family: Skein.fontFamily

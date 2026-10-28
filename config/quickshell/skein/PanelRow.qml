@@ -14,14 +14,14 @@ Rectangle {
 
   width: parent ? parent.width : 0
   height: 32
-  color: mouse.containsMouse ? Qt.alpha(Skein.accent, 0.15) : "transparent"
+  color: mouse.containsMouse ? Qt.alpha(Skein.foreground, 0.08) : "transparent"
 
   Behavior on color {
     ColorAnimation {
       duration: 100
     }
   }
-  radius: 8
+  radius: 12
 
   Row {
     anchors.fill: parent

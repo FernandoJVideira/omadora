@@ -125,6 +125,8 @@ Scope {
       readonly property int base: DockConfig.iconSize
       readonly property int peak: DockConfig.magnify ? Math.max(DockConfig.magnifySize, base) : base
       readonly property int gap: 8
+      // Room on each side of an icon, so the gap between neighbours is the same whatever their shape
+      readonly property int pad: 5
       readonly property int frameThickness: base + 20
       // Room for the magnified icons and the name label above the frame
       readonly property int areaThickness: gap + frameThickness + (peak - base) + 34
@@ -282,8 +284,8 @@ Scope {
           Rectangle {
             id: frame
 
-            width: win.vertical ? win.frameThickness : cells.childrenRect.width + 24
-            height: win.vertical ? cells.childrenRect.height + 24 : win.frameThickness
+            width: win.vertical ? win.frameThickness : cells.childrenRect.width + 16
+            height: win.vertical ? cells.childrenRect.height + 16 : win.frameThickness
             anchors.bottom: win.edge === "bottom" ? parent.bottom : undefined
             anchors.bottomMargin: win.gap
             anchors.left: win.edge === "left" ? parent.left : undefined
@@ -292,10 +294,10 @@ Scope {
             anchors.rightMargin: win.gap
             anchors.horizontalCenter: win.vertical ? undefined : parent.horizontalCenter
             anchors.verticalCenter: win.vertical ? parent.verticalCenter : undefined
-            radius: 16
+            radius: 22
             color: Qt.alpha(Skein.background, 0.88)
             border.width: 1
-            border.color: Qt.alpha(Skein.accent, 0.5)
+            border.color: Qt.alpha(Skein.foreground, 0.16)
 
             // The icons sit on the screen-side edge and grow into the room above the frame
             Grid {
@@ -326,8 +328,8 @@ Scope {
                   property real bounce: 0
 
                   // Along the dock the cell is as wide as the icon, across it as tall as the biggest
-                  width: win.vertical ? win.peak + 8 : size
-                  height: win.vertical ? size : win.peak + 8
+                  width: win.vertical ? win.peak + 8 : size + 2 * win.pad
+                  height: win.vertical ? size + 2 * win.pad : win.peak + 8
 
                   Rectangle {
                     visible: cell.isSeparator
@@ -345,13 +347,25 @@ Scope {
                     visible: !cell.isSeparator
                     width: cell.size
                     height: cell.size
-                    x: win.edge === "left" ? 8 + cell.bounce : (win.edge === "right" ? parent.width - width - 8 - cell.bounce : 0)
-                    y: win.edge === "bottom" ? parent.height - height - 8 - cell.bounce : 0
+                    x: win.edge === "left" ? 8 + cell.bounce : (win.edge === "right" ? parent.width - width - 8 - cell.bounce : win.pad)
+                    y: win.edge === "bottom" ? parent.height - height - 8 - cell.bounce : win.pad
+
+                    // Every icon sits on the same rounded tile, whatever shape its own artwork has
+                    Rectangle {
+                      anchors.fill: parent
+                      visible: picture.status === Image.Ready
+                      radius: width * 0.26
+                      color: Qt.alpha(Skein.foreground, 0.09)
+                      border.width: 1
+                      border.color: Qt.alpha(Skein.foreground, 0.08)
+                    }
 
                     Image {
                       id: picture
 
-                      anchors.fill: parent
+                      anchors.centerIn: parent
+                      width: parent.width * 0.78
+                      height: parent.height * 0.78
                       source: cell.modelData.icon ?? ""
                       sourceSize: Qt.size(160, 160)
                       fillMode: Image.PreserveAspectFit
@@ -364,8 +378,8 @@ Scope {
                     Rectangle {
                       anchors.fill: parent
                       visible: picture.status !== Image.Ready
-                      radius: width * 0.22
-                      color: Qt.alpha(Skein.accent, 0.7)
+                      radius: width * 0.26
+                      color: Qt.alpha(Skein.accent, 0.85)
 
                       Text {
                         anchors.centerIn: parent
@@ -398,7 +412,7 @@ Scope {
                     radius: 8
                     color: Qt.alpha(Skein.background, 0.95)
                     border.width: 1
-                    border.color: Qt.alpha(Skein.accent, 0.5)
+                    border.color: Qt.alpha(Skein.foreground, 0.16)
                     width: labelText.implicitWidth + 20
                     height: labelText.implicitHeight + 10
                     x: win.edge === "left" ? icon.x + icon.width + 12 : (win.edge === "right" ? icon.x - width - 12 : (parent.width - width) / 2)
@@ -456,7 +470,7 @@ Scope {
                     cursorShape: Qt.PointingHandCursor
                     onPositionChanged: mouse => {
                       const along = win.vertical ? mouse.y : mouse.x;
-                      win.hoverPos = cell.index + Math.max(0, Math.min(1, along / Math.max(1, cell.size)));
+                      win.hoverPos = cell.index + Math.max(0, Math.min(1, along / Math.max(1, win.vertical ? cell.height : cell.width)));
                     }
                     onEntered: win.hover(true)
                     onClicked: mouse => {
@@ -509,7 +523,7 @@ Scope {
           radius: 12
           color: Qt.alpha(Skein.background, 0.97)
           border.width: 1
-          border.color: Qt.alpha(Skein.accent, 0.5)
+          border.color: Qt.alpha(Skein.foreground, 0.16)
           x: win.edge === "left" ? win.areaThickness + 6 : (win.edge === "right" ? parent.width - win.areaThickness - width - 6 : Math.max(8, Math.min(parent.width - width - 8, win.menuAnchor - width / 2)))
           y: win.edge === "bottom" ? parent.height - win.areaThickness - height - 6 : Math.max(8, Math.min(parent.height - height - 8, win.menuAnchor - height / 2))
 
@@ -573,7 +587,7 @@ Scope {
                 width: menuColumn.width
                 height: 30
                 radius: 8
-                color: entryMouse.containsMouse && modelData.enabled ? Qt.alpha(Skein.accent, 0.25) : "transparent"
+                color: entryMouse.containsMouse && modelData.enabled ? Qt.alpha(Skein.foreground, 0.1) : "transparent"
                 opacity: modelData.enabled ? 1 : 0.4
 
                 Text {

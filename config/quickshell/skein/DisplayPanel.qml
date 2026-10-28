@@ -118,10 +118,10 @@ Panel {
   }
 
   component Caption: Text {
-    color: Qt.alpha(Skein.foreground, 0.6)
-    font.family: root.mono
-    font.pointSize: Skein.fontSize - 2.5
-    font.letterSpacing: 1
+    color: Qt.alpha(Skein.foreground, 0.55)
+    font.family: Skein.fontFamily
+    font.pointSize: Skein.fontSize - 1
+    font.weight: Font.Medium
   }
 
   // Header
@@ -153,7 +153,7 @@ Panel {
       }
 
       Caption {
-        text: root.hasBrightness ? Model.brightnessName(root.brightness).toUpperCase() : (root.focusedDisplay ? root.focusedDisplay.name : "")
+        text: root.hasBrightness ? Model.brightnessName(root.brightness) : (root.focusedDisplay ? root.focusedDisplay.name : "")
       }
     }
   }
@@ -177,7 +177,7 @@ Panel {
       Caption {
         id: brightnessCaption
 
-        text: "BRIGHTNESS"
+        text: "Brightness"
       }
 
       Caption {
@@ -205,7 +205,7 @@ Panel {
       Caption {
         id: textCaption
 
-        text: "TEXT SIZE"
+        text: "Text size"
       }
 
       Caption {
@@ -231,7 +231,7 @@ Panel {
     spacing: 8
 
     Caption {
-      text: "SCALE"
+      text: "Scale"
     }
 
     Row {
@@ -283,7 +283,7 @@ Panel {
     spacing: 8
 
     Caption {
-      text: "DISPLAYS"
+      text: "Displays"
     }
 
     Column {

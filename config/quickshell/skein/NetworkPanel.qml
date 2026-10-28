@@ -167,10 +167,10 @@ Panel {
   }
 
   component Caption: Text {
-    color: Qt.alpha(Skein.foreground, 0.6)
-    font.family: root.mono
-    font.pointSize: Skein.fontSize - 2.5
-    font.letterSpacing: 1
+    color: Qt.alpha(Skein.foreground, 0.55)
+    font.family: Skein.fontFamily
+    font.pointSize: Skein.fontSize - 1
+    font.weight: Font.Medium
   }
 
   component Stat: Item {
@@ -371,8 +371,8 @@ Panel {
       height: visible ? 32 : 0
       color: "transparent"
       border.width: 1
-      border.color: Qt.alpha(Skein.accent, 0.5)
-      radius: 8
+      border.color: Qt.alpha(Skein.foreground, 0.16)
+      radius: 12
 
       Text {
         anchors.verticalCenter: parent.verticalCenter
@@ -453,7 +453,7 @@ Panel {
       Caption {
         width: parent.width
         elide: Text.ElideRight
-        text: (root.speedText !== "" ? root.speedText : (root.testing ? "Testing…" : [root.info.iface, root.info.band].filter(part => part).join("  ·  "))).toUpperCase()
+        text: (root.speedText !== "" ? root.speedText : (root.testing ? "Testing…" : [root.info.iface, root.info.band].filter(part => part).join("  ·  ")))
       }
     }
 
@@ -567,7 +567,7 @@ Panel {
 
     Caption {
       anchors.verticalCenter: parent.verticalCenter
-      text: `WI-FI BAND: ${(root.info.band ?? "").toUpperCase().replace(" ", "")}`
+      text: `Wi-Fi band: ${(root.info.band ?? "").replace(" ", "")}`
     }
 
     Row {
@@ -577,7 +577,7 @@ Panel {
 
       Caption {
         anchors.verticalCenter: parent.verticalCenter
-        text: "AUTOMATIC"
+        text: "Automatic"
       }
 
       Switch {
@@ -600,7 +600,7 @@ Panel {
   Divider {}
 
   Caption {
-    text: "DNS PROVIDER"
+    text: "DNS provider"
   }
 
   Row {
@@ -644,8 +644,8 @@ Panel {
     height: visible ? 32 : 0
     color: "transparent"
     border.width: 1
-    border.color: Qt.alpha(Skein.accent, 0.5)
-    radius: 8
+    border.color: Qt.alpha(Skein.foreground, 0.16)
+    radius: 12
 
     Text {
       anchors.verticalCenter: parent.verticalCenter
@@ -698,7 +698,7 @@ Panel {
 
   Caption {
     visible: root.knownNetworks.length > 0 && root.wifiDevice !== null && Networking.wifiEnabled
-    text: "KNOWN NETWORKS"
+    text: "Known networks"
   }
 
   Column {
@@ -719,7 +719,7 @@ Panel {
 
   Caption {
     visible: root.otherNetworks.length > 0 && root.wifiDevice !== null && Networking.wifiEnabled
-    text: "OTHER NETWORKS"
+    text: "Other networks"
   }
 
   Flickable {
@@ -749,7 +749,7 @@ Panel {
 
   Caption {
     visible: root.wifiDevice === null
-    text: "NO WI-FI ADAPTER"
+    text: "No Wi-Fi adapter"
   }
 
   // Only scan while the panel is open

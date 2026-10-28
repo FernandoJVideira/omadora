@@ -12,7 +12,7 @@ Item {
   property alias leading: leadSlot.data
 
   width: parent ? parent.width : 0
-  implicitHeight: Math.max(Math.round(42 * Skein.textScale), texts.implicitHeight + 22, slot.height + 22)
+  implicitHeight: Math.max(Math.round(48 * Skein.textScale), texts.implicitHeight + 30, slot.height + 30)
   height: implicitHeight
   opacity: dimmed ? 0.5 : 1
 
