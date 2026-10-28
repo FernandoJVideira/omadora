@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Print how many packages are installed. Counting takes over a second, so the result is cached
-# until the package database changes.
+# Print how many packages are installed (rpm on Fedora and Nobara, pacman on Arch). Counting takes
+# over a second on rpm, so the result is cached until the package database changes.
+
+if command -v pacman >/dev/null; then
+  pacman -Qq 2>/dev/null | wc -l
+  exit 0
+fi
 
 db=/usr/lib/sysimage/rpm/rpmdb.sqlite
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/skein/package-count"
