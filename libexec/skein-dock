@@ -4,10 +4,14 @@ set -euo pipefail
 # Settings of the Skein dock, kept in ~/.config/skein/dock.json (the shell watches the file).
 #   skein-dock init                        create the file with defaults, if missing
 #   skein-dock set <key> <json value>      enabled, position, iconSize, magnify, magnifySize,
-#                                          autoHide, showRunning, showIndicators
+#                                          autoHide, showRunning, showIndicators, showTrash, showDownloads, iconPack (app icon folder, or empty for the system theme), iconPackName
 #   skein-dock pin <desktop id>            add an app to the dock
 #   skein-dock unpin <desktop id>          remove it
 #   skein-dock move <desktop id> <-1|1>    move it one place left/up or right/down
+#   skein-dock place <desktop id> <index>  put it at a position (0 is first), adding it if it is not there yet
+#   skein-dock icon <app> <image path>     use your own icon for an app (<app> is its lowercase desktop id)
+#   skein-dock icon-reset <app>            back to the pack or theme icon
+#   skein-dock choose-icon <app>           pick the image with a file dialog, then do the same as "icon"
 #   skein-dock toggle                      show or hide the dock
 
 file="${XDG_CONFIG_HOME:-$HOME/.config}/skein/dock.json"
@@ -25,24 +29,29 @@ seed_pinned() {
 }
 
 init() {
-  [[ -f $file ]] && return 0
+  # An empty file counts as missing; the new one is written aside and moved in, never half-written
+  [[ -s $file ]] && return 0
   mkdir -p "$(dirname "$file")"
+  local tmp
+  tmp="$(mktemp "$file.XXXXXX")"
   jq -n --argjson pinned "$(seed_pinned)" '{
     enabled: false, position: "bottom", iconSize: 48, magnify: true, magnifySize: 72,
-    autoHide: false, showRunning: true, showIndicators: true, pinned: $pinned}' >"$file"
+    autoHide: false, showRunning: true, showIndicators: true, showTrash: true, showDownloads: true, pinned: $pinned}' >"$tmp" && mv "$tmp" "$file"
 }
 
 edit() { # <jq filter> [jq args...]
   local filter="$1"
   shift
   init
-  jq "$@" "$filter" "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+  local tmp
+  tmp="$(mktemp "$file.XXXXXX")"
+  jq "$@" "$filter" "$file" >"$tmp" && mv "$tmp" "$file" || rm -f "$tmp"
 }
 
 case "${1:-}" in
 init) init ;;
 set)
-  [[ $2 =~ ^(enabled|position|iconSize|magnify|magnifySize|autoHide|showRunning|showIndicators)$ ]] || { echo "Unknown setting: $2" >&2; exit 1; }
+  [[ $2 =~ ^(enabled|position|iconSize|magnify|magnifySize|autoHide|showRunning|showIndicators|showTrash|showDownloads|iconPack|iconPackName)$ ]] || { echo "Unknown setting: $2" >&2; exit 1; }
   edit '.[$k] = $v' --arg k "$2" --argjson v "$3"
   ;;
 pin) edit '(.pinned // []) as $p | .pinned = (if ($p | index($id)) then $p else $p + [$id] end)' --arg id "$2" ;;
@@ -52,12 +61,25 @@ move)
         | if $i == null or ($i + $d) < 0 or ($i + $d) >= ($p | length) then .
           else .pinned = ($p | .[$i] = $p[$i + $d] | .[$i + $d] = $p[$i]) end' --arg id "$2" --argjson d "$3"
   ;;
+icon)
+  [[ -f ${3:-} ]] || { echo "No such image: ${3:-}" >&2; exit 1; }
+  edit '.icons = ((.icons // {}) + {($id): $path})' --arg id "$2" --arg path "$3"
+  ;;
+icon-reset) edit 'del(.icons[$id])' --arg id "$2" ;;
+choose-icon)
+  picked="$(zenity --file-selection --title="Icon for $2" --filename="$HOME/Pictures/" \
+    --file-filter="Images | *.png *.svg *.jpg *.jpeg *.webp *.ico" 2>/dev/null)" || exit 0
+  [[ -n $picked ]] && "$0" icon "$2" "$picked"
+  ;;
+place)
+  edit '((.pinned // []) - [$id]) as $p | .pinned = ($p[0:$i] + [$id] + $p[$i:])' --arg id "$2" --argjson i "$3"
+  ;;
 toggle)
   init
   edit '.enabled = (.enabled | not)'
   ;;
 *)
-  echo "Usage: skein-dock init | set <key> <json> | pin <id> | unpin <id> | move <id> <-1|1> | toggle" >&2
+  echo "Usage: skein-dock init | set <key> <json> | pin <id> | unpin <id> | move <id> <-1|1> | icon <app> <file> | icon-reset <app> | choose-icon <app> | toggle" >&2
   exit 1
   ;;
 esac

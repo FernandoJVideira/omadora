@@ -1,9 +1,59 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 // Settings > Dock: turn the dock on, how it looks and behaves, and which apps it holds.
 SettingsPage {
   id: root
+
+  // Icon packs: what is installed or can be downloaded, and the one in use
+  property var packs: []
+  property bool busy: false
+  property string busyText: ""
+  readonly property string packTool: `${Skein.skeinPath}/libexec/skein-icon-pack`
+
+  function loadPacks(): void {
+    if (!listProc.running) {
+      listProc.running = true;
+    }
+  }
+
+  // Run one command of the pack tool; the list is read again when it ends
+  function runPack(text: string, script: string): void {
+    if (busy) {
+      return;
+    }
+    busy = true;
+    busyText = text;
+    toolProc.command = ["bash", "-c", script, "_", packTool];
+    toolProc.running = true;
+  }
+
+  Component.onCompleted: loadPacks()
+
+  Process {
+    id: listProc
+
+    command: [root.packTool, "list"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          root.packs = JSON.parse(text);
+        } catch (e) {
+          // keep the last list
+        }
+      }
+    }
+  }
+
+  Process {
+    id: toolProc
+
+    onExited: {
+      root.busy = false;
+      root.loadPacks();
+    }
+  }
 
   readonly property string search: searchRow.text.trim().toLowerCase()
   // Installed apps that are not in the dock yet, filtered by the search box
@@ -80,6 +130,92 @@ SettingsPage {
       checked: DockConfig.showIndicators
       onToggled: value => DockConfig.set("showIndicators", value)
     }
+
+    SwitchRow {
+      label: "Downloads folder"
+      description: "A shortcut to your Downloads folder at the end of the dock"
+      checked: DockConfig.showDownloads
+      onToggled: value => DockConfig.set("showDownloads", value)
+    }
+
+    SwitchRow {
+      label: "Trash"
+      description: "Open the trash, or empty it from the right-click menu"
+      checked: DockConfig.showTrash
+      onToggled: value => DockConfig.set("showTrash", value)
+    }
+  }
+
+  SettingsSection {
+    title: "Icon pack"
+
+    SettingsRow {
+      visible: root.busy
+      label: root.busyText
+      description: "Hang on, this can take a minute. You can keep using the system meanwhile."
+    }
+
+    Repeater {
+      model: root.packs
+
+      SettingsRow {
+        id: packRow
+
+        required property var modelData
+
+        dimmed: root.busy
+        label: modelData.active ? `${modelData.name} (in use)` : modelData.name
+        description: modelData.description
+
+        Row {
+          spacing: 6
+
+          SmallButton {
+            visible: !packRow.modelData.installed
+            enabled: !root.busy
+            text: "Download and apply"
+            onClicked: root.runPack(`Downloading ${packRow.modelData.name}…`, 'tool="$1"; "$tool" install "$2" && "$tool" apply "$2"; true'.replace("$2", packRow.modelData.id))
+          }
+
+          SmallButton {
+            visible: packRow.modelData.installed && !packRow.modelData.active
+            enabled: !root.busy
+            text: "Apply"
+            onClicked: root.runPack("Applying…", '"$1" apply "' + packRow.modelData.id + '"')
+          }
+
+          SmallButton {
+            visible: packRow.modelData.installed && packRow.modelData.active
+            enabled: false
+            highlighted: true
+            text: "In use"
+          }
+
+          SmallButton {
+            visible: packRow.modelData.installed && packRow.modelData.removable
+            enabled: !root.busy
+            text: "Remove"
+            onClicked: root.runPack("Removing…", '"$1" remove "' + packRow.modelData.id + '"')
+          }
+        }
+      }
+    }
+
+    TextInputRow {
+      label: "Add a pack from a link"
+      placeholder: "https://… .zip or .tar.xz"
+      onAccepted: link => {
+        const url = link.trim();
+        if (url !== "") {
+          root.runPack("Downloading the icon pack…", 'tool="$1"; name="$("$tool" add-url "$2")" && "$tool" apply "$name"; true'.replace("$2", url.replace(/[^A-Za-z0-9:\/._~?&=%+#@,-]/g, "")));
+        }
+      }
+    }
+
+    SettingsRow {
+      label: "Your own icon for one app"
+      description: "Use Icon… on any app in the list below. It always wins over the pack."
+    }
   }
 
   SettingsSection {
@@ -100,6 +236,10 @@ SettingsPage {
         required property string modelData
         required property int index
 
+        // The key the dock stores your own icon under: the lowercase desktop id
+        readonly property string appKey: (entry?.id ?? modelData).toLowerCase().replace(/\.desktop$/, "")
+        readonly property bool hasOwnIcon: (DockConfig.icons[appKey] ?? "") !== ""
+
         entry: DesktopEntries.byId(modelData) ?? DesktopEntries.heuristicLookup(modelData)
         fallbackName: modelData
 
@@ -116,6 +256,17 @@ SettingsPage {
             text: "▶"
             enabled: pinnedRow.index < DockConfig.pinned.length - 1
             onClicked: DockConfig.move(pinnedRow.modelData, 1)
+          }
+
+          SmallButton {
+            text: "Icon…"
+            onClicked: root.backend.external([`${DockConfig.script}`, "choose-icon", pinnedRow.appKey], true)
+          }
+
+          SmallButton {
+            visible: pinnedRow.hasOwnIcon
+            text: "Reset icon"
+            onClicked: DockConfig.resetIcon(pinnedRow.appKey)
           }
 
           SmallButton {

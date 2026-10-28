@@ -22,7 +22,59 @@ Scope {
     return (entry ? Quickshell.iconPath(entry.icon, true) : "") || Quickshell.iconPath(appId.toLowerCase(), true) || "";
   }
 
-  // Pinned apps first, then other running apps (with a divider between)
+  // Trash: full or empty decides its icon, checked now and then while the dock is up
+  property bool trashFull: false
+
+  function refreshTrash(): void {
+    trashProc.running = false;
+    trashProc.running = true;
+  }
+
+  Process {
+    id: trashProc
+
+    command: ["bash", "-c", 'ls -A "${XDG_DATA_HOME:-$HOME/.local/share}/Trash/files" 2>/dev/null | head -n 1']
+    stdout: StdioCollector {
+      onStreamFinished: root.trashFull = text.trim() !== ""
+    }
+  }
+
+  Timer {
+    interval: 5000
+    running: DockConfig.enabled && DockConfig.showTrash
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: root.refreshTrash()
+  }
+
+  // Files to try, in order, for the Downloads and Trash icons: the icon pack's own, then Papirus and Adwaita
+  function placeIcons(names: var): var {
+    const list = [];
+    const placesDir = DockConfig.iconPack.replace(/\/apps\/([^/]+)$/, "/places/$1");
+    for (const name of names) {
+      if (DockConfig.iconPack !== "" && placesDir !== DockConfig.iconPack && Object.keys(DockConfig.packIndex).length > 0) {
+        list.push({
+          url: `file://${placesDir}/${name}.svg`,
+          full: true
+        });
+      }
+      for (const dir of ["/usr/share/icons/Papirus/64x64/places", "/usr/share/icons/Adwaita/scalable/places", "/usr/share/icons/Adwaita/scalable/status"]) {
+        list.push({
+          url: `file://${dir}/${name}.svg`,
+          full: false
+        });
+      }
+    }
+    return list;
+  }
+
+  // The names an icon pack might know the app by, best guess first
+  function iconNames(entry: var, appId: string): var {
+    const names = [entry?.icon ?? "", appId, entry?.id ?? "", entry?.startupClass ?? ""];
+    return names.map(n => n.toLowerCase().replace(/\.desktop$/, "")).filter((n, i, all) => n !== "" && all.indexOf(n) === i);
+  }
+
+  // Pinned apps first, then other running apps (with a gap between)
   readonly property var items: {
     const toplevels = ToplevelManager.toplevels.values;
     DesktopEntries.applications.values; // lookups are empty until the entries are scanned
@@ -36,6 +88,7 @@ Scope {
         entry: entry,
         name: entry?.name ?? id,
         icon: root.iconFor(entry, id),
+        names: root.iconNames(entry, id),
         windows: [],
         pinned: true
       };
@@ -67,6 +120,7 @@ Scope {
           entry: entry,
           name: entry?.name ?? appId,
           icon: root.iconFor(entry, appId),
+          names: root.iconNames(entry, appId),
           windows: [],
           pinned: false
         };
@@ -74,6 +128,43 @@ Scope {
         byKey[key] = item;
       }
       item.windows.push(toplevel);
+    }
+
+    // Like macOS: Downloads and the Trash close the dock on the far side
+    const specials = [];
+    if (DockConfig.showDownloads) {
+      specials.push({
+        key: "special-downloads",
+        id: "downloads",
+        special: "downloads",
+        name: "Downloads",
+        icon: "",
+        files: root.placeIcons(["folder-download", "folder"]),
+        names: [],
+        windows: [],
+        pinned: false
+      });
+    }
+    if (DockConfig.showTrash) {
+      specials.push({
+        key: "special-trash",
+        id: "trash",
+        special: "trash",
+        name: "Trash",
+        icon: "",
+        files: root.placeIcons(root.trashFull ? ["user-trash-full", "user-trash"] : ["user-trash"]),
+        names: [],
+        windows: [],
+        pinned: false
+      });
+    }
+    if (specials.length > 0) {
+      if (result.length > 0) {
+        result.push({
+          separator: true
+        });
+      }
+      result.push(...specials);
     }
     return result;
   }
@@ -137,6 +228,11 @@ Scope {
       // Smoothed copies of it, so the icons and the frame around them grow together
       property real focus: 0
       property real strength: 0
+      // An icon being dragged: where the pointer is in the scene, and the picture to show under it
+      property var dragItem: null
+      property real dragX: 0
+      property real dragY: 0
+      property string dragUrl: ""
       property bool menuOpen: false
       property var menuItem: null
       property real menuAnchor: 0 // along the dock, in window coordinates
@@ -237,6 +333,21 @@ Scope {
           onClicked: win.menuOpen = false
         }
 
+        // The icon you are dragging, following the pointer
+        Image {
+          visible: win.dragItem !== null
+          z: 50
+          width: win.base
+          height: win.base
+          x: win.dragX - width / 2
+          y: win.dragY - height / 2
+          opacity: 0.92
+          source: win.dragUrl
+          sourceSize: Qt.size(160, 160)
+          fillMode: Image.PreserveAspectFit
+          smooth: true
+        }
+
         // A thin strip at the screen edge that brings a hidden dock back
         Item {
           id: hotStrip
@@ -295,9 +406,10 @@ Scope {
             anchors.horizontalCenter: win.vertical ? undefined : parent.horizontalCenter
             anchors.verticalCenter: win.vertical ? parent.verticalCenter : undefined
             radius: 22
-            color: Qt.alpha(Skein.background, 0.88)
+            // Frosted glass: a light veil over the blurred screen behind, with a bright hairline on top
+            color: Qt.alpha(Skein.background, 0.42)
             border.width: 1
-            border.color: Qt.alpha(Skein.foreground, 0.16)
+            border.color: Qt.alpha(Skein.foreground, 0.22)
 
             // The icons sit on the screen-side edge and grow into the room above the frame
             Grid {
@@ -331,42 +443,65 @@ Scope {
                   width: win.vertical ? win.peak + 8 : size + 2 * win.pad
                   height: win.vertical ? size + 2 * win.pad : win.peak + 8
 
-                  Rectangle {
-                    visible: cell.isSeparator
-                    anchors.centerIn: win.vertical ? undefined : parent
-                    width: win.vertical ? win.base : 1
-                    height: win.vertical ? 1 : win.base
-                    x: win.vertical ? 4 : 0
-                    y: win.vertical ? 5 : 0
-                    color: Qt.alpha(Skein.foreground, 0.25)
-                  }
-
                   Item {
                     id: icon
 
                     visible: !cell.isSeparator
+                    opacity: win.dragItem !== null && win.dragItem.key === cell.modelData.key ? 0.25 : 1
                     width: cell.size
                     height: cell.size
                     x: win.edge === "left" ? 8 + cell.bounce : (win.edge === "right" ? parent.width - width - 8 - cell.bounce : win.pad)
                     y: win.edge === "bottom" ? parent.height - height - 8 - cell.bounce : win.pad
 
-                    // Every icon sits on the same rounded tile, whatever shape its own artwork has
-                    Rectangle {
-                      anchors.fill: parent
-                      visible: picture.status === Image.Ready
-                      radius: width * 0.26
-                      color: Qt.alpha(Skein.foreground, 0.09)
-                      border.width: 1
-                      border.color: Qt.alpha(Skein.foreground, 0.08)
+                    // The first of these that loads: your own icon, the icon pack's, then the system theme's
+                    readonly property string own: DockConfig.icons[cell.modelData.key] ?? ""
+                    readonly property var sources: {
+                      const list = [];
+                      if (own !== "") {
+                        list.push({
+                          url: own.startsWith("/") ? `file://${own}` : (Quickshell.iconPath(own, true) ?? ""),
+                          full: true
+                        });
+                      }
+                      if (DockConfig.iconPack !== "") {
+                        for (const name of cell.modelData.names ?? []) {
+                          const file = DockConfig.packIndex[name];
+                          if (file) {
+                            list.push({
+                              url: `file://${DockConfig.iconPack}/${file}`,
+                              full: true
+                            });
+                            break;
+                          }
+                        }
+                      }
+                      for (const file of cell.modelData.files ?? []) {
+                        list.push(file);
+                      }
+                      if (cell.modelData.icon) {
+                        list.push({
+                          url: cell.modelData.icon,
+                          full: false
+                        });
+                      }
+                      return list.filter(entry => entry.url !== "");
                     }
+                    property int tryIndex: 0
+                    // Pack and picked icons are already rounded squares and fill the cell; theme icons keep a little margin
+                    readonly property bool full: sources[tryIndex]?.full ?? false
+
+                    onSourcesChanged: tryIndex = 0
 
                     Image {
                       id: picture
 
                       anchors.centerIn: parent
-                      width: parent.width * 0.78
-                      height: parent.height * 0.78
-                      source: cell.modelData.icon ?? ""
+                      width: parent.width * (icon.full ? 1 : 0.92)
+                      height: parent.height * (icon.full ? 1 : 0.92)
+                      source: icon.sources[icon.tryIndex]?.url ?? ""
+                      onStatusChanged: if (status === Image.Error && icon.tryIndex < icon.sources.length - 1) {
+                        icon.tryIndex++;
+                      }
                       sourceSize: Qt.size(160, 160)
                       fillMode: Image.PreserveAspectFit
                       smooth: true
@@ -468,12 +603,63 @@ Scope {
                     hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                     cursorShape: Qt.PointingHandCursor
+                    property point pressPoint
+                    property bool dragged: false
+
+                    onPressed: mouse => {
+                      pressPoint = Qt.point(mouse.x, mouse.y);
+                      dragged = false;
+                    }
                     onPositionChanged: mouse => {
                       const along = win.vertical ? mouse.y : mouse.x;
                       win.hoverPos = cell.index + Math.max(0, Math.min(1, along / Math.max(1, win.vertical ? cell.height : cell.width)));
+                      // Drag an icon to rearrange the dock, or off the dock to remove it (Downloads and Trash stay put)
+                      if (pressed && !cell.modelData.special && !cell.isSeparator && (dragged || Math.hypot(mouse.x - pressPoint.x, mouse.y - pressPoint.y) > 10)) {
+                        if (!dragged) {
+                          dragged = true;
+                          win.menuOpen = false;
+                          win.dragItem = cell.modelData;
+                          win.dragUrl = picture.source.toString();
+                        }
+                        const point = mapToItem(scene, mouse.x, mouse.y);
+                        win.dragX = point.x;
+                        win.dragY = point.y;
+                      }
+                    }
+                    onReleased: mouse => {
+                      if (!dragged) {
+                        return;
+                      }
+                      const item = cell.modelData;
+                      const onFrame = mapToItem(frame, mouse.x, mouse.y);
+                      const reach = 60;
+                      const inside = onFrame.x > -reach && onFrame.x < frame.width + reach && onFrame.y > -reach && onFrame.y < frame.height + reach;
+                      if (inside) {
+                        // The new place is among the pinned icons: count those whose middle the pointer has passed
+                        const local = mapToItem(cells, mouse.x, mouse.y);
+                        const along = win.vertical ? local.y : local.x;
+                        let index = 0;
+                        for (const other of cells.children) {
+                          if (other.modelData === undefined || other.isSeparator || !other.modelData.pinned || other.modelData.key === item.key) {
+                            continue;
+                          }
+                          const middle = win.vertical ? other.y + other.height / 2 : other.x + other.width / 2;
+                          if (along > middle) {
+                            index++;
+                          }
+                        }
+                        DockConfig.place(item.id, index);
+                      } else if (item.pinned) {
+                        DockConfig.unpin(item.id);
+                      }
+                      win.dragItem = null;
                     }
                     onEntered: win.hover(true)
                     onClicked: mouse => {
+                      if (dragged) {
+                        dragged = false;
+                        return;
+                      }
                       const item = cell.modelData;
                       if (mouse.button !== Qt.RightButton) {
                         win.menuOpen = false;
@@ -481,6 +667,10 @@ Scope {
                       if (mouse.button === Qt.RightButton) {
                         const point = cell.mapToItem(scene, cell.width / 2, cell.height / 2);
                         win.openMenu(item, win.vertical ? point.y : point.x);
+                      } else if (item.special) {
+                        // Downloads and Trash open in the file manager
+                        Quickshell.execDetached(item.special === "trash" ? ["gio", "open", "trash:///"] : ["xdg-open", `${Skein.home}/Downloads`]);
+                        bounceAnimation.restart();
                       } else if (mouse.button === Qt.MiddleButton || item.windows.length === 0) {
                         if (item.entry) {
                           item.entry.execute();
@@ -554,6 +744,26 @@ Scope {
                   return [];
                 }
                 const entries = [];
+                if (item.special) {
+                  entries.push({
+                    text: "Open",
+                    action: "open-special",
+                    enabled: true
+                  });
+                  if (item.special === "trash") {
+                    entries.push({
+                      text: "Empty Trash",
+                      action: "empty-trash",
+                      enabled: root.trashFull
+                    });
+                  }
+                  entries.push({
+                    text: "Dock settings…",
+                    action: "settings",
+                    enabled: true
+                  });
+                  return entries;
+                }
                 entries.push({
                   text: item.windows.length > 0 ? "New window" : "Open",
                   action: "open",
@@ -612,6 +822,13 @@ Scope {
                     switch (entry.modelData.action) {
                     case "open":
                       item.entry.execute();
+                      break;
+                    case "open-special":
+                      Quickshell.execDetached(item.special === "trash" ? ["gio", "open", "trash:///"] : ["xdg-open", `${Skein.home}/Downloads`]);
+                      break;
+                    case "empty-trash":
+                      Quickshell.execDetached(["bash", "-c", "gio trash --empty; true"]);
+                      root.trashFull = false;
                       break;
                     case "quit":
                       item.windows.forEach(w => w.close());

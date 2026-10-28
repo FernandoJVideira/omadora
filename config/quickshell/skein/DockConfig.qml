@@ -17,9 +17,32 @@ Singleton {
   property bool autoHide: false
   property bool showRunning: true
   property bool showIndicators: true
+  property bool showTrash: true
+  property bool showDownloads: true
   property var pinned: []
+  // Where the app icons come from: the folder of an icon pack, or empty for the system icon theme.
+  // Until a choice is made, the WhiteSur pack (rounded squares, like macOS) if it is installed.
+  property string iconPack: `${Skein.home}/.local/share/icons/WhiteSur/apps/scalable`
+  property string iconPackName: "WhiteSur"
+  // Icons you picked yourself: {"<app id>": "/path/to/image"}
+  property var icons: ({})
+  // The pack's files by lowercase icon name, so the dock only ever asks for files that exist
+  property var packIndex: ({})
 
   readonly property string script: `${Skein.skeinPath}/libexec/skein-dock`
+  readonly property string packTool: `${Skein.skeinPath}/libexec/skein-icon-pack`
+
+  onIconPackChanged: {
+    indexProc.running = false;
+    indexProc.running = true;
+  }
+
+  function resetIcon(app: string): void {
+    const next = Object.assign({}, icons);
+    delete next[app];
+    icons = next;
+    Quickshell.execDetached([script, "icon-reset", app]);
+  }
 
   function set(key: string, value: var): void {
     root[key] = value;
@@ -36,6 +59,14 @@ Singleton {
   function unpin(id: string): void {
     pinned = pinned.filter(p => p !== id);
     Quickshell.execDetached([script, "unpin", id]);
+  }
+
+  // Drag and drop: put an app at a position, adding it to the dock if it was not there
+  function place(id: string, index: int): void {
+    const rest = pinned.filter(p => p !== id);
+    const at = Math.max(0, Math.min(rest.length, index));
+    pinned = [...rest.slice(0, at), id, ...rest.slice(at)];
+    Quickshell.execDetached([script, "place", id, `${at}`]);
   }
 
   function move(id: string, delta: int): void {
@@ -61,11 +92,35 @@ Singleton {
       root.autoHide = data.autoHide ?? false;
       root.showRunning = data.showRunning ?? true;
       root.showIndicators = data.showIndicators ?? true;
+      root.showTrash = data.showTrash ?? true;
+      root.showDownloads = data.showDownloads ?? true;
       root.pinned = Array.isArray(data.pinned) ? data.pinned : [];
+      if (typeof data.iconPack === "string") {
+        root.iconPack = data.iconPack;
+        root.iconPackName = data.iconPackName ?? "";
+      }
+      root.icons = data.icons && typeof data.icons === "object" ? data.icons : {};
     } catch (e) {
       // keep what we have
     }
   }
+
+  Process {
+    id: indexProc
+
+    command: [root.packTool, "index"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          root.packIndex = JSON.parse(text);
+        } catch (e) {
+          root.packIndex = {};
+        }
+      }
+    }
+  }
+
+  Component.onCompleted: indexProc.running = true
 
   FileView {
     path: `${Skein.home}/.config/skein/dock.json`
