@@ -6,3 +6,5 @@
 [[ -n $1 ]] || { echo "Usage: skein-user-fullname <name> <full name>" >&2; exit 1; }
 
 pkexec usermod -c "$2" "$1" && notify-send -u low "Users" "Full name of $1 updated"
+# Keep the login screen in step (picture and name)
+"$(dirname "${BASH_SOURCE[0]}")/skein-greeter" sync --auto >/dev/null 2>&1 || true

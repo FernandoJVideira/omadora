@@ -20,3 +20,5 @@ args=()
 [[ $2 == home ]] && args+=(-r)
 
 pkexec userdel "${args[@]}" "$name" && notify-send -u low "Users" "Deleted $name"
+# Keep the login screen in step (picture and name)
+"$(dirname "${BASH_SOURCE[0]}")/skein-greeter" sync --auto >/dev/null 2>&1 || true

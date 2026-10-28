@@ -22,3 +22,5 @@ args=(-m -s /bin/bash)
 [[ $admin == admin ]] && args+=(-G wheel)
 
 pkexec useradd "${args[@]}" "$name" && pkexec passwd "$name"
+# Keep the login screen in step (picture and name)
+"$(dirname "${BASH_SOURCE[0]}")/skein-greeter" sync --auto >/dev/null 2>&1 || true
