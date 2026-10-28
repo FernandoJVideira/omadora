@@ -67,6 +67,11 @@ ShellRoot {
       Skein.panelRequested(name);
     }
 
+    // Drag the bar's items to rearrange them (call again to finish)
+    function rearrange(): void {
+      Skein.barEditing = !Skein.barEditing;
+    }
+
     // Re-read the current theme colors
     function reloadTheme(): void {
       Skein.reloadTheme();

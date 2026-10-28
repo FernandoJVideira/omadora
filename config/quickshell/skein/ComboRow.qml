@@ -63,25 +63,10 @@ Column {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.open = !root.open
-      }
-    }
-  }
-
-  Repeater {
-    model: root.open ? root.options : []
-
-    PanelRow {
-      required property var modelData
-
-      x: 8
-      width: root.width - 16
-      text: modelData.label
-      trailing: modelData.value === root.current ? "✓" : ""
-      highlighted: modelData.value === root.current
-      onClicked: {
-        root.open = false;
-        root.chosen(modelData.value);
+        onClicked: {
+          root.open = true;
+          Skein.dropdownRequested(root, head.parent, root.options, root.current);
+        }
       }
     }
   }

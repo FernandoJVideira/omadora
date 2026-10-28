@@ -8,7 +8,7 @@ Column {
   default property alias rows: list.data
 
   width: parent ? parent.width : 0
-  spacing: 6
+  spacing: 8
 
   Text {
     visible: root.title !== ""

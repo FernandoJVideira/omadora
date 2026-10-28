@@ -9,7 +9,7 @@ set -euo pipefail
 #   skein-menubar reset                    back to the classic bar and default items
 
 config="${XDG_CONFIG_HOME:-$HOME/.config}/skein/shell.json"
-keys='^(controlCenter|notificationCenter|clockStyle|clock24h|clockSeconds|barLayout|barSize|barOpacity|barFloating|barBorder|barDensity|showModes)$'
+keys='^(controlCenter|notificationCenter|clockStyle|clock24h|clockSeconds|barLayout|barSize|barOpacity|barFloating|barBorder|barDensity|barStyle|showModes)$'
 old_keys='^(showCpu|showBattery|showTray|showUpdates|showAgents)$'
 
 read_config() {
