@@ -335,12 +335,12 @@ Scope {
 
       anchors.centerIn: parent
       width: Math.min(Math.round(900 * Skein.textScale), parent.width - 40)
-      height: Math.min(Math.round(700 * Skein.textScale), parent.height - 40)
+      height: Math.min(Math.round(780 * Skein.textScale), parent.height - 40)
       radius: 12
       color: Qt.alpha(Skein.background, 0.98)
       focus: true
 
-      Keys.onEscapePressed: root.close()
+      Keys.onEscapePressed: dropdown.owner ? dropdown.close() : root.close()
 
       MouseArea {
         anchors.fill: parent
@@ -566,12 +566,13 @@ Scope {
                 readonly property bool newGroup: root.query === "" && (index === 0 || root.visiblePages[index - 1].group !== modelData.group)
 
                 width: pageList.width
+                spacing: 3
 
                 // Gap between groups, like the dividers of System Settings
                 Item {
                   visible: entry.newGroup && entry.index !== 0
                   width: parent.width
-                  height: visible ? 10 : 0
+                  height: visible ? 16 : 0
 
                   Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
@@ -583,7 +584,7 @@ Scope {
 
                 Rectangle {
                   width: parent.width
-                  height: Math.round(30 * Skein.textScale)
+                  height: Math.round(34 * Skein.textScale)
                   radius: 8
                   color: root.page === entry.modelData.key ? Qt.alpha(Skein.accent, 0.25) : (rowMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.08) : "transparent")
                   border.width: 1
@@ -666,6 +667,132 @@ Scope {
         font.family: Skein.fontFamily
         font.pointSize: Skein.fontSize + 6
         font.bold: true
+      }
+
+      // Dropdown list, drawn above the whole window so no card can clip or cover it
+      Item {
+        id: dropdown
+
+        property var owner: null
+        property var options: []
+        property string current: ""
+        property real anchorX: 0
+        property real anchorY: 0
+        property real anchorWidth: 0
+
+        anchors.fill: parent
+        visible: owner !== null
+        z: 20
+
+        function close(): void {
+          if (owner) {
+            owner.open = false;
+          }
+          owner = null;
+        }
+
+        Connections {
+          target: Skein
+
+          function onDropdownRequested(owner, anchor, options, current): void {
+            if (dropdown.owner && dropdown.owner !== owner) {
+              dropdown.owner.open = false;
+            }
+            const point = anchor.mapToItem(dropdown, 0, anchor.height + 4);
+            dropdown.anchorX = point.x;
+            dropdown.anchorY = point.y;
+            dropdown.anchorWidth = anchor.width;
+            dropdown.options = options;
+            dropdown.current = current;
+            dropdown.owner = owner;
+          }
+        }
+
+        // A list left open is closed when the window closes or the page changes
+        Connections {
+          target: root
+
+          function onActiveChanged(): void {
+            dropdown.close();
+          }
+
+          function onPageChanged(): void {
+            dropdown.close();
+          }
+        }
+
+        MouseArea {
+          anchors.fill: parent
+          acceptedButtons: Qt.AllButtons
+          onClicked: dropdown.close()
+        }
+
+        Rectangle {
+          width: Math.max(dropdown.anchorWidth, Math.round(170 * Skein.textScale))
+          height: choices.implicitHeight + 10
+          x: Math.min(dropdown.anchorX + dropdown.anchorWidth - width, dropdown.width - width - 10)
+          y: Math.min(dropdown.anchorY, dropdown.height - height - 10)
+          radius: 10
+          color: Qt.alpha(Skein.background, 0.98)
+          border.width: 1
+          border.color: Qt.alpha(Skein.accent, 0.6)
+
+          Column {
+            id: choices
+
+            x: 5
+            y: 5
+            width: parent.width - 10
+
+            Repeater {
+              model: dropdown.options
+
+              Rectangle {
+                id: choice
+
+                required property var modelData
+
+                width: choices.width
+                height: Math.round(30 * Skein.textScale)
+                radius: 7
+                color: choiceMouse.containsMouse ? Qt.alpha(Skein.accent, 0.25) : "transparent"
+
+                Text {
+                  anchors.left: parent.left
+                  anchors.leftMargin: 10
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: choice.modelData.label
+                  color: choice.modelData.value === dropdown.current ? Skein.accent : Skein.foreground
+                  font.family: Skein.fontFamily
+                  font.pointSize: Skein.fontSize
+                }
+
+                Text {
+                  visible: choice.modelData.value === dropdown.current
+                  anchors.right: parent.right
+                  anchors.rightMargin: 10
+                  anchors.verticalCenter: parent.verticalCenter
+                  text: "✓"
+                  color: Skein.accent
+                  font.pointSize: Skein.fontSize - 1
+                }
+
+                MouseArea {
+                  id: choiceMouse
+
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  onClicked: {
+                    const owner = dropdown.owner;
+                    const value = choice.modelData.value;
+                    dropdown.close();
+                    owner.chosen(value);
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
       Rectangle {

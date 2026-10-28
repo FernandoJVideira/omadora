@@ -48,6 +48,8 @@ Singleton {
   property real barOpacity: 1
   property bool barFloating: false // a rounded bar with a gap around it
   property bool barBorder: false
+  property string barStyle: "classic" // classic (one bar) or pills (a rounded group for each side)
+  property bool barEditing: false // drag items on the bar to rearrange them (not saved)
   property string barDensity: "default" // compact, default or comfortable
 
   // Everything the bar can show. `only` limits an item to the classic bar or to the Control Center.
@@ -206,6 +208,8 @@ Singleton {
   signal panelRequested(string name)
   // A bar panel just opened: every other one closes
   signal panelOpening(var panel)
+  // A dropdown wants its list shown above everything (Settings window): owner gets chosen(value)
+  signal dropdownRequested(var owner, var anchor, var options, string current)
 
   function glyph(codepoint: int): string {
     return String.fromCodePoint(codepoint);
@@ -259,6 +263,7 @@ Singleton {
         root.barOpacity = Math.max(0.3, Math.min(1, config.barOpacity ?? 1));
         root.barFloating = config.barFloating === true;
         root.barBorder = config.barBorder === true;
+        root.barStyle = config.barStyle === "pills" ? "pills" : "classic";
         root.barDensity = ["compact", "default", "comfortable"].includes(config.barDensity) ? config.barDensity : "default";
         root.barLayout = config.barLayout ? root.normalizeLayout(config.barLayout) : root.defaultBarLayout;
         root.clockStyle = ["day", "date", "time"].includes(config.clockStyle) ? config.clockStyle : "day";

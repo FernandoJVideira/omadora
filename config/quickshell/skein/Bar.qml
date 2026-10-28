@@ -64,6 +64,7 @@ PanelWindow {
   color: "transparent"
 
   Rectangle {
+    visible: Skein.barStyle === "classic"
     anchors.fill: parent
     radius: Skein.barFloating ? Math.round(10 * Skein.textScale) : 0
     color: Qt.alpha(Skein.background, Skein.barOpacity)
@@ -72,28 +73,221 @@ PanelWindow {
   }
 
   // A row of bar items for one section
-  component Section: Row {
+  readonly property bool pills: Skein.barStyle === "pills"
+  readonly property int pillInset: Math.round(3 * Skein.textScale)
+
+  component Section: Item {
     id: section
 
     property var ids: []
+    readonly property bool occupied: row.width > 0
+
+    // The id and horizontal centre (in bar coordinates) of every item shown in this section
+    function centers(): var {
+      const result = [];
+      for (let i = 0; i < ids.length; i++) {
+        const cell = items.itemAt(i);
+        if (cell && cell.width > 0) {
+          result.push({
+            id: ids[i],
+            index: i,
+            cx: cell.mapToItem(bar.contentItem, cell.width / 2, 0).x
+          });
+        }
+      }
+      return result;
+    }
 
     height: parent ? parent.height : Skein.barHeight
+    width: row.width + (bar.pills ? 2 * Skein.sectionPadding : 0)
 
-    Repeater {
-      model: section.ids
+    // Pills: a rounded, translucent group behind the items of this side
+    Rectangle {
+      visible: bar.pills && section.occupied
+      anchors.fill: parent
+      anchors.topMargin: bar.pillInset
+      anchors.bottomMargin: bar.pillInset
+      radius: height / 2
+      color: Qt.alpha(Skein.background, Skein.barOpacity)
+      border.width: Skein.barBorder ? 1 : 0
+      border.color: Qt.alpha(Skein.accent, 0.5)
+    }
 
-      Loader {
-        required property string modelData
+    Row {
+      id: row
 
-        height: section.height
-        sourceComponent: bar.componentFor(modelData)
+      x: bar.pills ? Skein.sectionPadding : 0
+      height: section.height
+
+      Repeater {
+        id: items
+
+        model: section.ids
+
+        Item {
+          id: cell
+
+          required property string modelData
+
+          width: loader.width
+          height: row.height
+
+          Loader {
+            id: loader
+
+            height: parent.height
+            sourceComponent: bar.componentFor(cell.modelData)
+          }
+
+          // Rearranging: the item stops reacting to clicks and can be dragged to another place
+          Rectangle {
+            visible: Skein.barEditing && cell.width > 0
+            anchors.fill: parent
+            anchors.topMargin: bar.pillInset + 1
+            anchors.bottomMargin: bar.pillInset + 1
+            radius: 6
+            color: Qt.alpha(Skein.accent, drag.pressed ? 0.35 : 0.15)
+            border.width: 1
+            border.color: Qt.alpha(Skein.accent, 0.8)
+
+            MouseArea {
+              id: drag
+
+              anchors.fill: parent
+              cursorShape: Qt.SizeAllCursor
+              onPressed: bar.startDrag(cell.modelData)
+              onPositionChanged: mouse => bar.moveDrag(mapToItem(bar.contentItem, mouse.x, mouse.y).x)
+              onReleased: mouse => bar.dropDrag(mapToItem(bar.contentItem, mouse.x, mouse.y).x)
+            }
+          }
+        }
       }
     }
   }
 
+  // --- drag and drop of bar items while Skein.barEditing ---
+  property string dragId: ""
+  property real dragX: 0
+
+  function startDrag(id: string): void {
+    dragId = id;
+  }
+
+  function moveDrag(x: real): void {
+    dragX = x;
+  }
+
+  function sectionAt(x: real): string {
+    return x < width / 3 ? "left" : (x > width * 2 / 3 ? "right" : "center");
+  }
+
+  function dropDrag(x: real): void {
+    const id = dragId;
+    dragId = "";
+    if (id === "") {
+      return;
+    }
+    const target = sectionAt(x);
+    const sections = {
+      left: leftSection,
+      center: centerSection,
+      right: rightSection
+    };
+    const layout = Skein.normalizeLayout(Skein.barLayout);
+    for (const s of ["left", "center", "right"]) {
+      layout[s] = layout[s].filter(i => i !== id);
+    }
+    // Insert before the first item whose centre is to the right of the drop point
+    const ids = layout[target];
+    const shown = sections[target].centers().filter(c => c.id !== id);
+    const next = shown.find(c => c.cx > x);
+    const at = next ? ids.indexOf(next.id) : ids.length;
+    ids.splice(at < 0 ? ids.length : at, 0, id);
+    Skein.saveLayout(layout);
+  }
+
+  // The item being dragged, following the pointer
+  Rectangle {
+    visible: bar.dragId !== ""
+    z: 50
+    x: bar.dragX - width / 2
+    y: bar.pillInset
+    width: dragLabel.implicitWidth + 20
+    height: bar.height - 2 * bar.pillInset
+    radius: height / 2
+    color: Qt.alpha(Skein.accent, 0.9)
+
+    Text {
+      id: dragLabel
+
+      anchors.centerIn: parent
+      text: Skein.barItems.find(i => i.id === bar.dragId)?.label ?? ""
+      color: Skein.background
+      font.family: Skein.fontFamily
+      font.pointSize: Skein.fontSize - 1
+      font.bold: true
+    }
+  }
+
+  // Which side the item would land on
+  Repeater {
+    model: Skein.barEditing && bar.dragId !== "" ? ["left", "center", "right"] : []
+
+    Rectangle {
+      required property string modelData
+
+      readonly property bool target: bar.sectionAt(bar.dragX) === modelData
+
+      z: 40
+      y: bar.pillInset
+      height: bar.height - 2 * bar.pillInset
+      width: bar.width / 3 - 8
+      x: (modelData === "left" ? 0 : (modelData === "center" ? 1 : 2)) * bar.width / 3 + 4
+      radius: height / 2
+      color: "transparent"
+      border.width: target ? 2 : 1
+      border.color: Qt.alpha(Skein.accent, target ? 0.9 : 0.3)
+    }
+  }
+
+  // Done button while rearranging
+  Rectangle {
+    visible: Skein.barEditing && bar.dragId === ""
+    z: 60
+    anchors.left: centerSection.right
+    anchors.leftMargin: 12
+    anchors.verticalCenter: parent.verticalCenter
+    width: doneText.implicitWidth + 28
+    height: bar.height - 2 * bar.pillInset - 2
+    radius: height / 2
+    color: Qt.alpha(Skein.accent, doneMouse.containsMouse ? 1 : 0.85)
+
+    Text {
+      id: doneText
+
+      anchors.centerIn: parent
+      text: "Done rearranging"
+      color: Skein.background
+      font.family: Skein.fontFamily
+      font.pointSize: Skein.fontSize - 0.5
+      font.bold: true
+    }
+
+    MouseArea {
+      id: doneMouse
+
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: Skein.barEditing = false
+    }
+  }
+
   Section {
+    id: leftSection
+
     anchors.left: parent.left
-    anchors.leftMargin: Skein.sectionPadding
+    anchors.leftMargin: bar.pills ? Skein.sectionPadding + 2 : Skein.sectionPadding
     ids: Skein.barLayout.left
   }
 
@@ -111,8 +305,10 @@ PanelWindow {
   }
 
   Section {
+    id: rightSection
+
     anchors.right: parent.right
-    anchors.rightMargin: Skein.sectionPadding
+    anchors.rightMargin: bar.pills ? Skein.sectionPadding + 2 : Skein.sectionPadding
     ids: Skein.barLayout.right
   }
 

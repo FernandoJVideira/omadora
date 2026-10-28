@@ -13,7 +13,7 @@ Rectangle {
   signal clicked
 
   width: parent ? parent.width : 0
-  height: 28
+  height: 32
   color: mouse.containsMouse ? Qt.alpha(Skein.accent, 0.15) : "transparent"
 
   Behavior on color {

@@ -8,17 +8,19 @@ Item {
   property string description: ""
   property bool dimmed: false
   default property alias control: slot.data
+  // Something at the far left of the row, such as a drag handle
+  property alias leading: leadSlot.data
 
   width: parent ? parent.width : 0
-  implicitHeight: Math.max(Math.round(36 * Skein.textScale), texts.implicitHeight + 12)
+  implicitHeight: Math.max(Math.round(42 * Skein.textScale), texts.implicitHeight + 22, slot.height + 22)
   height: implicitHeight
   opacity: dimmed ? 0.5 : 1
 
   Column {
     id: texts
 
-    anchors.left: parent.left
-    anchors.leftMargin: 14
+    anchors.left: leadSlot.right
+    anchors.leftMargin: leadSlot.width > 0 ? 10 : 0
     anchors.right: slot.left
     anchors.rightMargin: 12
     anchors.verticalCenter: parent.verticalCenter
@@ -53,6 +55,16 @@ Item {
     anchors.bottom: parent.bottom
     height: 1
     color: Qt.alpha(Skein.foreground, 0.08)
+  }
+
+  Item {
+    id: leadSlot
+
+    anchors.left: parent.left
+    anchors.leftMargin: 14
+    anchors.verticalCenter: parent.verticalCenter
+    width: childrenRect.width
+    height: childrenRect.height
   }
 
   Item {

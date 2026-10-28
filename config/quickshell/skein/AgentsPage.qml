@@ -166,7 +166,7 @@ SettingsPage {
             required property var modelData
 
             label: modelData.label
-            implicitHeight: Math.round(28 * Skein.textScale)
+            implicitHeight: Math.round(36 * Skein.textScale)
 
             Text {
               width: 70

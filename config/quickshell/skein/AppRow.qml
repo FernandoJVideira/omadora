@@ -10,7 +10,7 @@ Item {
   default property alias control: slot.data
 
   width: parent ? parent.width : 0
-  height: Math.round(40 * Skein.textScale)
+  height: Math.round(46 * Skein.textScale)
 
   Image {
     id: icon
