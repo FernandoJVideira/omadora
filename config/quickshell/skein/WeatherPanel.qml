@@ -31,7 +31,7 @@ Panel {
         }
         const date = new Date(`${daily.time[i]}T12:00:00`);
         days.push({
-          name: date.toLocaleDateString(Qt.locale("en_US"), "dddd").toUpperCase(),
+          name: date.toLocaleDateString(Qt.locale("en_US"), "dddd"),
           icon: (derived.daily_icons ?? [])[i] ?? "",
           high: Math.round(daily.temperature_2m_max[i]),
           low: Math.round(daily.temperature_2m_min[i])
@@ -141,10 +141,10 @@ Panel {
   }
 
   component Caption: Text {
-    color: Qt.alpha(Skein.foreground, 0.6)
-    font.family: root.mono
-    font.pointSize: Skein.fontSize - 2.5
-    font.letterSpacing: 1
+    color: Qt.alpha(Skein.foreground, 0.55)
+    font.family: Skein.fontFamily
+    font.pointSize: Skein.fontSize - 1
+    font.weight: Font.Medium
   }
 
   component Stat: Column {
@@ -167,7 +167,7 @@ Panel {
 
   Caption {
     visible: root.weather === null
-    text: "WEATHER DATA UNAVAILABLE"
+    text: "Weather data unavailable"
   }
 
   Item {
@@ -234,7 +234,7 @@ Panel {
           }
 
           Caption {
-            text: (root.pendingPlace !== "" ? root.pendingPlace : (root.weather?.place ?? "")).toUpperCase()
+            text: (root.pendingPlace !== "" ? root.pendingPlace : (root.weather?.place ?? ""))
             color: Qt.alpha(Skein.foreground, cityMouse.containsMouse ? 1 : 0.6)
           }
         }
@@ -262,8 +262,8 @@ Panel {
             height: 40
             color: Qt.alpha(Skein.foreground, 0.07)
             border.width: 1
-            border.color: Qt.alpha(Skein.accent, 0.6)
-            radius: 8
+            border.color: Qt.alpha(Skein.foreground, 0.16)
+            radius: 12
 
             TextInput {
               id: cityInput
@@ -435,6 +435,6 @@ Panel {
 
   Caption {
     visible: root.weather !== null && root.staleMinutes > 30
-    text: `UPDATED ${root.staleMinutes} MIN AGO`
+    text: `Updated ${root.staleMinutes} min ago`
   }
 }

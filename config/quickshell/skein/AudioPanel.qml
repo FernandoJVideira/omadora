@@ -33,10 +33,10 @@ Panel {
   }
 
   component Caption: Text {
-    color: Qt.alpha(Skein.foreground, 0.6)
-    font.family: root.mono
-    font.pointSize: Skein.fontSize - 2.5
-    font.letterSpacing: 1
+    color: Qt.alpha(Skein.foreground, 0.55)
+    font.family: Skein.fontFamily
+    font.pointSize: Skein.fontSize - 1
+    font.weight: Font.Medium
   }
 
   component DeviceRow: Rectangle {
@@ -207,7 +207,7 @@ Panel {
       Caption {
         width: parent.width
         elide: Text.ElideRight
-        text: root.sink ? root.label(root.sink).toUpperCase() : "NO OUTPUT"
+        text: root.sink ? root.label(root.sink) : "No output"
       }
     }
 

@@ -57,10 +57,10 @@ Panel {
   }
 
   component Caption: Text {
-    color: Qt.alpha(Skein.foreground, 0.6)
-    font.family: root.mono
-    font.pointSize: Skein.fontSize - 2.5
-    font.letterSpacing: 1
+    color: Qt.alpha(Skein.foreground, 0.55)
+    font.family: Skein.fontFamily
+    font.pointSize: Skein.fontSize - 1
+    font.weight: Font.Medium
   }
 
   // Scroll to change month
@@ -247,7 +247,7 @@ Panel {
     // Click the month to come back to today
     Caption {
       anchors.centerIn: parent
-      text: `${root.english.monthName(root.viewMonth.getMonth(), Locale.LongFormat).toUpperCase()} ${root.viewMonth.getFullYear()}`
+      text: `${root.english.monthName(root.viewMonth.getMonth(), Locale.LongFormat)} ${root.viewMonth.getFullYear()}`
 
       MouseArea {
         anchors.fill: parent

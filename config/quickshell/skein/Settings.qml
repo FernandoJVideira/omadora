@@ -4,8 +4,8 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import Quickshell.Wayland
 
-// Settings window in the style of macOS System Settings: a sidebar with a search field, your
-// account and the pages in groups, and the selected page on the right under its title.
+// Settings window in the Skein Search style: a pill search field, your account and the pages in
+// groups (text only, the selected one filled with the accent), and the page on the right.
 // A transparent full-screen layer catches clicks outside the window, and Escape closes it.
 //   qs -c skein ipc call settings toggle|open|close|page <name>
 Scope {
@@ -336,7 +336,7 @@ Scope {
       anchors.centerIn: parent
       width: Math.min(Math.round(900 * Skein.textScale), parent.width - 40)
       height: Math.min(Math.round(780 * Skein.textScale), parent.height - 40)
-      radius: 12
+      radius: 22
       color: Qt.alpha(Skein.background, 0.98)
       focus: true
 
@@ -416,31 +416,31 @@ Scope {
           anchors.right: parent.right
           anchors.leftMargin: 12
           anchors.rightMargin: 12
-          height: Math.round(28 * Skein.textScale)
-          radius: 8
-          color: Qt.alpha(Skein.foreground, 0.08)
+          height: Math.round(36 * Skein.textScale)
+          radius: height / 2
+          color: Qt.alpha(Skein.foreground, 0.06)
           border.width: 1
-          border.color: searchInput.activeFocus ? Skein.accent : Qt.alpha(Skein.accent, 0.25)
+          border.color: searchInput.activeFocus ? Qt.alpha(Skein.foreground, 0.32) : Qt.alpha(Skein.foreground, 0.16)
 
           Text {
             id: lens
 
             anchors.left: parent.left
-            anchors.leftMargin: 8
+            anchors.leftMargin: 16
             anchors.verticalCenter: parent.verticalCenter
-            text: Skein.glyph(0xf002)
+            text: "\uf002"
             color: Qt.alpha(Skein.foreground, 0.5)
-            font.family: Skein.fontFamily
-            font.pointSize: Skein.fontSize - 1
+            font.family: "JetBrainsMono Nerd Font"
+            font.pointSize: Skein.fontSize
           }
 
           TextInput {
             id: searchInput
 
             anchors.left: lens.right
-            anchors.leftMargin: 6
+            anchors.leftMargin: 8
             anchors.right: parent.right
-            anchors.rightMargin: 8
+            anchors.rightMargin: 14
             anchors.verticalCenter: parent.verticalCenter
             clip: true
             color: Skein.foreground
@@ -464,8 +464,8 @@ Scope {
             Text {
               visible: searchInput.text === ""
               anchors.verticalCenter: parent.verticalCenter
-              text: "Search"
-              color: Qt.alpha(Skein.foreground, 0.4)
+              text: "Search settings"
+              color: Qt.alpha(Skein.foreground, 0.45)
               font: searchInput.font
             }
           }
@@ -483,10 +483,8 @@ Scope {
           anchors.leftMargin: 12
           anchors.rightMargin: 12
           height: visible ? Math.round(56 * Skein.textScale) : 0
-          radius: 10
-          color: root.page === "users" ? Qt.alpha(Skein.accent, 0.25) : (accountMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.08) : "transparent")
-          border.width: 1
-          border.color: root.page === "users" ? Qt.alpha(Skein.accent, 0.6) : "transparent"
+          radius: 14
+          color: root.page === "users" ? Qt.alpha(Skein.accent, 0.9) : (accountMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : "transparent")
 
           Avatar {
             id: accountAvatar
@@ -513,17 +511,17 @@ Scope {
               width: parent.width
               elide: Text.ElideRight
               text: root.me.fullName || root.me.name
-              color: Skein.foreground
+              color: root.page === "users" ? Skein.background : Skein.foreground
               font.family: Skein.fontFamily
               font.pointSize: Skein.fontSize
-              font.bold: true
+              font.weight: Font.DemiBold
             }
 
             Text {
               width: parent.width
               elide: Text.ElideRight
               text: root.me.admin ? "Administrator" : "Standard"
-              color: Qt.alpha(Skein.foreground, 0.6)
+              color: root.page === "users" ? Qt.alpha(Skein.background, 0.7) : Qt.alpha(Skein.foreground, 0.6)
               font.family: Skein.fontFamily
               font.pointSize: Skein.fontSize - 2
             }
@@ -566,58 +564,43 @@ Scope {
                 readonly property bool newGroup: root.query === "" && (index === 0 || root.visiblePages[index - 1].group !== modelData.group)
 
                 width: pageList.width
-                spacing: 3
+                spacing: 5
 
-                // Gap between groups, like the dividers of System Settings
+                // Space between groups
                 Item {
                   visible: entry.newGroup && entry.index !== 0
                   width: parent.width
-                  height: visible ? 16 : 0
-
-                  Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width
-                    height: 1
-                    color: Qt.alpha(Skein.foreground, 0.08)
-                  }
+                  height: visible ? 10 : 0
                 }
 
                 Rectangle {
                   width: parent.width
                   height: Math.round(34 * Skein.textScale)
-                  radius: 8
-                  color: root.page === entry.modelData.key ? Qt.alpha(Skein.accent, 0.25) : (rowMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.08) : "transparent")
-                  border.width: 1
-                  border.color: root.page === entry.modelData.key ? Qt.alpha(Skein.accent, 0.6) : "transparent"
+                  radius: 12
+                  color: root.page === entry.modelData.key ? Qt.alpha(Skein.accent, 0.9) : (rowMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : "transparent")
 
-                  Rectangle {
-                    id: badge
-
+                  // Plain glyph in the same Nerd Font the launcher categories use, no badge behind it
+                  Text {
                     anchors.left: parent.left
-                    anchors.leftMargin: 6
+                    anchors.leftMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.round(22 * Skein.textScale)
-                    height: width
-                    radius: 6
-                    color: entry.modelData.tint
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: entry.modelData.glyph
-                      color: "white"
-                      font.family: Skein.fontFamily
-                      font.pointSize: Skein.fontSize - 1.5
-                    }
+                    width: 24
+                    horizontalAlignment: Text.AlignHCenter
+                    text: entry.modelData.glyph
+                    color: root.page === entry.modelData.key ? Skein.background : Qt.alpha(Skein.foreground, 0.8)
+                    font.family: "JetBrainsMono Nerd Font"
+                    font.pointSize: Skein.fontSize + 1
                   }
 
                   Text {
-                    anchors.left: badge.right
-                    anchors.leftMargin: 10
+                    anchors.left: parent.left
+                    anchors.leftMargin: 48
                     anchors.right: parent.right
+                    anchors.rightMargin: 12
                     anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideRight
                     text: entry.modelData.label
-                    color: Skein.foreground
+                    color: root.page === entry.modelData.key ? Skein.background : Skein.foreground
                     font.family: Skein.fontFamily
                     font.pointSize: Skein.fontSize
                   }
@@ -659,14 +642,14 @@ Scope {
         id: title
 
         anchors.top: parent.top
-        anchors.topMargin: 14
+        anchors.topMargin: 28
         anchors.left: sidebar.right
         anchors.leftMargin: 24
         text: root.pageTitle
         color: Skein.foreground
         font.family: Skein.fontFamily
         font.pointSize: Skein.fontSize + 6
-        font.bold: true
+        font.weight: Font.DemiBold
       }
 
       // Dropdown list, drawn above the whole window so no card can clip or cover it
@@ -732,10 +715,10 @@ Scope {
           height: choices.implicitHeight + 10
           x: Math.min(dropdown.anchorX + dropdown.anchorWidth - width, dropdown.width - width - 10)
           y: Math.min(dropdown.anchorY, dropdown.height - height - 10)
-          radius: 10
+          radius: 16
           color: Qt.alpha(Skein.background, 0.98)
           border.width: 1
-          border.color: Qt.alpha(Skein.accent, 0.6)
+          border.color: Qt.alpha(Skein.foreground, 0.16)
 
           Column {
             id: choices
@@ -753,16 +736,16 @@ Scope {
                 required property var modelData
 
                 width: choices.width
-                height: Math.round(30 * Skein.textScale)
-                radius: 7
-                color: choiceMouse.containsMouse ? Qt.alpha(Skein.accent, 0.25) : "transparent"
+                height: Math.round(34 * Skein.textScale)
+                radius: 11
+                color: choiceMouse.containsMouse ? Qt.alpha(Skein.accent, 0.9) : "transparent"
 
                 Text {
                   anchors.left: parent.left
                   anchors.leftMargin: 10
                   anchors.verticalCenter: parent.verticalCenter
                   text: choice.modelData.label
-                  color: choice.modelData.value === dropdown.current ? Skein.accent : Skein.foreground
+                  color: choiceMouse.containsMouse ? Skein.background : (choice.modelData.value === dropdown.current ? Skein.accent : Skein.foreground)
                   font.family: Skein.fontFamily
                   font.pointSize: Skein.fontSize
                 }
@@ -773,7 +756,7 @@ Scope {
                   anchors.rightMargin: 10
                   anchors.verticalCenter: parent.verticalCenter
                   text: "✓"
-                  color: Skein.accent
+                  color: choiceMouse.containsMouse ? Skein.background : Skein.accent
                   font.pointSize: Skein.fontSize - 1
                 }
 
@@ -800,7 +783,7 @@ Scope {
         radius: window.radius
         color: "transparent"
         border.width: 1
-        border.color: Qt.alpha(Skein.accent, 0.5)
+        border.color: Qt.alpha(Skein.foreground, 0.16)
         z: 10
       }
 
@@ -808,13 +791,13 @@ Scope {
         id: pageLoader
 
         anchors.top: title.bottom
-        anchors.topMargin: 12
+        anchors.topMargin: 20
         anchors.bottom: parent.bottom
         anchors.left: sidebar.right
         anchors.right: parent.right
         anchors.leftMargin: 24
         anchors.rightMargin: 12
-        anchors.bottomMargin: 12
+        anchors.bottomMargin: 16
         active: root.active
         source: root.pages.some(p => p.key === root.page) ? `${root.page.charAt(0).toUpperCase()}${root.page.slice(1)}Page.qml` : ""
         onLoaded: {

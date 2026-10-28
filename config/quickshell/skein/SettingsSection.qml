@@ -14,18 +14,18 @@ Column {
     visible: root.title !== ""
     leftPadding: 4
     topPadding: 8
-    text: root.title.toUpperCase()
-    color: Qt.alpha(Skein.foreground, 0.6)
+    text: root.title
+    color: Qt.alpha(Skein.foreground, 0.55)
     font.family: Skein.fontFamily
-    font.pointSize: Skein.fontSize - 1.5
-    font.bold: true
-    font.letterSpacing: 0.6
+    font.pointSize: Skein.fontSize - 0.5
+    font.weight: Font.Medium
   }
 
   Rectangle {
     width: parent.width
-    height: list.implicitHeight
-    radius: 8
+    // One pixel short and clipped: hides the last row's divider, which would sit on the card's edge
+    height: list.implicitHeight - 1
+    radius: 16
     color: Qt.alpha(Skein.foreground, 0.05)
     clip: true
 
@@ -40,7 +40,7 @@ Column {
       radius: parent.radius
       color: "transparent"
       border.width: 1
-      border.color: Qt.alpha(Skein.accent, 0.3)
+      border.color: Qt.alpha(Skein.foreground, 0.12)
     }
   }
 }

@@ -22,10 +22,10 @@ Column {
     description: root.description
 
     Rectangle {
-      width: Math.max(Math.round(120 * Skein.textScale), currentText.implicitWidth + 36)
-      height: Math.round(24 * Skein.textScale)
-      radius: 6
-      color: head.containsMouse || root.open ? Qt.alpha(Skein.accent, 0.25) : Qt.alpha(Skein.foreground, 0.06)
+      width: Math.max(Math.round(120 * Skein.textScale), currentText.implicitWidth + 48)
+      height: Math.round(26 * Skein.textScale)
+      radius: height / 2
+      color: head.containsMouse || root.open ? Qt.alpha(Skein.foreground, 0.14) : Qt.alpha(Skein.foreground, 0.07)
 
       Behavior on color {
         ColorAnimation {
@@ -33,13 +33,13 @@ Column {
         }
       }
       border.width: 1
-      border.color: Qt.alpha(Skein.accent, 0.6)
+      border.color: Qt.alpha(Skein.foreground, 0.16)
 
       Text {
         id: currentText
 
         anchors.left: parent.left
-        anchors.leftMargin: 8
+        anchors.leftMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         text: root.currentLabel
         color: Skein.foreground
@@ -49,7 +49,7 @@ Column {
 
       Text {
         anchors.right: parent.right
-        anchors.rightMargin: 8
+        anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         text: root.open ? "▴" : "▾"
         color: Qt.alpha(Skein.foreground, 0.7)

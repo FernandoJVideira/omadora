@@ -85,7 +85,7 @@ SettingsPage {
     radius: 8
     color: Qt.alpha(Skein.foreground, 0.08)
     border.width: wallpaper.current ? 2 : 1
-    border.color: wallpaper.current ? Skein.accent : Qt.alpha(Skein.accent, 0.25)
+    border.color: wallpaper.current ? Skein.accent : Qt.alpha(Skein.foreground, 0.16)
 
     Image {
       anchors.fill: parent
@@ -151,7 +151,8 @@ SettingsPage {
   Row {
     anchors.horizontalCenter: parent.horizontalCenter
     spacing: 28
-    topPadding: 4
+    topPadding: 16
+    bottomPadding: 4
 
     Repeater {
       model: Quickshell.screens
@@ -230,12 +231,11 @@ SettingsPage {
 
     Text {
       leftPadding: 4
-      text: `${root.themeName} WALLPAPERS`.toUpperCase()
-      color: Qt.alpha(Skein.foreground, 0.6)
+      text: `${root.themeName.charAt(0).toUpperCase()}${root.themeName.slice(1)} wallpapers`
+      color: Qt.alpha(Skein.foreground, 0.55)
       font.family: Skein.fontFamily
-      font.pointSize: Skein.fontSize - 1.5
-      font.bold: true
-      font.letterSpacing: 0.6
+      font.pointSize: Skein.fontSize - 0.5
+      font.weight: Font.Medium
     }
 
     Flow {
@@ -261,12 +261,11 @@ SettingsPage {
 
     Text {
       leftPadding: 4
-      text: "MY WALLPAPERS"
-      color: Qt.alpha(Skein.foreground, 0.6)
+      text: "My wallpapers"
+      color: Qt.alpha(Skein.foreground, 0.55)
       font.family: Skein.fontFamily
-      font.pointSize: Skein.fontSize - 1.5
-      font.bold: true
-      font.letterSpacing: 0.6
+      font.pointSize: Skein.fontSize - 0.5
+      font.weight: Font.Medium
     }
 
     Text {

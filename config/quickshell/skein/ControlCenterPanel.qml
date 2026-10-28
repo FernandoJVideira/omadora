@@ -292,7 +292,7 @@ Panel {
     radius: 14
     color: Qt.alpha(Skein.foreground, 0.07)
     border.width: 1
-    border.color: Qt.alpha(Skein.accent, 0.25)
+    border.color: Qt.alpha(Skein.foreground, 0.12)
 
     Text {
       x: 14
@@ -342,15 +342,20 @@ Panel {
       }
     }
 
+    // Fixed box with the glyph centred in it, so the slider lines up with the icon itself
     Text {
       id: icon
 
       x: 14
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 10
+      width: 24
+      height: 24
+      horizontalAlignment: Text.AlignHCenter
+      verticalAlignment: Text.AlignVCenter
       text: card.glyph
       color: Skein.foreground
-      font.family: Skein.fontFamily
+      font.family: "JetBrainsMono Nerd Font"
       font.pointSize: Skein.fontSize + 2
 
       MouseArea {
@@ -495,11 +500,11 @@ Panel {
   Rectangle {
     visible: root.appsOpen
     width: parent.width
-    height: root.streams.length === 0 ? 46 : Math.min(appList.implicitHeight + 16, 250)
+    height: root.streams.length === 0 ? 46 : Math.min(appList.implicitHeight + 24, 250)
     radius: 14
     color: Qt.alpha(Skein.foreground, 0.05)
     border.width: 1
-    border.color: Qt.alpha(Skein.accent, 0.25)
+    border.color: Qt.alpha(Skein.foreground, 0.12)
     clip: true
 
     Text {
@@ -514,6 +519,8 @@ Panel {
     Flickable {
       anchors.fill: parent
       anchors.margins: 8
+      topMargin: 4
+      bottomMargin: 4
       contentHeight: appList.implicitHeight
       clip: true
       boundsBehavior: Flickable.StopAtBounds
@@ -598,12 +605,15 @@ Panel {
               id: appMute
 
               anchors.right: parent.right
-              y: 1
-              width: 22
+              anchors.top: parent.top
+              anchors.topMargin: 3
+              width: 24
+              height: 20
               horizontalAlignment: Text.AlignHCenter
+              verticalAlignment: Text.AlignVCenter
               text: appRow.modelData.audio.muted ? Skein.glyph(0xeee8) : Skein.glyph(0xf028)
               color: Skein.foreground
-              font.family: Skein.fontFamily
+              font.family: "JetBrainsMono Nerd Font"
               font.pointSize: Skein.fontSize
 
               MouseArea {
@@ -636,7 +646,7 @@ Panel {
     radius: 14
     color: Qt.alpha(Skein.foreground, 0.07)
     border.width: 1
-    border.color: Qt.alpha(Skein.accent, 0.25)
+    border.color: Qt.alpha(Skein.foreground, 0.12)
 
     Column {
       id: agentsColumn
@@ -764,10 +774,10 @@ Panel {
 
         width: (parent.width - parent.spacing) / 2
         height: 32
-        radius: 10
-        color: buttonMouse.containsMouse ? Qt.alpha(Skein.accent, 0.25) : Qt.alpha(Skein.foreground, 0.06)
+        radius: height / 2
+        color: buttonMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.14) : Qt.alpha(Skein.foreground, 0.07)
         border.width: 1
-        border.color: Qt.alpha(Skein.accent, 0.5)
+        border.color: Qt.alpha(Skein.foreground, 0.16)
 
         Text {
           anchors.centerIn: parent

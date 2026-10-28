@@ -16,6 +16,6 @@ Flickable {
     id: body
 
     width: root.width - 12
-    spacing: 12
+    spacing: 18
   }
 }
