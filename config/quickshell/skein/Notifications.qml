@@ -213,7 +213,7 @@ Scope {
           height: shown ? body.implicitHeight + 25 : 0
           z: -index
           color: Skein.background
-          radius: 18
+          radius: 13
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
 

@@ -425,7 +425,7 @@ Scope {
             anchors.rightMargin: win.gap
             anchors.horizontalCenter: win.vertical ? undefined : parent.horizontalCenter
             anchors.verticalCenter: win.vertical ? parent.verticalCenter : undefined
-            radius: 22
+            radius: 16
             // Frosted glass: a light veil over the blurred screen behind, with a bright hairline on top
             color: Qt.alpha(Skein.background, 0.42)
             border.width: 1
@@ -769,7 +769,7 @@ Scope {
             y: win.edge === "bottom" ? (1 - menu.opacity) * 8 : 0
           }
           height: menuColumn.implicitHeight + 12
-          radius: 12
+          radius: 9
           color: Qt.alpha(Skein.background, 0.97)
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)

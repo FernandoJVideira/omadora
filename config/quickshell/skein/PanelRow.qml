@@ -21,7 +21,7 @@ Rectangle {
       duration: 100
     }
   }
-  radius: 12
+  radius: 9
 
   Row {
     anchors.fill: parent

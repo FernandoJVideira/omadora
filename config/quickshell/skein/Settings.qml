@@ -336,7 +336,7 @@ Scope {
       anchors.centerIn: parent
       width: Math.min(Math.round(900 * Skein.textScale), parent.width - 40)
       height: Math.min(Math.round(780 * Skein.textScale), parent.height - 40)
-      radius: 22
+      radius: 16
       color: Qt.alpha(Skein.background, 0.98)
       focus: true
 
@@ -483,7 +483,7 @@ Scope {
           anchors.leftMargin: 12
           anchors.rightMargin: 12
           height: visible ? Math.round(56 * Skein.textScale) : 0
-          radius: 14
+          radius: 11
           color: root.page === "users" ? Qt.alpha(Skein.accent, 0.9) : (accountMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : "transparent")
 
           Avatar {
@@ -576,7 +576,7 @@ Scope {
                 Rectangle {
                   width: parent.width
                   height: Math.round(34 * Skein.textScale)
-                  radius: 12
+                  radius: 9
                   color: root.page === entry.modelData.key ? Qt.alpha(Skein.accent, 0.9) : (rowMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : "transparent")
 
                   // Plain glyph in the same Nerd Font the launcher categories use, no badge behind it
@@ -715,7 +715,7 @@ Scope {
           height: choices.implicitHeight + 10
           x: Math.min(dropdown.anchorX + dropdown.anchorWidth - width, dropdown.width - width - 10)
           y: Math.min(dropdown.anchorY, dropdown.height - height - 10)
-          radius: 16
+          radius: 12
           color: Qt.alpha(Skein.background, 0.98)
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
@@ -737,7 +737,7 @@ Scope {
 
                 width: choices.width
                 height: Math.round(34 * Skein.textScale)
-                radius: 11
+                radius: 8
                 color: choiceMouse.containsMouse ? Qt.alpha(Skein.accent, 0.9) : "transparent"
 
                 Text {

@@ -372,7 +372,7 @@ Panel {
       color: "transparent"
       border.width: 1
       border.color: Qt.alpha(Skein.foreground, 0.16)
-      radius: 12
+      radius: 9
 
       Text {
         anchors.verticalCenter: parent.verticalCenter
@@ -645,7 +645,7 @@ Panel {
     color: "transparent"
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.16)
-    radius: 12
+    radius: 9
 
     Text {
       anchors.verticalCenter: parent.verticalCenter

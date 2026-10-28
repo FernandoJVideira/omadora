@@ -25,7 +25,7 @@ Column {
     width: parent.width
     // One pixel short and clipped: hides the last row's divider, which would sit on the card's edge
     height: list.implicitHeight - 1
-    radius: 16
+    radius: 12
     color: Qt.alpha(Skein.foreground, 0.05)
     clip: true
 
