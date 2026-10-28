@@ -10,6 +10,7 @@ source "$SKEIN_INSTALL/config/mimetypes.sh"
 source "$SKEIN_INSTALL/config/user-dirs.sh"
 source "$SKEIN_INSTALL/config/nautilus-python.sh"
 source "$SKEIN_INSTALL/config/skein-toggles.sh"
+source "$SKEIN_INSTALL/config/icon-pack.sh"
 
 source "$SKEIN_INSTALL/config/hardware/network.sh"
 source "$SKEIN_INSTALL/config/hardware/power.sh"
