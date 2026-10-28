@@ -233,6 +233,8 @@ Scope {
       property real dragX: 0
       property real dragY: 0
       property string dragUrl: ""
+      // Where the dragged icon would land among the pinned ones (-1: outside the dock, nowhere)
+      property int dropIndex: -1
       property bool menuOpen: false
       property var menuItem: null
       property real menuAnchor: 0 // along the dock, in window coordinates
@@ -266,6 +268,24 @@ Scope {
         }
         const distance = index - focus;
         return base + (peak - base) * strength * Math.exp(-(distance * distance) / 1.6);
+      }
+
+      // The pinned slot a pointer position along the dock falls into. Measured on the dock as it was before
+      // the drag (every icon at full width, no gap open), so opening the gap cannot flip the answer back.
+      function dropIndexAt(along: real, key: string): int {
+        let position = 0;
+        let index = 0;
+        for (const other of cells.children) {
+          if (other.modelData === undefined) {
+            continue;
+          }
+          const width = other.size + 2 * pad;
+          if (!other.isSeparator && other.modelData.pinned && other.modelData.key !== key && along > position + width / 2) {
+            index++;
+          }
+          position += width;
+        }
+        return index;
       }
 
       function hover(value: bool): void {
@@ -439,19 +459,52 @@ Scope {
                   readonly property bool running: !isSeparator && modelData.windows.length > 0
                   property real bounce: 0
 
+                  // While an icon is dragged: its own cell closes up and a gap opens where it would land
+                  readonly property bool isDragged: !isSeparator && win.dragItem !== null && win.dragItem.key === modelData.key
+                  readonly property int rank: {
+                    let n = 0;
+                    for (const other of root.items) {
+                      if (other.key !== undefined && other.key === modelData.key) {
+                        break;
+                      }
+                      if (other.pinned === true && (win.dragItem === null || other.key !== win.dragItem.key)) {
+                        n++;
+                      }
+                    }
+                    return n;
+                  }
+                  readonly property int pinnedCount: root.items.filter(other => other.pinned === true && (win.dragItem === null || other.key !== win.dragItem.key)).length
+                  readonly property bool canTakeGap: win.dragItem !== null && win.dropIndex >= 0 && !isSeparator && modelData.pinned && !isDragged
+                  property real gapBefore: canTakeGap && win.dropIndex === rank ? win.base + 2 * win.pad : 0
+                  property real gapAfter: canTakeGap && win.dropIndex === pinnedCount && rank === pinnedCount - 1 ? win.base + 2 * win.pad : 0
+                  property real along: isDragged ? 0 : size + 2 * win.pad + gapBefore + gapAfter
+
+                  Behavior on gapBefore {
+                    NumberAnimation {
+                      duration: 140
+                      easing.type: Easing.OutCubic
+                    }
+                  }
+
+                  Behavior on gapAfter {
+                    NumberAnimation {
+                      duration: 140
+                      easing.type: Easing.OutCubic
+                    }
+                  }
+
                   // Along the dock the cell is as wide as the icon, across it as tall as the biggest
-                  width: win.vertical ? win.peak + 8 : size + 2 * win.pad
-                  height: win.vertical ? size + 2 * win.pad : win.peak + 8
+                  width: win.vertical ? win.peak + 8 : along
+                  height: win.vertical ? along : win.peak + 8
 
                   Item {
                     id: icon
 
-                    visible: !cell.isSeparator
-                    opacity: win.dragItem !== null && win.dragItem.key === cell.modelData.key ? 0.25 : 1
+                    visible: !cell.isSeparator && !cell.isDragged
                     width: cell.size
                     height: cell.size
-                    x: win.edge === "left" ? 8 + cell.bounce : (win.edge === "right" ? parent.width - width - 8 - cell.bounce : win.pad)
-                    y: win.edge === "bottom" ? parent.height - height - 8 - cell.bounce : win.pad
+                    x: win.edge === "left" ? 8 + cell.bounce : (win.edge === "right" ? parent.width - width - 8 - cell.bounce : win.pad + cell.gapBefore)
+                    y: win.edge === "bottom" ? parent.height - height - 8 - cell.bounce : win.pad + cell.gapBefore
 
                     // The first of these that loads: your own icon, the icon pack's, then the system theme's
                     readonly property string own: DockConfig.icons[cell.modelData.key] ?? ""
@@ -612,7 +665,9 @@ Scope {
                     }
                     onPositionChanged: mouse => {
                       const along = win.vertical ? mouse.y : mouse.x;
-                      win.hoverPos = cell.index + Math.max(0, Math.min(1, along / Math.max(1, win.vertical ? cell.height : cell.width)));
+                      if (!dragged) {
+                        win.hoverPos = cell.index + Math.max(0, Math.min(1, along / Math.max(1, win.vertical ? cell.height : cell.width)));
+                      }
                       // Drag an icon to rearrange the dock, or off the dock to remove it (Downloads and Trash stay put)
                       if (pressed && !cell.modelData.special && !cell.isSeparator && (dragged || Math.hypot(mouse.x - pressPoint.x, mouse.y - pressPoint.y) > 10)) {
                         if (!dragged) {
@@ -620,10 +675,20 @@ Scope {
                           win.menuOpen = false;
                           win.dragItem = cell.modelData;
                           win.dragUrl = picture.source.toString();
+                          // Nothing is hovered while dragging: no magnifying, no name label
+                          win.hoverPos = -1;
                         }
                         const point = mapToItem(scene, mouse.x, mouse.y);
                         win.dragX = point.x;
                         win.dragY = point.y;
+                        const onDock = mapToItem(frame, mouse.x, mouse.y);
+                        const near = 60;
+                        if (onDock.x > -near && onDock.x < frame.width + near && onDock.y > -near && onDock.y < frame.height + near) {
+                          const local = mapToItem(cells, mouse.x, mouse.y);
+                          win.dropIndex = win.dropIndexAt(win.vertical ? local.y : local.x, cell.modelData.key);
+                        } else {
+                          win.dropIndex = -1;
+                        }
                       }
                     }
                     onReleased: mouse => {
@@ -638,21 +703,12 @@ Scope {
                         // The new place is among the pinned icons: count those whose middle the pointer has passed
                         const local = mapToItem(cells, mouse.x, mouse.y);
                         const along = win.vertical ? local.y : local.x;
-                        let index = 0;
-                        for (const other of cells.children) {
-                          if (other.modelData === undefined || other.isSeparator || !other.modelData.pinned || other.modelData.key === item.key) {
-                            continue;
-                          }
-                          const middle = win.vertical ? other.y + other.height / 2 : other.x + other.width / 2;
-                          if (along > middle) {
-                            index++;
-                          }
-                        }
-                        DockConfig.place(item.id, index);
+                        DockConfig.place(item.id, win.dropIndexAt(along, item.key));
                       } else if (item.pinned) {
                         DockConfig.unpin(item.id);
                       }
                       win.dragItem = null;
+                      win.dropIndex = -1;
                     }
                     onEntered: win.hover(true)
                     onClicked: mouse => {
