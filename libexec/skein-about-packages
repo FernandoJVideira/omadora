@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Print how many packages are installed. Counting takes over a second, so the result is cached
+# until the package database changes.
+
+db=/usr/lib/sysimage/rpm/rpmdb.sqlite
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/skein/package-count"
+stamp="$(stat -c %Y "$db" 2>/dev/null)"
+
+if [[ -n $stamp && -f $cache ]]; then
+  read -r cached_stamp count <"$cache"
+  if [[ $cached_stamp == "$stamp" && -n $count ]]; then
+    echo "$count"
+    exit 0
+  fi
+fi
+
+count="$(rpm -qa 2>/dev/null | wc -l)"
+mkdir -p "$(dirname "$cache")"
+echo "$stamp $count" >"$cache"
+echo "$count"

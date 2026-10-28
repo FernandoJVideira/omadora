@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Show or change this computer's name.
+#   skein-hostname            print the hostname
+#   skein-hostname set <name> change it (asks for your password through polkit)
+
+if (($# == 0)); then
+  hostnamectl hostname
+  exit 0
+fi
+
+[[ ${1:-} == set && -n ${2:-} ]] || { echo "Usage: skein-hostname [set <name>]" >&2; exit 1; }
+name="$2"
+
+# One DNS label: letters, digits and hyphens, not starting or ending with a hyphen, up to 63 characters
+if [[ ! $name =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]]; then
+  notify-send -u critical "Computer name" "Use letters, digits and hyphens only (no spaces), up to 63 characters"
+  exit 1
+fi
+
+if [[ $name == "$(hostnamectl hostname)" ]]; then
+  exit 0
+fi
+
+if pkexec hostnamectl set-hostname "$name"; then
+  notify-send -u low "Computer name" "Now called $name. Open terminals show it after they restart."
+else
+  notify-send -u critical "Computer name" "The name was not changed"
+  exit 1
+fi
