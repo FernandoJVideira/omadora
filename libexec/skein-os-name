@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# The operating system as shown by fastfetch and similar: "SkeinOS (based on Nobara Linux 44) x86_64".
+# The base is whichever distro this branch of SkeinOS sits on: Nobara, Arch or CachyOS.
+
+# shellcheck disable=SC1091
+. /etc/os-release 2>/dev/null
+
+case "${ID:-}" in
+nobara) base="Nobara Linux ${VERSION_ID:-}" ;;
+cachyos) base="CachyOS" ;;
+arch) base="Arch Linux" ;;
+*) base="${NAME:-Linux} ${VERSION_ID:-}" ;;
+esac
+
+echo "SkeinOS (based on ${base% }) $(uname -m)"

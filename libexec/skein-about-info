@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Print facts about this computer and OS, as JSON, for the Settings About page.
+
+os_release() { (. /etc/os-release; echo "${!1}"); }
+
+cpu="$(lscpu | awk -F: '/^Model name/ { sub(/^ +/, "", $2); print $2; exit }')"
+threads="$(nproc)"
+gpu="$(lspci 2>/dev/null | awk -F': ' '/VGA|3D controller/ { print $2 }' | sed 's/ (rev.*//' | paste -sd'|')"
+mem="$(awk '/^MemTotal/ { printf "%.1f GiB", $2 / 1048576 }' /proc/meminfo)"
+disk="$(df -h --output=used,size,pcent / | awk 'NR == 2 { gsub(/ +/, " "); print $1 " of " $2 " (" $3 ")" }')"
+uptime_text="$(uptime -p | sed 's/^up //')"
+screens="$(hyprctl monitors -j 2>/dev/null | jq -r 'map("\(.name) \(.width)x\(.height)@\(.refreshRate | floor)Hz") | join("|")')"
+product="$(cat /sys/class/dmi/id/product_name 2>/dev/null)"
+vendor="$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)"
+# SkeinOS sits on top of whichever distro this branch is installed on: Nobara, Arch or CachyOS
+case "$(os_release ID)" in
+nobara) base="Nobara Linux $(os_release VERSION_ID)" ;;
+cachyos) base="CachyOS" ;;
+arch) base="Arch Linux" ;;
+*) base="$(os_release NAME) $(os_release VERSION_ID)" ;;
+esac
+
+logo="${SKEIN_PATH:-$HOME/.local/share/skein}/default/branding/skein-logo.png"
+[[ -f $logo ]] || logo=""
+logo_name="$(os_release LOGO)"
+for candidate in ${logo:+/dev/null} /usr/share/icons/hicolor/{256x256,128x128,scalable,64x64,48x48}/apps/"$logo_name".{png,svg} /usr/share/pixmaps/"$logo_name".{png,svg} /usr/share/pixmaps/fedora-logo-sprite.png; do
+  [[ -n $logo ]] && break
+  if [[ -n $logo_name || $candidate == */fedora-logo-sprite.png ]] && [[ -f $candidate ]]; then
+    logo="$candidate"
+    break
+  fi
+done
+
+jq -nc \
+  --arg host "$(hostname)" \
+  --arg user "$USER" \
+  --arg os "SkeinOS" \
+  --arg kernel "$(uname -r)" \
+  --arg arch "$(uname -m)" \
+  --arg skein "$("$(dirname "${BASH_SOURCE[0]}")/skein-version" 2>/dev/null)" \
+  --arg hypr "$(hyprctl version -j 2>/dev/null | jq -r '.tag // .version // empty')" \
+  --arg qs "$(qs --version 2>/dev/null | awk '{ print $2 }')" \
+  --arg shell "${SHELL##*/}" \
+  --arg session "${XDG_CURRENT_DESKTOP:-}" \
+  --arg model "$vendor $product" \
+  --arg cpu "$cpu ($threads threads)" \
+  --arg gpu "$gpu" \
+  --arg mem "$mem" \
+  --arg disk "$disk" \
+  --arg uptime "$uptime_text" \
+  --arg screens "$screens" \
+  --arg logo "$logo" \
+  --arg osName "SkeinOS" \
+  --arg base "$base" \
+  --arg osVersion "Based on $base" \
+  '{host: $host, user: $user, os: $os, kernel: $kernel, arch: $arch, skein: $skein, hyprland: $hypr,
+    quickshell: $qs, shell: $shell, session: $session, model: ($model | gsub("^ +| +$"; "")),
+    cpu: $cpu, gpus: ($gpu | split("|") | map(select(. != ""))), memory: $mem, disk: $disk,
+    uptime: $uptime, screens: ($screens | split("|") | map(select(. != ""))), logo: $logo, osName: $osName, osVersion: $osVersion, base: $base}'

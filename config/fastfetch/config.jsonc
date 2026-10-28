@@ -68,7 +68,7 @@
       "type": "command",
       "key": "󰣛 OS",
       "keyColor": "blue",
-      "text": "version=$(skeinctl info version); echo \"Skein $version\""
+      "text": "version=$(skeinctl info version); echo \"SkeinOS $version\""
     },
     {
       "type": "command",
