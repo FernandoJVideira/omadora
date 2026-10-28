@@ -18,6 +18,9 @@ require_cmd gum
 update_confirm() {
   # Wrap inside the terminal, otherwise long lines break the border
   local width=$(($(tput cols 2>/dev/null || echo 80) - 2))
+  # Arch updates the repositories and the AUR (yay); Fedora and Nobara use DNF
+  local system_packages="DNF packages"
+  command -v pacman >/dev/null && system_packages="Pacman and AUR packages"
 
   gum style \
     --border normal \
@@ -25,7 +28,7 @@ update_confirm() {
     --width "$width" \
     "Ready to update?" \
     "" \
-    "The update process includes: Skein, DNF packages, Flatpaks, Cargo bins, and firmware." \
+    "The update process includes: Skein, $system_packages, Flatpaks, Cargo bins, and firmware." \
     "" \
     "• You cannot stop the update once you start!" \
     "• Make sure you're connected to power or have a full battery"
