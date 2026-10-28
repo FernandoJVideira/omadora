@@ -49,11 +49,27 @@ sync() {
   [[ -f $monitors_lua ]] && primary=$(sed -n 's/.*\["\([^"]*\)"\][[:space:]]*=[[:space:]]*"0x0".*/\1/p' "$monitors_lua" | head -n 1)
   [[ -n $primary ]] || primary=$(hyprctl -j monitors 2>/dev/null | jq -r '[.[] | select(.x == 0 and .y == 0)][0].name // empty' 2>/dev/null || true)
 
+  # The people who can log in, with their pictures. The greeter runs as its own user and can't read
+  # anyone's home, so the pictures are copied (as small PNGs) next to it whenever this runs.
+  local users_json="[]" name uid home full shell
+  mkdir -p "$dir/avatars"
+  rm -f "$dir"/avatars/*.png
+  while IFS=: read -r name _ uid _ full home shell; do
+    ((uid >= 1000 && uid < 60000)) || continue
+    [[ $shell == */nologin || $shell == */false ]] && continue
+    local has=false
+    if [[ -r $home/.face ]] && command -v magick >/dev/null && magick "$home/.face[0]" -resize 192x192^ -gravity center -extent 192x192 "PNG:$dir/avatars/$name.png" 2>/dev/null; then
+      has=true
+    fi
+    users_json=$(jq -c --arg n "$name" --arg f "${full%%,*}" --argjson a "$has" '. + [{name: $n, fullName: $f, avatar: $a}]' <<<"$users_json")
+  done < <(getent passwd)
+
   cat >"$dir/Theme.qml" <<QML
 import QtQuick
 
 QtObject {
   readonly property string user: "$USER"
+  readonly property var users: $users_json
   readonly property string primary: "$primary"
   readonly property string logo: "$logo"
   readonly property color background: "$(color background '#1a1b26')"

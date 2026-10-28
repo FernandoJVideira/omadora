@@ -9,7 +9,9 @@ face="$HOME/.face"
 
 if [[ ${1:-} == --remove ]]; then
   rm -f "$face" "$HOME/.face.icon"
-  exit 0
+  # Keep the login screen in step (picture and name)
+  "$(dirname "${BASH_SOURCE[0]}")/skein-greeter" sync --auto >/dev/null 2>&1 || true
+    exit 0
 fi
 
 image="${1:-}"
@@ -27,3 +29,5 @@ magick "$image[0]" -resize 256x256^ -gravity center -extent 256x256 "PNG:$face.t
 mv "$face.tmp" "$face"
 ln -nsf "$face" "$HOME/.face.icon"
 notify-send -u low "Users" "Avatar updated"
+# Keep the login screen in step (picture and name)
+"$(dirname "${BASH_SOURCE[0]}")/skein-greeter" sync --auto >/dev/null 2>&1 || true
