@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Switch the top bar between its classic row of indicators (audio, network, bluetooth, display, agents)
+# and a single Control Center button with a notification center. Nothing else changes, so it is
+# safe to try: "off" brings the classic bar back exactly as it was.
+#   skein-controlcenter            print on or off
+#   skein-controlcenter on|off|toggle
+
+config="${XDG_CONFIG_HOME:-$HOME/.config}/skein/shell.json"
+
+current() {
+  [[ -f $config ]] && jq -r 'if .controlCenter == true then "on" else "off" end' "$config" 2>/dev/null || echo off
+}
+
+set_to() { # on|off
+  local value=false data='{}'
+  [[ $1 == on ]] && value=true
+  mkdir -p "$(dirname "$config")"
+  [[ -f $config ]] && data="$(jq -ec 'select(type == "object")' "$config" 2>/dev/null || echo '{}')"
+  jq --argjson v "$value" '.controlCenter = $v' <<<"$data" >"$config.tmp" && mv "$config.tmp" "$config"
+}
+
+case "${1:-}" in
+"") current ;;
+on | off) set_to "$1" ;;
+toggle) [[ $(current) == on ]] && set_to off || set_to on ;;
+*)
+  echo "Usage: skein-controlcenter [on|off|toggle]" >&2
+  exit 1
+  ;;
+esac

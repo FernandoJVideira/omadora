@@ -106,10 +106,12 @@ Panel {
       x: yearLabel.width + 16
       width: parent.width - x - percent.width - 16
       height: 6
+      radius: 3
       color: Qt.alpha(Skein.foreground, 0.12)
 
       Rectangle {
         width: parent.width * root.yearPercent / 100
+        radius: 3
         height: parent.height
         color: Skein.accent
       }
@@ -201,6 +203,7 @@ Panel {
               color: "transparent"
               border.width: 1
               border.color: Qt.alpha(Skein.foreground, 0.6)
+              radius: 8
             }
 
             Text {

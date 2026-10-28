@@ -263,6 +263,7 @@ Panel {
             color: Qt.alpha(Skein.foreground, 0.07)
             border.width: 1
             border.color: Qt.alpha(Skein.accent, 0.6)
+            radius: 8
 
             TextInput {
               id: cityInput
@@ -343,6 +344,7 @@ Panel {
         width: parent.width
         height: 36
         color: index === root.selected ? Qt.alpha(Skein.foreground, 0.07) : (placeMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.04) : "transparent")
+        radius: 8
 
         Row {
           anchors.verticalCenter: parent.verticalCenter

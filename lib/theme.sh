@@ -3,7 +3,7 @@ readonly SKEIN_CURRENT_THEME_DIR="${SKEIN_CONFIG_HOME}/current/theme"
 readonly SKEIN_NEXT_THEME_DIR="${SKEIN_CONFIG_HOME}/current/next-theme"
 readonly SKEIN_THEME_NAME_FILE="${SKEIN_CONFIG_HOME}/current/theme.name"
 readonly SKEIN_THEME_LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/skein-theme-set.lock"
-readonly SKEIN_USER_BACKGROUNDS_DIR="${SKEIN_CONFIG_HOME}/backgrounds"
+readonly SKEIN_USER_BACKGROUNDS_DIR="${SKEIN_BACKGROUNDS_DIR:-${HOME}/Pictures/Wallpapers}"
 readonly SKEIN_CURRENT_BACKGROUND_LINK="${SKEIN_CONFIG_HOME}/current/background"
 
 theme_name_normalize() {
@@ -100,6 +100,16 @@ theme_set_gnome() {
   gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
 }
 
+# How the wallpaper fills the screen: cover (fill), contain (fit), fill (stretch) or tile
+theme_background_fit() {
+  local fit
+  fit="$(cat "${SKEIN_CONFIG_HOME}/wallpaper-fit" 2>/dev/null || true)"
+  case "$fit" in
+  cover | contain | fill | tile) echo "$fit" ;;
+  *) echo cover ;;
+  esac
+}
+
 theme_apply_background() {
-  hyprctl hyprpaper wallpaper ,"$SKEIN_CURRENT_BACKGROUND_LINK"
+  hyprctl hyprpaper wallpaper ,"$SKEIN_CURRENT_BACKGROUND_LINK","$(theme_background_fit)"
 }

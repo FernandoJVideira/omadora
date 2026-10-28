@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Give or take administrator rights (the wheel group).
+#   skein-user-admin <name> on|off
+
+name="$1"
+state="$2"
+
+if [[ -z $name || ! $state =~ ^(on|off)$ ]]; then
+  echo "Usage: skein-user-admin <name> on|off" >&2
+  exit 1
+fi
+
+if [[ $state == off && $name == "$USER" ]]; then
+  notify-send -u critical "Users" "You can't remove your own administrator rights"
+  exit 1
+fi
+
+if [[ $state == on ]]; then
+  pkexec usermod -aG wheel "$name"
+else
+  pkexec gpasswd -d "$name" wheel
+fi && notify-send -u low "Users" "$name: administrator $state"

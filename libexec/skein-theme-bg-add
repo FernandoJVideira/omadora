@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# shellcheck source=lib/theme.sh
+source "$SKEIN_LIB_DIR/theme.sh"
+
+# Add wallpapers to the current theme: they are copied into ~/Pictures/Wallpapers/<theme>/.
+#   skein-theme-bg-add [image...]    with no images, a file chooser opens
+#   skein-theme-bg-add --folder      open the theme's wallpaper folder
+
+theme="$(theme_current)" || die "no current theme set"
+dest="${SKEIN_USER_BACKGROUNDS_DIR}/${theme}"
+ensure_dir "$dest"
+
+if [[ ${1:-} == --folder ]]; then
+  exec xdg-open "$dest"
+fi
+
+files=("$@")
+
+if ((${#files[@]} == 0)); then
+  picked="$(zenity --file-selection --multiple --separator=$'\n' \
+    --title="Add wallpapers to ${theme}" \
+    --file-filter='Images | *.png *.jpg *.jpeg *.webp' 2>/dev/null)" || exit 0
+  mapfile -t files <<<"$picked"
+fi
+
+added=0
+for file in "${files[@]}"; do
+  [[ -f $file ]] || continue
+  cp -n -- "$file" "$dest/" && added=$((added + 1))
+done
+
+((added > 0)) && notify-send -u low "Wallpapers" "Added $added to $theme"
+exit 0

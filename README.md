@@ -23,9 +23,8 @@ Read more about Omarchy itself at [omarchy.org](https://omarchy.org).
 ## What's different on this branch
 
 - **Quickshell shell**: one Quickshell config provides the top bar and its panels (audio, network, Bluetooth, weather, calendar, display, agents), notifications, OSD, launcher and menus, lock screen, and the theme and wallpaper switchers. It replaces Waybar, wofi, mako and hyprlock.
-- **Quickshell login screen**: greetd with a Quickshell greeter styled after Omarchy's login (the Skein logo, a lock and an entry box that fills with bullets), in `default/greeter`. It runs in cage, lays the monitors out itself (the form goes on the main one), takes the active theme's colors and follows theme changes, and unlocks the keyring at login. Plasma Login Manager stays installed but disabled; `skein-greeter rollback` switches back, and `SKEIN_KEEP_LOGIN_MANAGER=1` at install time keeps it as the login screen (offering only **Plasma** and **Skein**).
+- **Quickshell login screen**: greetd with a Quickshell greeter styled after Omarchy's login (the Skein logo, a lock and an entry box that fills with bullets), in `default/greeter`. It runs in cage, lays the monitors out itself (the form goes on the main one), takes the active theme's colors and follows theme changes, and unlocks the keyring at login.
 - **Dropping KDE**: `skein-remove-kde schedule` queues the removal of Plasma, its apps and the default apps Nobara ships for the next boot, before the login screen (removing Plasma Login Manager from inside a Plasma session would end that session). `skein-remove-kde remove` does it by hand from a session greetd started, with a `dnf` preview and a typed confirmation; either way the preview must not touch `nobara-*`, Hyprland, Quickshell, the gaming stack or KWallet. `skein-remove-kde clean` removes what Plasma left in your home (the scheduled run does that too).
-- **Login screen theme**: choose the login wallpaper from the Style menu (Login Screen), including an `skein` wallpaper that follows the active Skein theme.
 - **Default agent and crash diagnosis**: set a default coding agent with `skein-default-agent`, and get notified with a diagnosis when an app crashes.
 - **More themes**: Catppuccin, Gruvbox, Nord, Tokyo Night, Rose Pine and others (see [themes/THIRD_PARTY.md](themes/THIRD_PARTY.md)).
 
@@ -55,9 +54,9 @@ Run `~/.local/share/skein/install.sh` to install, then reboot.
 
 ## Usage
 
-Pick **Skein** from the session menu on the login screen. Pick **Plasma** to use the regular Nobara desktop.
+Log in through the greeter; it starts the **Skein** session.
 
-Open the menu with `skeinctl menu` (or its keybinding) to change the theme, wallpaper, login screen, defaults and more. Everything is also available from the CLI: run `skeinctl` for the list of commands.
+Open the menu with `skeinctl menu` (or its keybinding) to change the theme, wallpaper, defaults and more. Everything is also available from the CLI: run `skeinctl` for the list of commands.
 
 Update with `skeinctl update`. Updates pull over HTTPS, so they work without an SSH agent.
 

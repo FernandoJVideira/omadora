@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Drop KDE Plasma from Nobara (Plasma Login Manager is already replaced by the greeter, see skein-greeter):
-# skein-remove-kde [schedule|remove|clean|status] [--kde-only] [--yes] [--home DIR]
+# skein-remove-kde [schedule|remove|clean|status|list] [--kde-only] [--yes] [--home DIR]
 #
 #   schedule  queue the removal and the home cleanup for the next boot, before the login screen starts.
 #             The install scripts use this: from inside a Plasma session, removing Plasma Login Manager
 #             would end the session and the installer with it. Needs the greeter (skein-greeter install).
 #   remove    remove KDE Plasma, its apps and the default apps Nobara ships, once you are logged in through
 #             greetd: it shows the dnf preview and waits for you to type REMOVE.
+#   list      show, without changing anything, the packages a removal would take and the ones kept.
 #   clean     list the Plasma/KDE config, caches and unused Flatpak runtimes left in your home, and delete
 #             them once you type DELETE.
 #   --kde-only keeps the other default apps; --yes skips the questions (what schedule runs at boot).
@@ -44,6 +45,9 @@ KDE_PACKAGES=(
   kdegraphics-thumbnailers ffmpegthumbs kdenetwork-filesharing 'akonadi*' 'kaccounts-*'
   signon-kwallet-extension kwebkitpart kf6-baloo-file flatpak-kcm colord-kde kde-partitionmanager
   'kwalletmanager*' ksshaskpass
+  # KDE 4 era libraries and Nobara's Plasma tweaks, left over once Plasma itself is gone
+  'kdelibs*' 'kde-runtime*' kde-platform-plugin kde-workspace-common kde-l10n kde-apps-rpm-macros
+  kde4-filesystem kde-settings 'kde-nobara*' kde-steamdeck-additions
   dolphin 'dolphin-*' konsole kate kwrite okular gwenview ark spectacle kcalc kcharselect kfind
   filelight kdialog elisa-player kdenlive
 )
@@ -58,6 +62,10 @@ KEEP_PACKAGES=(
   'nobara-*' greetd cage 'hyprland*' 'quickshell*' uwsm xfce-polkit NetworkManager 'pipewire*' wireplumber
   as_root systemd 'kernel*' 'dnf*' flatpak kitty zsh git steam lutris 'heroic*' gamescope 'wine*'
   mangohud goverlay protonplus 'umu-launcher' timeshift falcond inputplumber '*kwallet*'
+  # needed by the KWallet libraries, the Qt/KF libraries Quickshell uses, and Nobara's identity
+  'kf5-*' kde-filesystem 'nobara-release*'
+  # what this desktop uses: the shell prompt, the Nerd Font and the icon theme
+  starship jetbrainsmono-nerd-fonts 'papirus-icon-theme*'
 )
 
 installed() { rpm -qa --qf '%{NAME}\n' | sort -u; }
@@ -179,6 +187,23 @@ run_transaction() {
   as_root dnf "$@" -y
 }
 
+# Some of what the desktop uses was only installed as a dependency of KDE packages (the prompt, the
+# Nerd Font). Mark it as installed on purpose, or removing KDE would take it along as "unused".
+mark_keepers() {
+  local keep
+  mapfile -t keep < <(matching starship jetbrainsmono-nerd-fonts 'papirus-icon-theme*')
+  ((${#keep[@]})) || return 0
+  log "Keeping ${keep[*]} (marked as installed on purpose)"
+  as_root dnf mark user "${keep[@]}" >/dev/null
+}
+
+cmd_list() {
+  log "A removal would take:"
+  selected_packages | sed 's/^/  /'
+  log "and always keeps (the ones installed):"
+  keep_names | sed 's/^/  /' | head -40
+}
+
 cmd_remove() {
   not_in_plasma
   if ((YES)); then
@@ -197,6 +222,7 @@ cmd_remove() {
 
   log "${#packages[@]} packages selected:"
   printf '  %s\n' "${packages[@]}"
+  mark_keepers
   write_protected
   lift_protection "${packages[@]}"
 
@@ -321,8 +347,8 @@ while (($#)); do
   --yes) YES=1 ;;
   --kde-only) KDE_ONLY=1 ;;
   --home) shift; TARGET_HOME="$1" ;;
-  schedule | remove | clean | status | boot) action=$1 ;;
-  *) die "usage: skein-remove-kde [schedule|remove|clean|status] [--kde-only] [--yes] [--home DIR]" ;;
+  schedule | remove | clean | status | list | boot) action=$1 ;;
+  *) die "usage: skein-remove-kde [schedule|remove|clean|status|list] [--kde-only] [--yes] [--home DIR]" ;;
   esac
   shift
 done
@@ -333,4 +359,5 @@ remove) cmd_remove ;;
 clean) cmd_clean ;;
 boot) cmd_boot ;;
 status) cmd_status ;;
+list) cmd_list ;;
 esac

@@ -49,6 +49,7 @@ Scope {
     Rectangle {
       anchors.fill: parent
       color: Qt.alpha(Skein.background, 0.95)
+      radius: 14
       border.width: 1
       border.color: Qt.alpha(Skein.accent, 0.5)
 
@@ -96,10 +97,12 @@ Scope {
             Rectangle {
               width: parent.width
               height: 4
+              radius: 2
               color: Qt.alpha(Skein.foreground, 0.2)
 
               Rectangle {
                 width: parent.width * Math.min(root.value, 100) / 100
+                radius: 2
                 height: parent.height
                 color: Skein.accent
               }

@@ -16,6 +16,13 @@ Rectangle {
   height: 28
   color: mouse.containsMouse ? Qt.alpha(Skein.accent, 0.15) : "transparent"
 
+  Behavior on color {
+    ColorAnimation {
+      duration: 100
+    }
+  }
+  radius: 8
+
   Row {
     anchors.fill: parent
     anchors.leftMargin: 6

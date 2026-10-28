@@ -34,6 +34,13 @@ ShellRoot {
     applyCommand: [`${Skein.skeinPath}/libexec/skein-theme-bg-set`]
   }
 
+  Settings {
+    barVisible: root.barVisible
+    onSetBarVisible: visible => root.barVisible = visible
+  }
+
+  Dock {}
+
   Notifications {}
 
   Osd {}
@@ -54,7 +61,8 @@ ShellRoot {
       Skein.refreshRequested(module);
     }
 
-    // Toggle a bar dropdown: agents, audio, network, bluetooth, weather, calendar or display
+    // Toggle a bar dropdown: agents, audio, network, bluetooth, weather, calendar, display,
+    // controlcenter or notifications (the last two need the Control Center on)
     function panel(name: string): void {
       Skein.panelRequested(name);
     }

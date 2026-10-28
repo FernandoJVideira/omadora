@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Delete an account, optionally with its home folder.
+#   skein-user-delete <name> [home]
+
+name="$1"
+uid="$(id -u "$name" 2>/dev/null)"
+
+if [[ -z $uid ]] || ((uid < 1000)); then
+  notify-send -u critical "Users" "Refusing to delete $name"
+  exit 1
+fi
+
+if [[ $name == "$USER" ]]; then
+  notify-send -u critical "Users" "You can't delete the account you are logged in with"
+  exit 1
+fi
+
+args=()
+[[ $2 == home ]] && args+=(-r)
+
+pkexec userdel "${args[@]}" "$name" && notify-send -u low "Users" "Deleted $name"

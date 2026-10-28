@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Create an account and ask for its password. Meant to run in a terminal, it needs polkit authentication.
+#   skein-user-add <name> [full name] [admin]
+
+name="$1"
+full="${2:-}"
+admin="${3:-}"
+
+if [[ ! $name =~ ^[a-z_][a-z0-9_-]{0,31}$ ]]; then
+  echo "Invalid user name: use lowercase letters, digits, - and _ (max 32, not starting with a digit)" >&2
+  exit 1
+fi
+
+if getent passwd "$name" >/dev/null; then
+  echo "User $name already exists" >&2
+  exit 1
+fi
+
+args=(-m -s /bin/bash)
+[[ -n $full ]] && args+=(-c "$full")
+[[ $admin == admin ]] && args+=(-G wheel)
+
+pkexec useradd "${args[@]}" "$name" && pkexec passwd "$name"

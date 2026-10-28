@@ -29,16 +29,183 @@ Singleton {
   }
 
   readonly property real fontSize: 10.5 * textScale
-  readonly property int barHeight: Math.round(26 * textScale)
+  readonly property int barHeight: Math.round(barSize * textScale)
+  // Gap around a floating bar
+  readonly property int barInset: barFloating ? Math.round(6 * textScale) : 0
   readonly property int sectionPadding: Math.round(5 * textScale) // 0.35rem
-  readonly property int modulePadding: Math.round(8 * textScale) // 0.55rem
-  readonly property int minModuleWidth: Math.round(28 * textScale) // 2em
+  readonly property int modulePadding: Math.round(8 * textScale * densityFactor) // 0.55rem
+  readonly property int minModuleWidth: Math.round(28 * textScale * densityFactor) // 2em
 
   // Do not disturb: only notify-send gets through (see Notifications.qml)
   property bool silenced: false
 
+  // Menu bar settings (Settings > Menu Bar), read from shell.json. With controlCenter on, one Control
+  // Center button and a notification center replace the row of indicators; off is the classic bar.
+  property bool controlCenter: false
+  property bool notificationCenter: true
+  property bool showModes: true // the mode indicators (recording, night light, ...) left of the clock
+  property int barSize: 26 // bar height in px at the default text size
+  property real barOpacity: 1
+  property bool barFloating: false // a rounded bar with a gap around it
+  property bool barBorder: false
+  property string barDensity: "default" // compact, default or comfortable
+
+  // Everything the bar can show. `only` limits an item to the classic bar or to the Control Center.
+  readonly property var barItems: [
+    {
+      id: "menu",
+      label: "Skein menu",
+      only: ""
+    },
+    {
+      id: "workspaces",
+      label: "Workspaces",
+      only: ""
+    },
+    {
+      id: "clock",
+      label: "Clock",
+      only: ""
+    },
+    {
+      id: "weather",
+      label: "Weather",
+      only: ""
+    },
+    {
+      id: "tray",
+      label: "System tray",
+      only: ""
+    },
+    {
+      id: "agents",
+      label: "Agents",
+      only: "classic"
+    },
+    {
+      id: "notifications",
+      label: "Notification bell",
+      only: "controlcenter"
+    },
+    {
+      id: "controlcenter",
+      label: "Control Center",
+      only: "controlcenter"
+    },
+    {
+      id: "bluetooth",
+      label: "Bluetooth",
+      only: "classic"
+    },
+    {
+      id: "network",
+      label: "Network",
+      only: "classic"
+    },
+    {
+      id: "audio",
+      label: "Audio",
+      only: "classic"
+    },
+    {
+      id: "display",
+      label: "Display",
+      only: "classic"
+    },
+    {
+      id: "cpu",
+      label: "Processor",
+      only: ""
+    },
+    {
+      id: "battery",
+      label: "Battery",
+      only: ""
+    },
+    {
+      id: "update",
+      label: "Updates",
+      only: ""
+    }
+  ]
+  readonly property var defaultBarLayout: ({
+      left: ["menu", "workspaces"],
+      center: ["clock", "weather"],
+      right: ["tray", "agents", "notifications", "controlcenter", "bluetooth", "network", "audio", "display", "cpu", "battery", "update"]
+    })
+  // Where each item sits: {left: [ids], center: [ids], right: [ids]}; ids left out are hidden
+  property var barLayout: defaultBarLayout
+
+  readonly property real densityFactor: barDensity === "compact" ? 0.75 : (barDensity === "comfortable" ? 1.3 : 1)
+
+  function normalizeLayout(layout: var): var {
+    const known = barItems.map(i => i.id);
+    const seen = {};
+    const result = {};
+    for (const section of ["left", "center", "right"]) {
+      result[section] = (Array.isArray(layout?.[section]) ? layout[section] : []).filter(id => known.includes(id) && !seen[id] && (seen[id] = true));
+    }
+    return result;
+  }
+
+  function sectionOf(id: string): string {
+    for (const section of ["left", "center", "right"]) {
+      if (barLayout[section].includes(id)) {
+        return section;
+      }
+    }
+    return "";
+  }
+
+  function saveLayout(layout: var): void {
+    setBar("barLayout", normalizeLayout(layout));
+  }
+
+  // Put an item at the end of a section ("" hides it)
+  function placeBarItem(id: string, section: string): void {
+    const next = normalizeLayout(barLayout);
+    for (const s of ["left", "center", "right"]) {
+      next[s] = next[s].filter(i => i !== id);
+    }
+    if (section !== "") {
+      next[section].push(id);
+    }
+    saveLayout(next);
+  }
+
+  // Move an item one place within its section
+  function moveBarItem(id: string, delta: int): void {
+    const next = normalizeLayout(barLayout);
+    const section = sectionOf(id);
+    if (section === "") {
+      return;
+    }
+    const list = next[section];
+    const i = list.indexOf(id);
+    const j = i + delta;
+    if (j < 0 || j >= list.length) {
+      return;
+    }
+    [list[i], list[j]] = [list[j], list[i]];
+    saveLayout(next);
+  }
+  property string clockStyle: "day" // day ("Tuesday 14:05"), date ("Tue 14 Oct 14:05") or time
+  property bool clock24h: true
+  property bool clockSeconds: false
+
+  // The notifications still open, newest last, for the notification center (kept by Notifications.qml)
+  property var notifications: []
+
+  // Change a menu bar setting now and save it
+  function setBar(key: string, value: var): void {
+    root[key] = value;
+    Quickshell.execDetached([`${skeinPath}/libexec/skein-menubar`, "set", key, JSON.stringify(value)]);
+  }
+
   signal refreshRequested(string module)
   signal panelRequested(string name)
+  // A bar panel just opened: every other one closes
+  signal panelOpening(var panel)
 
   function glyph(codepoint: int): string {
     return String.fromCodePoint(codepoint);
@@ -83,8 +250,20 @@ Singleton {
     onFileChanged: reload()
     onLoaded: {
       try {
-        const size = JSON.parse(text()).textSize;
-        root.textSize = size >= 9 && size <= 20 ? size : 12;
+        const config = JSON.parse(text());
+        root.textSize = config.textSize >= 9 && config.textSize <= 20 ? config.textSize : 12;
+        root.controlCenter = config.controlCenter === true;
+        root.notificationCenter = config.notificationCenter !== false;
+        root.showModes = config.showModes !== false;
+        root.barSize = Math.max(20, Math.min(48, config.barSize ?? 26));
+        root.barOpacity = Math.max(0.3, Math.min(1, config.barOpacity ?? 1));
+        root.barFloating = config.barFloating === true;
+        root.barBorder = config.barBorder === true;
+        root.barDensity = ["compact", "default", "comfortable"].includes(config.barDensity) ? config.barDensity : "default";
+        root.barLayout = config.barLayout ? root.normalizeLayout(config.barLayout) : root.defaultBarLayout;
+        root.clockStyle = ["day", "date", "time"].includes(config.clockStyle) ? config.clockStyle : "day";
+        root.clock24h = config.clock24h !== false;
+        root.clockSeconds = config.clockSeconds === true;
       } catch (e) {
         root.textSize = 12;
       }

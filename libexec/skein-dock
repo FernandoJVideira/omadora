@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Settings of the Skein dock, kept in ~/.config/skein/dock.json (the shell watches the file).
+#   skein-dock init                        create the file with defaults, if missing
+#   skein-dock set <key> <json value>      enabled, position, iconSize, magnify, magnifySize,
+#                                          autoHide, showRunning, showIndicators
+#   skein-dock pin <desktop id>            add an app to the dock
+#   skein-dock unpin <desktop id>          remove it
+#   skein-dock move <desktop id> <-1|1>    move it one place left/up or right/down
+#   skein-dock toggle                      show or hide the dock
+
+file="${XDG_CONFIG_HOME:-$HOME/.config}/skein/dock.json"
+
+seed_pinned() {
+  local dirs=(/usr/share/applications "$HOME/.local/share/applications" /var/lib/flatpak/exports/share/applications "$HOME/.local/share/flatpak/exports/share/applications")
+  local id dir found
+  local -a out=()
+  for id in kitty brave-origin brave-browser org.mozilla.firefox org.gnome.Nautilus dev.zed.Zed discord spotify com.spotify.Client com.discordapp.Discord; do
+    for dir in "${dirs[@]}"; do
+      [[ -f $dir/$id.desktop ]] && { out+=("$id"); break; }
+    done
+  done
+  printf '%s\n' "${out[@]}" | jq -R . | jq -sc .
+}
+
+init() {
+  [[ -f $file ]] && return 0
+  mkdir -p "$(dirname "$file")"
+  jq -n --argjson pinned "$(seed_pinned)" '{
+    enabled: false, position: "bottom", iconSize: 48, magnify: true, magnifySize: 72,
+    autoHide: false, showRunning: true, showIndicators: true, pinned: $pinned}' >"$file"
+}
+
+edit() { # <jq filter> [jq args...]
+  local filter="$1"
+  shift
+  init
+  jq "$@" "$filter" "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+}
+
+case "${1:-}" in
+init) init ;;
+set)
+  [[ $2 =~ ^(enabled|position|iconSize|magnify|magnifySize|autoHide|showRunning|showIndicators)$ ]] || { echo "Unknown setting: $2" >&2; exit 1; }
+  edit '.[$k] = $v' --arg k "$2" --argjson v "$3"
+  ;;
+pin) edit '(.pinned // []) as $p | .pinned = (if ($p | index($id)) then $p else $p + [$id] end)' --arg id "$2" ;;
+unpin) edit '.pinned -= [$id]' --arg id "$2" ;;
+move)
+  edit '(.pinned // []) as $p | ($p | index($id)) as $i
+        | if $i == null or ($i + $d) < 0 or ($i + $d) >= ($p | length) then .
+          else .pinned = ($p | .[$i] = $p[$i + $d] | .[$i + $d] = $p[$i]) end' --arg id "$2" --argjson d "$3"
+  ;;
+toggle)
+  init
+  edit '.enabled = (.enabled | not)'
+  ;;
+*)
+  echo "Usage: skein-dock init | set <key> <json> | pin <id> | unpin <id> | move <id> <-1|1> | toggle" >&2
+  exit 1
+  ;;
+esac

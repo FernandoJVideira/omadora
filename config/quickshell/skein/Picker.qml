@@ -106,17 +106,23 @@ Scope {
     });
   }
 
+  // The installed apps. Quickshell scans the desktop entries in the background, so this is empty
+  // until that is done; the Connections below fills the list in when it arrives.
+  function appItems(): var {
+    return DesktopEntries.applications.values.filter(entry => !entry.noDisplay).sort((a, b) => a.name.localeCompare(b.name)).map(entry => ({
+          text: entry.name,
+          label: entry.name,
+          plain: entry.name,
+          glyph: "",
+          trailing: "",
+          id: entry.id,
+          icon: Quickshell.iconPath(entry.icon, true) ?? ""
+        }));
+  }
+
   function loadItems(itemsFile: string): void {
     if (root.mode === "drun") {
-      root.items = DesktopEntries.applications.values.filter(entry => !entry.noDisplay).sort((a, b) => a.name.localeCompare(b.name)).map(entry => ({
-            text: entry.name,
-            label: entry.name,
-            plain: entry.name,
-            glyph: "",
-            trailing: "",
-            id: entry.id,
-            icon: Quickshell.iconPath(entry.icon, true) ?? ""
-          }));
+      root.items = root.appItems();
     } else {
       itemsView.path = "";
       itemsView.path = itemsFile;
@@ -135,6 +141,19 @@ Scope {
           icon: ""
         };
       });
+    }
+  }
+
+  Connections {
+    target: DesktopEntries.applications
+
+    function onValuesChanged(): void {
+      if (root.active && root.mode === "drun") {
+        root.items = root.appItems();
+        if (list.currentIndex < 0) {
+          list.currentIndex = 0;
+        }
+      }
     }
   }
 
@@ -222,8 +241,29 @@ Scope {
       width: root.query !== "" && root.extraItems.length > 0 ? Math.max(root.panelWidth, 500) : root.panelWidth
       height: Math.min(root.panelHeight, headerHeight + Math.max(root.items.length, Math.min(root.filtered.length, 10)) * root.rowHeight + 28)
       color: Qt.alpha(Skein.background, 0.97)
-      border.width: 2
-      border.color: Qt.alpha(Skein.accent, 0.8)
+      radius: 12
+      border.width: 1
+      border.color: Qt.alpha(Skein.accent, 0.6)
+
+      NumberAnimation on opacity {
+        id: pickerFade
+
+        running: false
+        from: 0
+        to: 1
+        duration: 120
+        easing.type: Easing.OutCubic
+      }
+
+      Connections {
+        target: window
+
+        function onVisibleChanged(): void {
+          if (window.visible) {
+            pickerFade.restart();
+          }
+        }
+      }
 
       MouseArea {
         anchors.fill: parent
@@ -314,6 +354,7 @@ Scope {
           width: list.width
           height: root.rowHeight
           color: current ? Qt.alpha(Skein.foreground, 0.07) : "transparent"
+          radius: 8
 
           Text {
             id: glyph

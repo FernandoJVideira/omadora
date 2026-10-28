@@ -280,11 +280,10 @@ show_hardware_menu() {
 }
 
 show_style_menu() {
-  case $(menu "Style" "󰸌  Theme\n  Terminal Font\n  Background\n  Login Screen\n  Hyprland\n󱄄  Screensaver\n  About") in
+  case $(menu "Style" "󰸌  Theme\n  Terminal Font\n  Background\n  Hyprland\n󱄄  Screensaver\n  About") in
   *Theme*) show_theme_menu ;;
   *"Terminal Font"*) show_font_menu ;;
   *Background*) qs -c skein ipc call wallpapers open ;;
-  *"Login Screen"*) show_login_theme_menu ;;
   *Hyprland*) open_in_editor ~/.config/hypr/looknfeel.lua ;;
   *Screensaver*) show_screensaver_menu ;;
   *About*) show_about_menu ;;
@@ -312,29 +311,6 @@ show_screensaver_menu() {
 
 show_theme_menu() {
   qs -c skein ipc call themes open
-}
-
-show_login_theme_menu() {
-  local choice
-  # with the greeter there is no login wallpaper or theme to pick: it follows the active theme itself
-  if systemctl is-enabled --quiet greetd.service 2>/dev/null; then
-    notify-send "Login Screen" "The login screen is the Quickshell greeter; it follows the active theme on its own."
-    back_to show_style_menu
-    return
-  fi
-  if [[ ! -d /usr/share/plasmalogin/wallpapers ]]; then
-    notify-send "Login Screen" "Plasma Login Manager isn't installed, so there is no login wallpaper to set."
-    back_to show_style_menu
-    return
-  fi
-  choice=$(menu "Login Screen" "󰸌  Match Skein Theme\n$(skein_run skein-login-theme list)" "--width 350" "$(skein_run skein-login-theme current)")
-  if [[ $choice == "CNCLD" || -z $choice ]]; then
-    back_to show_style_menu
-  elif [[ $choice == *"Match Skein Theme"* ]]; then
-    present_terminal "$(skein_command skein-login-theme) set skein"
-  else
-    present_terminal "$(skein_command skein-login-theme) set \"$choice\""
-  fi
 }
 
 show_font_menu() {
@@ -595,7 +571,8 @@ show_about() {
 }
 
 show_system_menu() {
-  case $(menu "System" "  Lock\n󱄄  Screensaver\n󰍃  Logout\n󰜉  Reboot\n󰐥  Shutdown") in
+  case $(menu "System" "󰒓  Settings\n  Lock\n󱄄  Screensaver\n󰍃  Logout\n󰜉  Reboot\n󰐥  Shutdown") in
+  *Settings*) qs -c skein ipc call settings open ;;
   *Lock*) skein_run skein-system-lock ;;
   *Screensaver*) skein_run skein-launch-screensaver ;;
   *Logout*) skein_run skein-system-logout ;;
