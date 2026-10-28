@@ -72,6 +72,7 @@ selinux-policy-devel
 qrencode
 slurp
 socat
+sound-theme-freedesktop
 sushi
 switcheroo-control
 systemd-networkd-defaults
@@ -96,4 +97,5 @@ xdg-terminal-exec
 xdg-user-dirs
 xfce-polkit
 yaru-icon-theme
+zenity
 zoxide
