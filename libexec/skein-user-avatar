@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Choose or remove your avatar (~/.face, read by the login screen and apps).
+#   skein-user-avatar [image]    with no image, a file chooser opens
+#   skein-user-avatar --remove
+
+face="$HOME/.face"
+
+if [[ ${1:-} == --remove ]]; then
+  rm -f "$face" "$HOME/.face.icon"
+  exit 0
+fi
+
+image="${1:-}"
+
+if [[ -z $image ]]; then
+  image="$(zenity --file-selection --title="Choose an avatar" \
+    --filename="$HOME/Pictures/" \
+    --file-filter='Images | *.png *.jpg *.jpeg *.webp' 2>/dev/null)" || exit 0
+fi
+
+[[ -f $image ]] || { echo "Not a file: $image" >&2; exit 1; }
+
+# A 256 px square crop keeps it light for greeters
+magick "$image[0]" -resize 256x256^ -gravity center -extent 256x256 "PNG:$face.tmp"
+mv "$face.tmp" "$face"
+ln -nsf "$face" "$HOME/.face.icon"
+notify-send -u low "Users" "Avatar updated"

@@ -19,7 +19,6 @@ CLI_SUMMARY="Manage themes and backgrounds"
 
 CLI_NAMESPACES=(
   "background|Manage theme backgrounds"
-  "login|Manage the login screen wallpaper"
 )
 
 CLI_COMMANDS=(
@@ -35,10 +34,6 @@ CLI_COMMANDS=(
   "background next||Cycle to next background|run_background_next||"
   "background install|<image-path>|Add a background image|run_background_install|complete_files|filenames"
   "background remove|<filename>|Remove a background image|run_background_remove|complete_backgrounds|"
-  "login list||List login screen wallpapers|run_login_list||"
-  "login current||Show the login screen wallpaper|run_login_current||"
-  "login set|<name>|Set the login screen wallpaper|run_login_set|complete_login_wallpapers|"
-  "login sync||Match the login screen to the current theme|run_login_sync||"
 )
 
 # -----------------------------------------------------------------------------
@@ -93,22 +88,6 @@ run_background_remove() {
   skein_exec skein-theme-bg-remove "$@"
 }
 
-run_login_list() {
-  skein_exec skein-login-theme list
-}
-
-run_login_current() {
-  skein_exec skein-login-theme current
-}
-
-run_login_set() {
-  skein_exec skein-login-theme set "$@"
-}
-
-run_login_sync() {
-  skein_exec skein-login-theme sync
-}
-
 # -----------------------------------------------------------------------------
 # Completion
 # -----------------------------------------------------------------------------
@@ -123,12 +102,6 @@ complete_user_themes() {
   local cur="$1"
 
   theme_list_user | cli_complete_lines "$cur"
-}
-
-complete_login_wallpapers() {
-  local cur="$1"
-
-  skein_exec skein-login-theme list 2>/dev/null | cli_complete_lines "$cur"
 }
 
 complete_files() {

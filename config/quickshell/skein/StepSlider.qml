@@ -30,6 +30,7 @@ Item {
 
         width: (parent.width - (root.stops - 2) * 3) / (root.stops - 1)
         height: 4
+        radius: 2
         color: index < (root.dragging ? root.liveIndex : root.index) ? Skein.foreground : Qt.alpha(Skein.foreground, 0.2)
       }
     }
@@ -38,6 +39,7 @@ Item {
   Rectangle {
     anchors.verticalCenter: parent.verticalCenter
     x: (root.width - width) * (root.dragging ? root.liveIndex : root.index) / (root.stops - 1)
+    radius: 4
     width: 12
     height: 14
     color: Skein.foreground

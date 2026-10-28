@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Choose the main display and each display's resolution and refresh rate.
+#   skein-monitors-set main <name>             make <name> the main display (0x0, workspaces 1-5)
+#   skein-monitors-set apply <name> <mode>     try a mode now, without saving it (<mode> is WxH@Hz)
+#   skein-monitors-set save <name> <mode>      keep a mode across restarts
+#   skein-monitors-set save <name> auto        back to the monitor's best mode
+# The layout lives in the generated blocks of ~/.config/hypr/monitors.lua.
+
+lua="$(readlink -f "${SKEIN_MONITORS_LUA:-$HOME/.config/hypr/monitors.lua}")"
+reload() { [[ -n ${SKEIN_NO_RELOAD:-} ]] || hyprctl reload >/dev/null; }
+
+die() {
+  echo "skein-monitors-set: $*" >&2
+  exit 1
+}
+
+[[ -f $lua ]] || die "$lua not found"
+
+# Replace the lines between "-- BEGIN generated: <name>" and "-- END generated: <name>" with a file
+replace_block() { # <name> <body-file>
+  awk -v name="$1" -v body="$2" '
+    $0 ~ "^-- BEGIN generated: " name { print; while ((getline l < body) > 0) print l; skip = 1; next }
+    $0 ~ "^-- END generated: " name { skip = 0 }
+    !skip { print }' "$lua" >"$lua.new" && cat "$lua.new" >"$lua" && rm -f "$lua.new"
+}
+
+# Older layouts have no modes block and always pin the best mode: add the block and the check
+ensure_modes_block() {
+  grep -q '^-- BEGIN generated: modes' "$lua" && return 0
+  grep -q '^-- END generated: monitors' "$lua" && grep -q 'local best = nil' "$lua" ||
+    die "$lua is not a Skein monitor layout (missing generated blocks)"
+  awk '
+    { print }
+    /^-- END generated: monitors/ {
+      print ""
+      print "-- Modes chosen in Settings > Display; monitors not listed run their best mode."
+      print "-- BEGIN generated: modes (skein-monitors-set)"
+      print "local configured_modes = {}"
+      print "-- END generated: modes"
+    }
+    /^  local best = nil/ {
+      print ""
+      print "  local forced = configured_modes[mon.name]"
+      print "  if forced then"
+      print "    hl.monitor({ output = mon.name, mode = forced, position = position, scale = omarchy_monitor_scale })"
+      print "    return"
+      print "  end"
+    }' "$lua" >"$lua.new" && cat "$lua.new" >"$lua" && rm -f "$lua.new"
+}
+
+monitor_json() { # <name>
+  hyprctl monitors all -j | jq -ce --arg n "$1" '.[] | select(.name == $n)' || die "no monitor named $1"
+}
+
+check_mode() { # <name> <mode>
+  [[ $2 =~ ^[0-9]+x[0-9]+@[0-9.]+$ ]] || die "mode must look like 1920x1080@144.00"
+  monitor_json "$1" | jq -e --arg m "$2Hz" '.availableModes | index($m)' >/dev/null || die "$1 does not support $2"
+}
+
+case "${1:-}" in
+main)
+  name="${2:-}"
+  [[ -n $name ]] || die "usage: skein-monitors-set main <name>"
+  mapfile -t order < <(hyprctl monitors all -j | jq -r --arg n "$name" '
+    [.[] | select(.disabled | not)] | sort_by(.x) | (map(select(.name == $n)) + map(select(.name != $n))) | .[].name')
+  [[ ${order[0]:-} == "$name" ]] || die "no active monitor named $name"
+
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  echo 'local configured_positions = {' >"$tmp/pos"
+  : >"$tmp/ws"
+  i=0
+  for mon in "${order[@]}"; do
+    echo "  [\"$mon\"] = \"$( ((i == 0)) && echo 0x0 || echo auto-right)\"," >>"$tmp/pos"
+    for ws in 1 2 3 4 5; do
+      printf 'hl.workspace_rule({ workspace = "%d", monitor = "%s", default = %s, persistent = true })\n' \
+        $((i * 5 + ws)) "$mon" "$([[ $ws == 1 ]] && echo true || echo false)" >>"$tmp/ws"
+    done
+    i=$((i + 1))
+  done
+  echo '}' >>"$tmp/pos"
+  replace_block monitors "$tmp/pos"
+  replace_block workspaces "$tmp/ws"
+  reload
+  ;;
+
+apply)
+  name="${2:-}" mode="${3:-}"
+  check_mode "$name" "$mode"
+  scale="$(monitor_json "$name" | jq -r '.scale')"
+  position="$(sed -n "s/.*\[\"$name\"\][[:space:]]*=[[:space:]]*\"\([^\"]*\)\".*/\1/p" "$lua" | head -n1)"
+  [[ -n $position ]] || position="$(monitor_json "$name" | jq -r '"\(.x)x\(.y)"')"
+  hyprctl eval "hl.monitor({ output = \"$name\", mode = \"$mode\", position = \"$position\", scale = $scale })" >/dev/null
+  ;;
+
+save)
+  name="${2:-}" mode="${3:-}"
+  [[ $mode == auto ]] || check_mode "$name" "$mode"
+  ensure_modes_block
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  declare -A modes=()
+  while IFS=$'\t' read -r key value; do
+    modes["$key"]="$value"
+  done < <(awk '/^-- BEGIN generated: modes/ { on = 1; next } /^-- END generated: modes/ { on = 0 } on' "$lua" |
+    sed -n 's/^[[:space:]]*\["\([^"]*\)"\][[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1\t\2/p')
+  if [[ $mode == auto ]]; then
+    unset 'modes[$name]'
+  else
+    modes["$name"]="$mode"
+  fi
+  {
+    echo 'local configured_modes = {'
+    for key in "${!modes[@]}"; do
+      echo "  [\"$key\"] = \"${modes[$key]}\","
+    done | sort
+    echo '}'
+  } >"$tmp/modes"
+  replace_block modes "$tmp/modes"
+  ;;
+
+*)
+  die "usage: skein-monitors-set main <name> | apply <name> <mode> | save <name> <mode|auto>"
+  ;;
+esac

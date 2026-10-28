@@ -252,6 +252,7 @@ Panel {
           width: (parent.width - (root.scales.length - 1) * 6) / root.scales.length
           height: 32
           color: active ? Qt.alpha(Skein.foreground, 0.16) : (scaleMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.06) : "transparent")
+          radius: 8
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, active ? 0.5 : 0.25)
 
@@ -299,6 +300,7 @@ Panel {
           width: parent.width
           height: 36
           color: modelData.focused ? Qt.alpha(Skein.foreground, 0.1) : (displayMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.05) : "transparent")
+          radius: 8
 
           Row {
             anchors.verticalCenter: parent.verticalCenter

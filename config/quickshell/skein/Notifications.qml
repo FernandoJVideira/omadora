@@ -31,6 +31,15 @@ Scope {
     root.shownCount = root.visibleItems().length;
   }
 
+  // Mirror the open notifications into Skein for the notification center
+  Connections {
+    target: server.trackedNotifications
+
+    function onValuesChanged(): void {
+      Skein.notifications = [...server.trackedNotifications.values];
+    }
+  }
+
   NotificationServer {
     id: server
 
@@ -157,17 +166,51 @@ Scope {
 
           readonly property bool shown: !expired && !suppressed
 
-          onShownChanged: root.recount()
+          onShownChanged: {
+            root.recount();
+            if (shown) {
+              arriveAnimation.restart();
+              arriveFade.restart();
+            }
+          }
           Component.onCompleted: root.recount()
           Component.onDestruction: Qt.callLater(root.recount)
+
+          // Slides in from the right when a notification arrives
+          transform: Translate {
+            id: arrive
+
+            x: 0
+          }
+
+          NumberAnimation {
+            id: arriveAnimation
+
+            target: arrive
+            property: "x"
+            from: 40
+            to: 0
+            duration: 200
+            easing.type: Easing.OutCubic
+          }
+
+          NumberAnimation on opacity {
+            id: arriveFade
+
+            running: false
+            from: 0
+            to: 1
+            duration: 160
+          }
 
           visible: shown
           width: stack.width
           height: shown ? body.implicitHeight + 25 : 0
           z: -index
           color: Skein.background
+          radius: 10
           border.width: 1
-          border.color: Skein.accent
+          border.color: Qt.alpha(Skein.accent, 0.7)
 
           // Show again when a notification is replaced in place (e.g. volume steps)
           Connections {

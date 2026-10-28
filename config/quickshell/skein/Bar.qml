@@ -2,11 +2,50 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 
-// The top bar, one per screen. Module order matches the Waybar config.
+// The top bar, one per screen. What it shows and where is set by Skein.barLayout
+// (Settings > Menu Bar); how it looks by Skein.barSize, barOpacity, barFloating and barBorder.
 PanelWindow {
   id: bar
 
   required property var modelData
+
+  // The component for a bar item id, see Skein.barItems
+  function componentFor(id: string): var {
+    switch (id) {
+    case "menu":
+      return cMenu;
+    case "workspaces":
+      return cWorkspaces;
+    case "clock":
+      return cClock;
+    case "weather":
+      return cWeather;
+    case "tray":
+      return cTray;
+    case "agents":
+      return cAgents;
+    case "notifications":
+      return cNotifications;
+    case "controlcenter":
+      return cControlCenter;
+    case "bluetooth":
+      return cBluetooth;
+    case "network":
+      return cNetwork;
+    case "audio":
+      return cAudio;
+    case "display":
+      return cDisplay;
+    case "cpu":
+      return cCpu;
+    case "battery":
+      return cBattery;
+    case "update":
+      return cUpdate;
+    default:
+      return null;
+    }
+  }
 
   screen: modelData
   anchors {
@@ -14,13 +53,71 @@ PanelWindow {
     left: true
     right: true
   }
+  margins {
+    top: Skein.barInset
+    left: Skein.barInset
+    right: Skein.barInset
+  }
   implicitHeight: Skein.barHeight
-  color: Skein.background
+  exclusionMode: ExclusionMode.Normal
+  exclusiveZone: Skein.barHeight + Skein.barInset * 2
+  color: "transparent"
 
-  Row {
+  Rectangle {
+    anchors.fill: parent
+    radius: Skein.barFloating ? Math.round(10 * Skein.textScale) : 0
+    color: Qt.alpha(Skein.background, Skein.barOpacity)
+    border.width: Skein.barBorder ? 1 : 0
+    border.color: Qt.alpha(Skein.accent, 0.5)
+  }
+
+  // A row of bar items for one section
+  component Section: Row {
+    id: section
+
+    property var ids: []
+
+    height: parent ? parent.height : Skein.barHeight
+
+    Repeater {
+      model: section.ids
+
+      Loader {
+        required property string modelData
+
+        height: section.height
+        sourceComponent: bar.componentFor(modelData)
+      }
+    }
+  }
+
+  Section {
     anchors.left: parent.left
     anchors.leftMargin: Skein.sectionPadding
-    height: parent.height
+    ids: Skein.barLayout.left
+  }
+
+  IndicatorsModule {
+    visible: Skein.showModes
+    anchors.right: centerSection.left
+    barWindow: bar
+  }
+
+  Section {
+    id: centerSection
+
+    anchors.horizontalCenter: parent.horizontalCenter
+    ids: Skein.barLayout.center
+  }
+
+  Section {
+    anchors.right: parent.right
+    anchors.rightMargin: Skein.sectionPadding
+    ids: Skein.barLayout.right
+  }
+
+  Component {
+    id: cMenu
 
     BarItem {
       text: Skein.glyph(0xf1ce)
@@ -28,26 +125,26 @@ PanelWindow {
       onLeftClicked: Skein.run("skein-exec skein-menu")
       onRightClicked: Skein.run("xdg-terminal-exec")
     }
+  }
+
+  Component {
+    id: cWorkspaces
 
     WorkspacesModule {
       screen: bar.screen
     }
   }
 
-  IndicatorsModule {
-    anchors.right: centerRow.left
-    barWindow: bar
-  }
-
-  Row {
-    id: centerRow
-
-    anchors.horizontalCenter: parent.horizontalCenter
-    height: parent.height
+  Component {
+    id: cClock
 
     ClockModule {
       barWindow: bar
     }
+  }
+
+  Component {
+    id: cWeather
 
     ScriptModule {
       id: weather
@@ -108,38 +205,90 @@ PanelWindow {
     }
   }
 
-  Row {
-    anchors.right: parent.right
-    anchors.rightMargin: Skein.sectionPadding
-    height: parent.height
+  Component {
+    id: cTray
 
     TrayModule {
       barWindow: bar
     }
+  }
+
+  // Classic layout: one icon each. With the Control Center on, they live in its panel instead.
+  Component {
+    id: cAgents
 
     AgentsModule {
       barWindow: bar
+      visible: !Skein.controlCenter && text !== ""
     }
+  }
+
+  Component {
+    id: cNotifications
+
+    NotificationCenterModule {
+      barWindow: bar
+    }
+  }
+
+  Component {
+    id: cControlCenter
+
+    ControlCenterModule {
+      barWindow: bar
+    }
+  }
+
+  Component {
+    id: cBluetooth
 
     BluetoothModule {
       barWindow: bar
+      visible: !Skein.controlCenter && text !== ""
     }
+  }
+
+  Component {
+    id: cNetwork
 
     NetworkModule {
       barWindow: bar
+      visible: !Skein.controlCenter && text !== ""
     }
+  }
+
+  Component {
+    id: cAudio
 
     AudioModule {
       barWindow: bar
+      visible: !Skein.controlCenter && text !== ""
     }
+  }
+
+  Component {
+    id: cDisplay
 
     DisplayModule {
       barWindow: bar
+      visible: !Skein.controlCenter && text !== ""
     }
+  }
+
+  Component {
+    id: cCpu
 
     CpuModule {}
+  }
+
+  Component {
+    id: cBattery
 
     BatteryModule {}
+  }
+
+  Component {
+    id: cUpdate
 
     ScriptModule {
       name: "update"

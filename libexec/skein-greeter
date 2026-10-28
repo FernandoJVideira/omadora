@@ -2,8 +2,7 @@
 
 # Quickshell login screen on greetd, styled like Omarchy's: skein-greeter [install|sync [--auto]|rollback|status]
 #   install   install greetd and cage, deploy the greeter (default/greeter), make greetd the login manager
-#             (SDDM on Arch, Plasma Login Manager on Nobara stays installed, just disabled). Takes effect
-#             at the next boot.
+#             (SDDM on Arch stays installed, just disabled). Takes effect at the next boot.
 #   sync      write the colors, user name, logo and main monitor of the active Skein theme into the
 #             greeter. "--auto" (run on every theme change) does nothing when the greeter isn't installed.
 #   rollback  make the previous login manager the login manager again.
@@ -19,7 +18,7 @@ if command -v pacman >/dev/null; then
   install_packages() { sudo pacman -S --needed --noconfirm greetd cage; }
   package_installed() { pacman -Qq "$1" &>/dev/null; }
 else
-  old_dm=plasmalogin
+  old_dm=""
   install_packages() { sudo dnf install -y greetd cage; }
   package_installed() { rpm -q "$1" &>/dev/null; }
 fi
@@ -114,14 +113,14 @@ TOML
   for old in /usr/local/share/dotfiles-greeter /usr/local/share/omadora-greeter; do
     if [[ -d $old ]]; then sudo rm -rf "$old"; fi
   done
-  sudo systemctl disable "$old_dm.service" 2>/dev/null || true
+  [[ -n $old_dm ]] && sudo systemctl disable "$old_dm.service" 2>/dev/null || true
   sudo systemctl enable --force greetd.service
-  echo "greetd is the login manager from the next boot. If the login screen doesn't show up: Ctrl+Alt+F3, log in, skein-greeter rollback."
+  echo "greetd is the login manager from the next boot.${old_dm:+ If the login screen does not show up: Ctrl+Alt+F3, log in, skein-greeter rollback.}"
 }
 
 rollback() {
-  package_installed "$([[ $old_dm == sddm ]] && echo sddm || echo plasma-login-manager)" \
-    || die "$old_dm isn't installed, install it first"
+  [[ -n $old_dm ]] || die "there is no previous login manager to go back to"
+  package_installed "$old_dm" || die "$old_dm isn't installed, install it first"
   sudo systemctl disable greetd.service 2>/dev/null || true
   sudo systemctl enable --force "$old_dm.service"
   echo "$old_dm is the login manager from the next boot."
@@ -129,7 +128,7 @@ rollback() {
 
 status() {
   printf 'display manager: %s\n' "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null || echo none)"
-  for p in greetd cage "$([[ $old_dm == sddm ]] && echo sddm || echo plasma-login-manager)"; do
+  for p in greetd cage ${old_dm:+"$old_dm"}; do
     package_installed "$p" && echo "$p installed" || echo "$p missing"
   done
   [[ -n ${XDG_SESSION_ID:-} ]] && printf 'this session came from: %s\n' "$(loginctl show-session "$XDG_SESSION_ID" -p Service --value 2>/dev/null)"

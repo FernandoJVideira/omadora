@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Print the state of the switches and defaults the Settings window shows, as JSON.
+
+here="$(dirname "${BASH_SOURCE[0]}")"
+toggles="$HOME/.local/state/skein/toggles"
+
+flag() { [[ -f "$toggles/$1" ]] && echo true || echo false; }
+noflag() { [[ -f "$toggles/$1" ]] && echo false || echo true; }
+active() { systemctl --quiet --user is-active "$1" && echo true || echo false; }
+
+nightlight=false
+[[ "$(hyprctl hyprsunset temperature 2>/dev/null | grep -oE '[0-9]+')" == 4000 ]] && nightlight=true
+
+touchpad=null
+if [[ -n "$("$here/skein-hw-touchpad" 2>/dev/null)" ]]; then
+  [[ -f "$toggles/hypr/touchpad-disabled.lua" ]] && touchpad=false || touchpad=true
+fi
+
+claude_hook=false
+[[ "$(jq -r ".statusLine.command // empty" "$HOME/.claude/settings.json" 2>/dev/null)" == "$(readlink -f "$here")/agents/skein-claude-statusline" ]] && claude_hook=true
+
+jq -nc \
+  --argjson claudeHook "$claude_hook" \
+  --argjson idle "$(active hypridle.service)" \
+  --argjson nightlight "$nightlight" \
+  --argjson screensaver "$(noflag screensaver-off)" \
+  --argjson weather "$(noflag weather-check-off)" \
+  --argjson updateCheck "$(noflag update-check-off)" \
+  --argjson crashCapture "$(noflag crash-capture-off)" \
+  --argjson gaps "$(noflag hypr/window-no-gaps.lua)" \
+  --argjson squareAspect "$(flag hypr/single-window-aspect-ratio.lua)" \
+  --argjson touchpad "$touchpad" \
+  --arg layout "$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.tiledLayout // "dwindle"')" \
+  --arg agent "$("$here/skein-default-agent" 2>/dev/null)" \
+  --arg browser "$("$here/skein-default-browser" 2>/dev/null)" \
+  --arg terminal "$("$here/skein-default-terminal" 2>/dev/null)" \
+  --arg editor "$("$here/skein-default-editor" 2>/dev/null)" \
+  --arg profile "$(powerprofilesctl get 2>/dev/null)" \
+  --arg profiles "$("$here/skein-powerprofiles-list" 2>/dev/null)" \
+  --arg version "$("$here/skein-version" 2>/dev/null)" \
+  '{idle: $idle, nightlight: $nightlight, screensaver: $screensaver, weather: $weather,
+    updateCheck: $updateCheck, crashCapture: $crashCapture, gaps: $gaps, squareAspect: $squareAspect,
+    touchpad: $touchpad, layout: $layout, agent: $agent, browser: $browser, terminal: $terminal,
+    editor: $editor, profile: $profile, profiles: ($profiles | split("\n") | map(select(. != ""))),
+    version: $version, claudeHook: $claudeHook}'

@@ -108,10 +108,12 @@ Panel {
     property real fillOpacity: 0.8
 
     height: 4
+    radius: 2
     color: Qt.alpha(Skein.foreground, 0.15)
 
     Rectangle {
       width: parent.width * Math.max(0, Math.min(1, parent.fraction))
+      radius: 2
       height: parent.height
       color: Qt.alpha(Skein.foreground, parent.fillOpacity)
     }
@@ -137,6 +139,7 @@ Panel {
         width: (parent.width - (root.providers.length - 1) * 8) / root.providers.length
         height: 32
         color: active ? Qt.alpha(Skein.foreground, 0.14) : (tabMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.06) : "transparent")
+        radius: 8
         border.width: 1
         border.color: Qt.alpha(Skein.foreground, active ? 0.5 : 0.25)
 
@@ -352,11 +355,13 @@ Panel {
             required property var modelData
 
             width: content.width
+            radius: 6
             height: 32
             color: Qt.alpha(Skein.foreground, 0.06)
 
             Rectangle {
               width: parent.width * model.modelData.tokens / root.maxModel
+              radius: 6
               height: parent.height
               color: Qt.alpha(Skein.foreground, 0.14)
             }

@@ -20,5 +20,5 @@ jq -nc --argjson monitors "$monitors" --arg focused "$focused" --arg brightness 
     focused: $focused,
     brightness: ($brightness | tonumber? // null),
     textSize: $textSize,
-    displays: [$monitors[] | {name, enabled: (.disabled != true), focused: (.focused == true), width, height, scale}]
+    displays: [$monitors[] | {name, enabled: (.disabled != true), focused: (.focused == true), width, height, scale, x, y, refreshRate, main: (.x == 0 and .y == 0), modes: .availableModes}]
   }'

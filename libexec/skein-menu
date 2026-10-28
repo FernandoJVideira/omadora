@@ -590,7 +590,8 @@ show_about() {
 }
 
 show_system_menu() {
-  case $(menu "System" "  Lock\n󱄄  Screensaver\n󰍃  Logout\n󰜉  Reboot\n󰐥  Shutdown") in
+  case $(menu "System" "󰒓  Settings\n  Lock\n󱄄  Screensaver\n󰍃  Logout\n󰜉  Reboot\n󰐥  Shutdown") in
+  *Settings*) qs -c skein ipc call settings open ;;
   *Lock*) skein_run skein-system-lock ;;
   *Screensaver*) skein_run skein-launch-screensaver ;;
   *Logout*) skein_run skein-system-logout ;;

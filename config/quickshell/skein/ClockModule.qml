@@ -10,7 +10,17 @@ BarItem {
   property date now: new Date()
 
   padded: true
-  text: english.toString(now, "dddd HH:mm")
+  text: {
+    const time = Skein.clock24h ? (Skein.clockSeconds ? "HH:mm:ss" : "HH:mm") : (Skein.clockSeconds ? "h:mm:ss AP" : "h:mm AP");
+    switch (Skein.clockStyle) {
+    case "date":
+      return english.toString(now, `ddd d MMM ${time}`);
+    case "time":
+      return english.toString(now, time);
+    default:
+      return english.toString(now, `dddd ${time}`);
+    }
+  }
   tooltip: Qt.locale().toString(now, "t:ttt")
   onLeftClicked: calendar.toggle()
   onRightClicked: Skein.run('skein-exec skein-launch-floating-terminal-with-presentation "skeinctl system timezone select"')

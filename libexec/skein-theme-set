@@ -204,10 +204,6 @@ reload opencode &
 ("$SKEIN_LIBEXEC_DIR/skein-hook" theme-set "$theme_name" ||
   warn "theme-set hook failed") &
 
-# Keep the login screen wallpaper in step (a no-op unless it uses the skein one).
-("$SKEIN_LIBEXEC_DIR/skein-login-theme" sync --auto >/dev/null 2>&1 ||
-  warn "login screen wallpaper sync failed") &
-
 # Keep the greeter's colors in step (a no-op unless the greeter is installed).
 ("$SKEIN_LIBEXEC_DIR/skein-greeter" sync --auto >/dev/null 2>&1 ||
   warn "greeter theme sync failed") &

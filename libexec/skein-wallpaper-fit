@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# shellcheck source=lib/common/init.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
+
+# shellcheck source=lib/theme.sh
+source "$SKEIN_LIB_DIR/theme.sh"
+
+# Show or set how the wallpaper fills the screen.
+#   skein-wallpaper-fit                      print the current mode
+#   skein-wallpaper-fit cover|contain|fill|tile
+
+if (($# == 0)); then
+  theme_background_fit
+  exit 0
+fi
+
+case "$1" in
+cover | contain | fill | tile) ;;
+*) die "usage: skein-wallpaper-fit [cover|contain|fill|tile]" ;;
+esac
+
+echo "$1" >"${SKEIN_CONFIG_HOME}/wallpaper-fit"
+theme_apply_background

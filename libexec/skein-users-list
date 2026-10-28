@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Print the human accounts on this machine (UID 1000 and up), as JSON, for the Settings Users page.
+
+admins="$(getent group wheel | cut -d: -f4)"
+
+getent passwd | awk -F: '$3 >= 1000 && $3 < 60000 { print }' | while IFS=: read -r name _ uid _ gecos home shell; do
+  admin=false
+  [[ ",$admins," == *",$name,"* ]] && admin=true
+  jq -nc --arg name "$name" --argjson uid "$uid" --arg full "${gecos%%,*}" --arg home "$home" --arg shell "$shell" \
+    --argjson admin "$admin" --arg me "$USER" \
+    '{name: $name, uid: $uid, fullName: $full, home: $home, shell: $shell, admin: $admin, current: ($name == $me)}'
+done | jq -sc '.'

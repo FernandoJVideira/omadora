@@ -73,16 +73,65 @@ PanelWindow {
     anchors.top: parent.top
     anchors.right: root.centered ? undefined : parent.right
     anchors.horizontalCenter: root.centered ? parent.horizontalCenter : undefined
-    anchors.topMargin: Skein.barHeight + 4
+    anchors.topMargin: Skein.barHeight + Skein.barInset + 4
     anchors.rightMargin: 8
     width: root.panelWidth
     height: body.implicitHeight + 24
     color: Qt.alpha(Skein.background, 0.97)
+    radius: 12
     border.width: 1
     border.color: Qt.alpha(Skein.accent, 0.5)
     focus: true
 
     Keys.onEscapePressed: root.open = false
+
+    // Fade and slide in when the panel opens
+    transform: Translate {
+      id: slide
+    }
+
+    ParallelAnimation {
+      id: openAnimation
+
+      NumberAnimation {
+        target: frame
+        property: "opacity"
+        from: 0
+        to: 1
+        duration: 150
+        easing.type: Easing.OutCubic
+      }
+
+      NumberAnimation {
+        target: slide
+        property: "y"
+        from: -10
+        to: 0
+        duration: 180
+        easing.type: Easing.OutCubic
+      }
+    }
+
+    Connections {
+      target: root
+
+      function onOpenChanged(): void {
+        if (root.open) {
+          Skein.panelOpening(root);
+          openAnimation.restart();
+        }
+      }
+    }
+
+    Connections {
+      target: Skein
+
+      function onPanelOpening(panel): void {
+        if (panel !== root) {
+          root.open = false;
+        }
+      }
+    }
 
     MouseArea {
       anchors.fill: parent
