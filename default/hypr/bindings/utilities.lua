@@ -3,7 +3,7 @@ o.bind("SUPER + SPACE", "Launch apps", o.libexec("skein-menu apps"))
 o.bind("SUPER + CTRL + C", "Capture menu", o.libexec("skein-menu capture"))
 o.bind("SUPER + CTRL + O", "Toggle menu", o.libexec("skein-menu toggle"))
 o.bind("SUPER + CTRL + H", "Hardware menu", o.libexec("skein-menu hardware"))
-o.bind("SUPER + ALT + SPACE", "Skein menu", o.libexec("skein-menu"))
+o.bind("SUPER + SHIFT + SPACE", "Skein menu", o.libexec("skein-menu"))
 o.bind("SUPER + SHIFT + code:201", "Skein menu", o.libexec("skein-menu"))
 o.bind("SUPER + ESCAPE", "System menu", o.libexec("skein-menu system"))
 o.bind("XF86PowerOff", "Power menu", o.libexec("skein-menu system"), { locked = true })
@@ -12,7 +12,7 @@ o.bind("SUPER + ALT + K", "Show Tmux key bindings", o.libexec("skein-menu-tmux-k
 o.bind("XF86Calculator", "Calculator", "gnome-calculator")
 
 -- Aesthetics.
-o.bind("SUPER + SHIFT + SPACE", "Toggle top bar", "skeinctl ui toggle bar")
+o.bind("SUPER + ALT + SPACE", "Toggle top bar", "skeinctl ui toggle bar")
 o.bind("SUPER + CTRL + SPACE", "Next theme background", o.libexec("skein-theme-bg-next"))
 o.bind("SUPER + SHIFT + CTRL + SPACE", "Theme menu", o.libexec("skein-menu theme"))
 o.bind("SUPER + CTRL + ALT + SPACE", "Background switcher", "qs -c skein ipc call wallpapers open")
