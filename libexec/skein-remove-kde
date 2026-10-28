@@ -63,7 +63,7 @@ KEEP_PACKAGES=(
   as_root systemd 'kernel*' 'dnf*' flatpak kitty zsh git steam lutris 'heroic*' gamescope 'wine*'
   mangohud goverlay protonplus 'umu-launcher' timeshift falcond inputplumber '*kwallet*'
   # needed by the KWallet libraries, the Qt/KF libraries Quickshell uses, and Nobara's identity
-  'kf5-*' kde-filesystem 'nobara-release*'
+  'kf5-*' kde-filesystem 'nobara-release*' plasma-breeze-common
   # what this desktop uses: the shell prompt, the Nerd Font and the icon theme
   starship jetbrainsmono-nerd-fonts 'papirus-icon-theme*'
 )
