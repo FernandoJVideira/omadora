@@ -1,15 +1,22 @@
 import QtQuick
 import Quickshell.Hyprland
 
-// The Control Center button of the unified menu bar; hidden in the classic layout.
+// The Control Center button of the unified menu bar. In the classic layout it is the quick way in:
+// one click switches to the Control Center menu bar (the panel's "Classic bar" button switches back).
 BarItem {
   id: root
 
   required property var barWindow
 
-  text: Skein.controlCenter ? Skein.glyph(0xf0521) : ""
-  tooltip: "Control Center"
-  onLeftClicked: panel.toggle()
+  text: Skein.glyph(0xf0521)
+  tooltip: Skein.controlCenter ? "Control Center" : "Switch to the Control Center"
+  onLeftClicked: {
+    if (Skein.controlCenter) {
+      panel.toggle();
+    } else {
+      Skein.setBar("controlCenter", true);
+    }
+  }
   onRightClicked: Skein.run("skein-exec qs -c skein ipc call settings page menubar")
 
   Connections {

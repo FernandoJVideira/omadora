@@ -52,6 +52,11 @@ Scope {
 
     onNotification: notification => {
       notification.tracked = true;
+      // Same rule as the popups: nothing for Spotify, and nothing while notifications are silenced
+      const quiet = notification.appName === "Spotify" || (Skein.silenced && notification.appName !== "notify-send");
+      if (!quiet) {
+        Skein.playNotificationSound("");
+      }
     }
   }
 
@@ -208,9 +213,9 @@ Scope {
           height: shown ? body.implicitHeight + 25 : 0
           z: -index
           color: Skein.background
-          radius: 10
+          radius: 18
           border.width: 1
-          border.color: Qt.alpha(Skein.accent, 0.7)
+          border.color: Qt.alpha(Skein.foreground, 0.16)
 
           // Show again when a notification is replaced in place (e.g. volume steps)
           Connections {

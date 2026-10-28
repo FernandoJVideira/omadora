@@ -43,6 +43,8 @@ Singleton {
   // Center button and a notification center replace the row of indicators; off is the classic bar.
   property bool controlCenter: false
   property bool notificationCenter: true
+  // Sound for a new notification: "default", "off", the name of a theme sound or the path of a file
+  property string notificationSound: "default"
   property bool showModes: true // the mode indicators (recording, night light, ...) left of the clock
   property int barSize: 26 // bar height in px at the default text size
   property real barOpacity: 1
@@ -92,7 +94,7 @@ Singleton {
     {
       id: "controlcenter",
       label: "Control Center",
-      only: "controlcenter"
+      only: ""
     },
     {
       id: "bluetooth",
@@ -199,6 +201,13 @@ Singleton {
   property var notifications: []
 
   // Change a menu bar setting now and save it
+  function playNotificationSound(choice: string): void {
+    const which = choice !== "" ? choice : notificationSound;
+    if (which !== "off") {
+      Quickshell.execDetached([`${skeinPath}/libexec/skein-notification-sound`, "play", which]);
+    }
+  }
+
   function setBar(key: string, value: var): void {
     root[key] = value;
     Quickshell.execDetached([`${skeinPath}/libexec/skein-menubar`, "set", key, JSON.stringify(value)]);
@@ -258,6 +267,7 @@ Singleton {
         root.textSize = config.textSize >= 9 && config.textSize <= 20 ? config.textSize : 12;
         root.controlCenter = config.controlCenter === true;
         root.notificationCenter = config.notificationCenter !== false;
+        root.notificationSound = typeof config.notificationSound === "string" && config.notificationSound !== "" ? config.notificationSound : "default";
         root.showModes = config.showModes !== false;
         root.barSize = Math.max(20, Math.min(48, config.barSize ?? 26));
         root.barOpacity = Math.max(0.3, Math.min(1, config.barOpacity ?? 1));
