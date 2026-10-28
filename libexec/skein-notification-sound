@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# The sound played when a notification arrives (Settings > Windows > Notifications).
+# The choice is stored in ~/.config/skein/shell.json as "notificationSound":
+#   default      the standard message sound
+#   off          no sound
+#   <name>       a sound of the freedesktop theme, such as bell or complete
+#   /some/file   any audio file you picked
+#
+#   skein-notification-sound play [choice]   play the current (or the given) choice
+#   skein-notification-sound choose          pick a file, save it and play it once
+#   skein-notification-sound current         print the current choice
+
+config="${XDG_CONFIG_HOME:-$HOME/.config}/skein/shell.json"
+theme_dirs=("$HOME/.local/share/sounds/freedesktop/stereo" "/usr/share/sounds/freedesktop/stereo")
+default_sound=message-new-instant
+
+current() {
+  local value=""
+  [[ -f $config ]] && value="$(jq -r '.notificationSound // empty' "$config" 2>/dev/null)"
+  echo "${value:-default}"
+}
+
+resolve() { # <choice> -> path of the file to play, nothing for "off"
+  local choice="$1" dir
+  case "$choice" in
+  off) return 1 ;;
+  default) choice="$default_sound" ;;
+  esac
+  if [[ $choice == /* ]]; then
+    [[ -f $choice ]] && echo "$choice"
+    return
+  fi
+  for dir in "${theme_dirs[@]}"; do
+    for ext in oga ogg wav; do
+      if [[ -f $dir/$choice.$ext ]]; then
+        echo "$dir/$choice.$ext"
+        return
+      fi
+    done
+  done
+}
+
+play() { # <file>
+  if command -v pw-play >/dev/null; then
+    pw-play "$1"
+  elif command -v paplay >/dev/null; then
+    paplay "$1"
+  elif command -v canberra-gtk-play >/dev/null; then
+    canberra-gtk-play -f "$1"
+  fi
+}
+
+case "${1:-}" in
+play)
+  file="$(resolve "${2:-$(current)}")" || exit 0
+  [[ -n $file ]] && play "$file"
+  ;;
+choose)
+  start="$HOME"
+  [[ -d $HOME/Music ]] && start="$HOME/Music"
+  picked="$(zenity --file-selection --title="Notification sound" --filename="$start/" \
+    --file-filter="Audio | *.oga *.ogg *.wav *.mp3 *.flac *.opus" 2>/dev/null)" || exit 0
+  [[ -n $picked ]] || exit 0
+  mkdir -p "$(dirname "$config")"
+  data='{}'
+  [[ -f $config ]] && data="$(jq -ec 'select(type == "object")' "$config" 2>/dev/null || echo '{}')"
+  echo "$data" | jq --arg v "$picked" '.notificationSound = $v' >"$config.tmp" && mv "$config.tmp" "$config"
+  play "$picked"
+  ;;
+current) current ;;
+*)
+  echo "Usage: skein-notification-sound play [choice] | choose | current" >&2
+  exit 1
+  ;;
+esac

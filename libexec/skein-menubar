@@ -11,6 +11,8 @@ set -euo pipefail
 config="${XDG_CONFIG_HOME:-$HOME/.config}/skein/shell.json"
 keys='^(controlCenter|notificationCenter|clockStyle|clock24h|clockSeconds|barLayout|barSize|barOpacity|barFloating|barBorder|barDensity|barStyle|showModes)$'
 old_keys='^(showCpu|showBattery|showTray|showUpdates|showAgents)$'
+# Not part of the menu bar: kept through a reset and left out of "get"
+other_keys='^(notificationSound)$'
 
 read_config() {
   local data='{}'
@@ -28,7 +30,7 @@ write_config() { # <jq filter> [jq args...]
 case "${1:-}" in
 get) read_config | jq 'with_entries(select(.key | test("'"$keys"'")))' ;;
 set)
-  [[ ${2:-} =~ $keys ]] || { echo "Unknown setting: ${2:-}" >&2; exit 1; }
+  [[ ${2:-} =~ $keys || ${2:-} =~ $other_keys ]] || { echo "Unknown setting: ${2:-}" >&2; exit 1; }
   write_config '.[$k] = $v' --arg k "$2" --argjson v "$3"
   ;;
 reset) write_config 'with_entries(select((.key | test("'"$keys"'")) or (.key | test("'"$old_keys"'")) | not))' ;;
