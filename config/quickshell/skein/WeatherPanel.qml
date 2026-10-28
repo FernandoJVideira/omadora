@@ -263,7 +263,7 @@ Panel {
             color: Qt.alpha(Skein.foreground, 0.07)
             border.width: 1
             border.color: Qt.alpha(Skein.foreground, 0.16)
-            radius: 12
+            radius: 9
 
             TextInput {
               id: cityInput

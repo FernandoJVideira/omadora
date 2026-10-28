@@ -162,7 +162,7 @@ Scope {
       anchors.centerIn: parent
       width: Math.min(Math.round(940 * Skein.textScale), parent.width - 80)
       height: Math.min(Math.round(640 * Skein.textScale), parent.height - 80)
-      radius: 22
+      radius: 16
       color: Qt.alpha(Skein.background, 0.97)
       border.width: 1
       border.color: Qt.alpha(Skein.foreground, 0.16)
@@ -310,7 +310,7 @@ Scope {
 
               width: tiles.tileWidth
               height: Math.round(tiles.tileWidth * 0.5625) + 52
-              radius: 16
+              radius: 12
               color: current ? Qt.alpha(Skein.accent, 0.14) : (tileMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : Qt.alpha(Skein.foreground, 0.04))
               border.width: current ? 2 : 1
               border.color: current ? Skein.accent : Qt.alpha(Skein.foreground, 0.12)
@@ -322,7 +322,7 @@ Scope {
                 y: 8
                 width: parent.width - 16
                 height: Math.round(tiles.tileWidth * 0.5625) - 8
-                radius: 10
+                radius: 8
                 color: Qt.alpha(Skein.foreground, 0.06)
                 clip: true
 
