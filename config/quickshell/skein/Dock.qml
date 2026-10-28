@@ -695,20 +695,23 @@ Scope {
                       if (!dragged) {
                         return;
                       }
+                      // Work out the drop first and end the drag at once: changing the pinned list rebuilds
+                      // the icons, which destroys this very one, so nothing may be touched afterwards
                       const item = cell.modelData;
                       const onFrame = mapToItem(frame, mouse.x, mouse.y);
                       const reach = 60;
                       const inside = onFrame.x > -reach && onFrame.x < frame.width + reach && onFrame.y > -reach && onFrame.y < frame.height + reach;
+                      const local = mapToItem(cells, mouse.x, mouse.y);
+                      const index = win.dropIndexAt(win.vertical ? local.y : local.x, item.key);
+                      const dock = win;
+                      dragged = false;
+                      dock.dragItem = null;
+                      dock.dropIndex = -1;
                       if (inside) {
-                        // The new place is among the pinned icons: count those whose middle the pointer has passed
-                        const local = mapToItem(cells, mouse.x, mouse.y);
-                        const along = win.vertical ? local.y : local.x;
-                        DockConfig.place(item.id, win.dropIndexAt(along, item.key));
+                        DockConfig.place(item.id, index);
                       } else if (item.pinned) {
                         DockConfig.unpin(item.id);
                       }
-                      win.dragItem = null;
-                      win.dropIndex = -1;
                     }
                     onEntered: win.hover(true)
                     onClicked: mouse => {
