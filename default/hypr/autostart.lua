@@ -6,3 +6,6 @@ o.exec_on_start("dbus-update-activation-environment --systemd --all")
 
 -- Run post-boot hooks after startup config has loaded.
 o.exec_on_start("sleep 2 && skein-exec skein-hook post-boot")
+
+-- Clipboard history for the launcher
+o.exec_on_start("skein-clipboard watch")

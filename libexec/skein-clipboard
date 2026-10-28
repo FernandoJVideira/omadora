@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Text clipboard history for the launcher.
+#   watch       run in the session: stores every text copy (wl-paste calls "store" on each one)
+#   store       save stdin as a new entry (used by watch)
+#   list        newest first, one "<id><TAB><one-line preview>" per entry
+#   copy <id>   put an entry back on the clipboard
+#   clear       forget everything
+
+set -u
+
+dir="${XDG_STATE_HOME:-$HOME/.local/state}/skein/clipboard"
+max=200
+max_bytes=102400
+
+case "${1:-}" in
+watch)
+  exec wl-paste --type text --watch "$0" store
+  ;;
+store)
+  # Password managers flag their copies; those never go in the history
+  wl-paste --list-types 2>/dev/null | grep -qi 'passwordManagerHint' && exit 0
+
+  mkdir -p "$dir"
+  chmod 700 "$dir"
+  tmp=$(mktemp "$dir/.new.XXXXXX")
+  head -c "$((max_bytes + 1))" >"$tmp"
+
+  if [[ $(stat -c %s "$tmp") -gt $max_bytes ]] || ! grep -q '[^[:space:]]' "$tmp"; then
+    rm -f "$tmp"
+    exit 0
+  fi
+
+  sum=$(md5sum <"$tmp" | cut -c1-32)
+  rm -f "$dir"/*-"$sum" # copying the same text again moves it to the top
+  mv "$tmp" "$dir/$(date +%s%N)-$sum"
+
+  # Keep only the newest entries
+  find "$dir" -maxdepth 1 -type f -name '[0-9]*-*' | sort | head -n -"$max" | xargs -r rm -f
+  ;;
+list)
+  [[ -d $dir ]] || exit 0
+  find "$dir" -maxdepth 1 -type f -name '[0-9]*-*' -printf '%f\n' | sort -r | head -n "$max" | while IFS= read -r id; do
+    preview=$(head -c 400 "$dir/$id" | tr -d '\0' | tr '\n\t\r' '   ' | sed 's/  */ /g; s/^ //')
+    printf '%s\t%s\n' "$id" "$preview"
+  done
+  ;;
+copy)
+  id="${2:-}"
+  [[ $id =~ ^[0-9]+-[0-9a-f]{32}$ && -f $dir/$id ]] || exit 1
+  wl-copy <"$dir/$id"
+  ;;
+clear)
+  rm -f "$dir"/[0-9]*-*
+  ;;
+*)
+  echo "usage: skein-clipboard watch|store|list|copy <id>|clear" >&2
+  exit 2
+  ;;
+esac
