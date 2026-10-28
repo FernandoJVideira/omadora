@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The icon packs the dock can draw app icons from.
+#   skein-icon-pack list                 JSON: every pack with whether it is installed and in use
+#   skein-icon-pack install <id>         download a pack from the catalog (default/icon-packs.json)
+#   skein-icon-pack add-url <https url>  download a .zip or .tar.* of an icon theme and install it
+#   skein-icon-pack apply <id|system>    use a pack for the dock ("system" = your icon theme)
+#   skein-icon-pack remove <id>          delete a downloaded pack
+#   skein-icon-pack index                JSON of the pack in use: lowercase icon name -> file name (for the dock)
+#
+# Packs go in your own icon folder, so nothing touches the system. Archives are only unpacked, never
+# run. The one installer that is run, WhiteSur's, comes from a commit pinned in the catalog.
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+catalog="$here/../default/icon-packs.json"
+target="${XDG_DATA_HOME:-$HOME/.local/share}/icons"
+system_icons=/usr/share/icons
+dock="$here/skein-dock"
+dock_file="${XDG_CONFIG_HOME:-$HOME/.config}/skein/dock.json"
+
+notify() { command -v notify-send >/dev/null && notify-send -a "Skein" "$@" || true; }
+die() { echo "$*" >&2; notify -u critical "Icon pack" "$*"; exit 1; }
+
+# The folder of a theme that holds its app icons, or nothing
+apps_dir() { # <theme dir>
+  local sub
+  for sub in apps/scalable scalable/apps 512x512/apps 256x256/apps 128x128/apps 96x96/apps 64x64/apps 48x48/apps apps/512 apps/256 apps/128 apps/96 apps/64 apps/48; do
+    [[ -d $1/$sub ]] && { echo "$1/$sub"; return; }
+  done
+  return 0
+}
+
+catalog_get() { jq -r --arg id "$1" ".[] | select(.id == \$id) | $2" "$catalog"; }
+
+# Where a pack lives, installed or not: <dir>
+theme_dir() { # <id>
+  local id="$1" folder kind
+  folder="$(catalog_get "$id" .folder)"
+  kind="$(catalog_get "$id" .kind)"
+  if [[ -n $folder ]]; then
+    [[ $kind == system ]] && echo "$system_icons/$folder" || echo "$target/$folder"
+  else
+    echo "$target/$id"
+  fi
+}
+
+# The pack in use: an app icon folder, empty for the system theme. Before a choice is made, WhiteSur.
+active_dir() {
+  local value
+  if [[ -f $dock_file ]] && jq -e 'has("iconPack")' "$dock_file" >/dev/null 2>&1; then
+    jq -r '.iconPack // ""' "$dock_file"
+  else
+    echo "$target/WhiteSur/apps/scalable"
+  fi
+}
+
+case "${1:-}" in
+list)
+  active="$(active_dir)"
+  out='[]'
+  add() { # id name description kind removable dir
+    local dir="$6" installed=false inuse=false apps
+    apps="$(apps_dir "$dir")"
+    [[ -n $apps ]] && installed=true
+    [[ $installed == true && -n $active && $active == "$apps" ]] && inuse=true
+    out="$(jq -c --arg id "$1" --arg name "$2" --arg d "$3" --arg k "$4" --argjson r "$5" \
+      --argjson i "$installed" --argjson a "$inuse" \
+      '. + [{id: $id, name: $name, description: $d, kind: $k, removable: $r, installed: $i, active: $a}]' <<<"$out")"
+  }
+  add system "System icons" "The icon theme of your desktop" system false "$system_icons/hicolor"
+  # system entry is "in use" when no pack is set
+  [[ -z $active ]] && out="$(jq -c '(.[] | select(.id == "system") | .active) = true' <<<"$out")"
+  known=""
+  while IFS=$'\t' read -r id name desc kind folder; do
+    add "$id" "$name" "$desc" "$kind" "$([[ $kind == git ]] && echo true || echo false)" "$(theme_dir "$id")"
+    known+=" $folder "
+  done < <(jq -r '.[] | [.id, .name, .description, .kind, .folder] | @tsv' "$catalog")
+  # Packs added by link
+  if [[ -d $target ]]; then
+    for dir in "$target"/*/; do
+      name="$(basename "$dir")"
+      [[ $known == *" $name "* || ! -f $dir/index.theme || -z "$(apps_dir "${dir%/}")" ]] && continue
+      add "$name" "$name" "Added by you" downloaded true "${dir%/}"
+    done
+  fi
+  # "system" is not a real theme folder: it is always available
+  out="$(jq -c '(.[] | select(.id == "system") | .installed) = true' <<<"$out")"
+  echo "$out"
+  ;;
+install)
+  id="${2:?pack id}"
+  [[ "$(catalog_get "$id" .kind)" == git ]] || die "$id is not downloadable"
+  dir="$(theme_dir "$id")"
+  [[ -n "$(apps_dir "$dir")" ]] && { echo "Already installed"; exit 0; }
+  command -v git >/dev/null || die "git is needed to download the icon pack"
+
+  repo="$(catalog_get "$id" .repo)"
+  commit="$(catalog_get "$id" .commit)"
+  work="$(mktemp -d)"
+  trap 'rm -rf "$work"' EXIT
+  notify "Downloading $(catalog_get "$id" .name)" "This takes a moment"
+  git init -q "$work/src"
+  git -C "$work/src" fetch -q --depth 1 "$repo" "$commit" || die "Could not download the pack"
+  git -C "$work/src" checkout -q FETCH_HEAD
+
+  mkdir -p "$target"
+  mapfile -t cmd < <(catalog_get "$id" '.install[]' | sed "s|{target}|$target|")
+  (cd "$work/src" && "${cmd[@]}") >/dev/null 2>&1 || die "The pack's installer failed"
+  [[ -n "$(apps_dir "$dir")" ]] || die "The pack did not install its app icons"
+  gtk-update-icon-cache -q -f "$dir" 2>/dev/null || true
+  notify "$(catalog_get "$id" .name) is ready" "Apply it in Settings > Dock"
+  ;;
+add-url)
+  url="${2:?link}"
+  [[ $url == https://* ]] || die "Only https links are accepted"
+  work="$(mktemp -d)"
+  trap 'rm -rf "$work"' EXIT
+  notify "Downloading icon pack" "$url"
+  curl -fsSL --max-filesize 400000000 -o "$work/pack" "$url" || die "Could not download the link"
+  mkdir "$work/out"
+  if file -b "$work/pack" | grep -qi 'zip'; then
+    command -v unzip >/dev/null || die "unzip is needed for .zip packs"
+    unzip -q "$work/pack" -d "$work/out" || die "Could not unpack the archive"
+  else
+    tar -xf "$work/pack" -C "$work/out" --no-same-owner --no-same-permissions || die "Could not unpack the archive"
+  fi
+  # Nothing may point outside the folder it was unpacked into
+  find "$work/out" -type l -lname '/*' -delete
+  find "$work/out" -type l -lname '*..*' -delete
+  found=""
+  while IFS= read -r index; do
+    d="$(dirname "$index")"
+    if [[ -n "$(apps_dir "$d")" ]]; then
+      found="$d"
+      break
+    fi
+  done < <(find "$work/out" -maxdepth 4 -name index.theme)
+  [[ -n $found ]] || die "That archive does not contain an icon theme with app icons"
+  name="$(basename "$found")"
+  [[ $name =~ ^[A-Za-z0-9._+-]+$ ]] || die "Unsupported pack name: $name"
+  mkdir -p "$target"
+  rm -rf "${target:?}/$name"
+  mv "$found" "$target/$name"
+  gtk-update-icon-cache -q -f "$target/$name" 2>/dev/null || true
+  notify "$name is ready" "Apply it in Settings > Dock"
+  echo "$name"
+  ;;
+apply)
+  id="${2:?pack id}"
+  if [[ $id == system ]]; then
+    "$dock" set iconPack '""'
+    "$dock" set iconPackName '"System icons"'
+    exit 0
+  fi
+  dir="$(theme_dir "$id")"
+  apps="$(apps_dir "$dir")"
+  [[ -n $apps ]] || die "$id is not installed yet"
+  name="$(catalog_get "$id" .name)"
+  "$dock" set iconPack "$(jq -n --arg v "$apps" '$v')"
+  "$dock" set iconPackName "$(jq -n --arg v "${name:-$id}" '$v')"
+  ;;
+remove)
+  id="${2:?pack id}"
+  [[ "$(catalog_get "$id" .kind)" == system ]] && die "System packs cannot be removed"
+  dir="$(theme_dir "$id")"
+  [[ $dir == "$target"/* && -d $dir ]] || die "$id is not a downloaded pack"
+  [[ "$(active_dir)" == "$(apps_dir "$dir")" ]] && "$0" apply system
+  rm -rf "$dir"
+  ;;
+index)
+  dir="$(active_dir)"
+  if [[ -z $dir || ! -d $dir ]]; then
+    echo '{}'
+    exit 0
+  fi
+  find -L "$dir" -maxdepth 1 -type f \( -name '*.svg' -o -name '*.png' \) -printf '%f\n' | sort |
+    jq -Rn '[inputs] | reduce .[] as $f ({}; ($f | sub("\\.[^.]*$"; "") | ascii_downcase) as $k | if has($k) then . else . + {($k): $f} end)'
+  ;;
+*)
+  echo "Usage: skein-icon-pack list | install <id> | add-url <https url> | apply <id|system> | remove <id> | index" >&2
+  exit 1
+  ;;
+esac

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "whitesur",
+    "name": "WhiteSur",
+    "description": "Rounded-square app icons like macOS. Downloaded from GitHub (about 80 MB).",
+    "folder": "WhiteSur",
+    "kind": "git",
+    "repo": "https://github.com/vinceliuice/WhiteSur-icon-theme",
+    "commit": "73d8040da51a9ed74e47c7366e7e9ff437601a5c",
+    "install": ["./install.sh", "-d", "{target}", "-t", "default"]
+  },
+  {
+    "id": "papirus",
+    "name": "Papirus",
+    "description": "Flat, colourful icons. Already installed on this system.",
+    "folder": "Papirus",
+    "kind": "system"
+  },
+  {
+    "id": "yaru",
+    "name": "Yaru",
+    "description": "The Ubuntu icon theme. Already installed on this system.",
+    "folder": "Yaru",
+    "kind": "system"
+  }
+]
