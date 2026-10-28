@@ -21,6 +21,7 @@ ShellRoot {
   }
 
   Picker {}
+  SharePicker {}
 
   ImageSwitcher {
     target: "themes"
