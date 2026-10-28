@@ -541,10 +541,11 @@ Scope {
     Item {
       id: spotRoot
 
-      width: root.apps ? Math.max(root.panelWidth, 700) : Math.max(root.panelWidth, 360)
+      width: root.apps ? 560 : Math.max(root.panelWidth, 360)
       x: Math.round((parent.width - width) / 2)
-      // The launcher sits high like Spotlight; menus stay centred
-      y: root.apps ? Math.round(parent.height * 0.2) : Math.round((parent.height - height) / 2)
+      // The launcher is centred as it opens (the bar and its four categories), so the bar stays put as
+      // results appear below it; menus are centred on their own height
+      y: root.apps ? Math.round((parent.height - (bar.height + 10 + 4 * 40 + 16)) / 2) : Math.round((parent.height - height) / 2)
       height: bar.height + 10 + card.height
 
       NumberAnimation on opacity {
@@ -562,11 +563,12 @@ Scope {
         id: bar
 
         width: parent.width
-        height: 58
+        height: 50
         radius: height / 2
-        color: Qt.alpha(Skein.background, 0.88)
+        // Frosted glass: a veil over the blurred screen (see the blur rule in default/hypr/apps/picker.lua)
+        color: Qt.alpha(Skein.background, 0.55)
         border.width: 1
-        border.color: Qt.alpha(Skein.foreground, 0.16)
+        border.color: Qt.alpha(Skein.foreground, 0.22)
 
         MouseArea {
           anchors.fill: parent
@@ -580,7 +582,7 @@ Scope {
           text: ""
           color: Qt.alpha(Skein.foreground, 0.55)
           font.family: root.mono
-          font.pointSize: Skein.pt(14)
+          font.pointSize: Skein.pt(12)
         }
 
         // The chosen category, shown in front of the text like Spotlight's token
@@ -616,7 +618,7 @@ Scope {
           text: root.apps ? "Skein Search" : root.prompt
           color: Qt.alpha(Skein.foreground, 0.5)
           font.family: Skein.fontFamily
-          font.pointSize: Skein.pt(15)
+          font.pointSize: Skein.pt(13)
         }
 
         TextInput {
@@ -629,7 +631,7 @@ Scope {
           color: Skein.foreground
           selectionColor: Skein.accent
           font.family: Skein.fontFamily
-          font.pointSize: Skein.pt(15)
+          font.pointSize: Skein.pt(13)
           clip: true
           onTextChanged: {
             root.query = text;
@@ -677,11 +679,11 @@ Scope {
 
         y: bar.height + 10
         width: parent.width
-        height: Math.min(spotList.contentHeight, root.apps ? 8 * 46 : Math.max(root.panelHeight - 80, 8 * 46)) + 20
+        height: Math.min(spotList.contentHeight, root.apps ? 8 * 40 : Math.max(root.panelHeight - 80, 8 * 40)) + 16
         radius: 24
-        color: Qt.alpha(Skein.background, 0.88)
+        color: Qt.alpha(Skein.background, 0.55)
         border.width: 1
-        border.color: Qt.alpha(Skein.foreground, 0.16)
+        border.color: Qt.alpha(Skein.foreground, 0.22)
         clip: true
 
         Behavior on height {
@@ -699,13 +701,16 @@ Scope {
           id: spotList
 
           x: 10
-          y: 10
+          y: 8
           width: parent.width - 20
-          height: parent.height - 20
+          // The card is the content plus 16, so the list fits its content exactly. Shorter than that, the
+          // list scrolls a few pixels whenever the first or last row is hovered or selected.
+          height: parent.height - 16
           clip: true
           model: root.spotRows
           currentIndex: 0
           highlightMoveDuration: 0
+          highlightRangeMode: ListView.NoHighlightRange
           boundsBehavior: Flickable.StopAtBounds
 
           delegate: Item {
@@ -718,7 +723,7 @@ Scope {
             readonly property bool plain: srow.modelData.type === "header" || srow.modelData.type === "empty"
 
             width: spotList.width
-            height: srow.modelData.type === "header" ? 32 : 46
+            height: srow.modelData.type === "header" ? 28 : 40
 
             Text {
               visible: srow.modelData.type === "header"
@@ -745,7 +750,7 @@ Scope {
               visible: !srow.plain
               anchors.fill: parent
               radius: 14
-              color: srow.current ? Qt.alpha(Skein.accent, 0.9) : "transparent"
+              color: srow.current ? Qt.alpha(Skein.accent, 0.38) : "transparent"
 
               Text {
                 visible: (srow.modelData.icon ?? "") === "" && (srow.modelData.glyph ?? "") !== ""
@@ -754,9 +759,9 @@ Scope {
                 width: 30
                 horizontalAlignment: Text.AlignHCenter
                 text: srow.modelData.glyph ?? ""
-                color: srow.current ? Skein.background : Qt.alpha(Skein.foreground, 0.8)
+                color: srow.current ? Skein.foreground : Qt.alpha(Skein.foreground, 0.75)
                 font.family: root.mono
-                font.pointSize: Skein.pt(14)
+                font.pointSize: Skein.pt(12)
               }
 
               Image {
@@ -779,7 +784,7 @@ Scope {
                 elide: Text.ElideRight
                 textFormat: (srow.modelData.rich ?? "") !== "" ? Text.RichText : Text.PlainText
                 text: (srow.modelData.rich ?? "") !== "" ? srow.modelData.rich : (srow.modelData.label ?? "")
-                color: srow.current ? Skein.background : Skein.foreground
+                color: Skein.foreground
                 font.family: Skein.fontFamily
                 font.pointSize: Skein.pt(12)
               }
@@ -795,7 +800,7 @@ Scope {
                 elide: Text.ElideLeft
                 horizontalAlignment: Text.AlignRight
                 text: srow.modelData.sub ?? ""
-                color: srow.current ? Qt.alpha(Skein.background, 0.7) : Qt.alpha(Skein.foreground, 0.45)
+                color: Qt.alpha(Skein.foreground, srow.current ? 0.7 : 0.45)
                 font.family: Skein.fontFamily
                 font.pointSize: Skein.pt(11)
               }
