@@ -119,7 +119,8 @@ add-url)
   notify "Downloading icon pack" "$url"
   curl -fsSL --max-filesize 400000000 -o "$work/pack" "$url" || die "Could not download the link"
   mkdir "$work/out"
-  if file -b "$work/pack" | grep -qi 'zip'; then
+  # A zip starts with "PK"; anything else is treated as a tar archive
+  if [[ "$(head -c 2 "$work/pack")" == "PK" ]]; then
     command -v unzip >/dev/null || die "unzip is needed for .zip packs"
     unzip -q "$work/pack" -d "$work/out" || die "Could not unpack the archive"
   else
