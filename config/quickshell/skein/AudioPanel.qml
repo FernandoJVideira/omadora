@@ -53,7 +53,7 @@ Panel {
     width: parent.width
     height: 30
     color: selected ? Qt.alpha(Skein.foreground, 0.12) : (mouse.containsMouse ? Qt.alpha(Skein.foreground, 0.06) : "transparent")
-    radius: 8
+    radius: Skein.radiusInner
 
     Row {
       anchors.fill: parent
@@ -222,13 +222,13 @@ Panel {
       width: 44
       height: 22
       color: on ? Qt.alpha(Skein.accent, 0.35) : Qt.alpha(Skein.foreground, 0.12)
-      radius: 11
+      radius: Skein.radiusInner
       border.width: 1
       border.color: Qt.alpha(Skein.foreground, 0.25)
 
       Rectangle {
         x: toggle.on ? parent.width - width - 3 : 3
-        radius: 7
+        radius: Skein.radiusInner
         anchors.verticalCenter: parent.verticalCenter
         width: 14
         height: 14

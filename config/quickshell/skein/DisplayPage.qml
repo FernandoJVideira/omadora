@@ -162,7 +162,7 @@ SettingsPage {
 
             width: label.implicitWidth + 28
             height: Math.round(26 * Skein.textScale)
-            radius: 6
+            radius: Skein.radiusInner
             color: btn.containsMouse ? Qt.alpha(Skein.accent, 0.35) : (modelData.keep ? Qt.alpha(Skein.accent, 0.25) : Qt.alpha(Skein.foreground, 0.06))
             border.width: 1
             border.color: Qt.alpha(Skein.accent, 0.6)

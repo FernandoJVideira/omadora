@@ -336,7 +336,7 @@ Scope {
       anchors.centerIn: parent
       width: Math.min(Math.round(900 * Skein.textScale), parent.width - 40)
       height: Math.min(Math.round(780 * Skein.textScale), parent.height - 40)
-      radius: Skein.glass ? 26 : 16
+      radius: Skein.radius
       color: Qt.alpha(Skein.background, Skein.glass ? 0.74 : 0.98)
       focus: true
 
@@ -418,7 +418,7 @@ Scope {
           anchors.leftMargin: 12
           anchors.rightMargin: 12
           height: Math.round(36 * Skein.textScale)
-          radius: Skein.glass ? 10 : height / 2
+          radius: Skein.radiusInner
           color: Qt.alpha(Skein.foreground, 0.06)
           border.width: 1
           border.color: searchInput.activeFocus ? Qt.alpha(Skein.foreground, 0.32) : Qt.alpha(Skein.foreground, 0.16)
@@ -484,7 +484,7 @@ Scope {
           anchors.leftMargin: 12
           anchors.rightMargin: 12
           height: visible ? Math.round(56 * Skein.textScale) : 0
-          radius: Skein.glass ? 12 : 11
+          radius: Skein.radiusInner
           color: root.page === "users" ? Qt.alpha(Skein.accent, 0.9) : (accountMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : "transparent")
 
           Avatar {
@@ -577,7 +577,7 @@ Scope {
                 Rectangle {
                   width: parent.width
                   height: Math.round(34 * Skein.textScale)
-                  radius: Skein.glass ? 12 : 9
+                  radius: Skein.radiusInner
                   color: root.page === entry.modelData.key ? Qt.alpha(Skein.accent, 0.9) : (rowMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : "transparent")
 
                   // Plain glyph in the same Nerd Font the launcher categories use, no badge behind it
@@ -716,7 +716,7 @@ Scope {
           height: choices.implicitHeight + 10
           x: Math.min(dropdown.anchorX + dropdown.anchorWidth - width, dropdown.width - width - 10)
           y: Math.min(dropdown.anchorY, dropdown.height - height - 10)
-          radius: 12
+          radius: Skein.radius
           color: Qt.alpha(Skein.background, Skein.glass ? 0.7 : 0.98)
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
@@ -739,7 +739,7 @@ Scope {
 
                 width: choices.width
                 height: Math.round(34 * Skein.textScale)
-                radius: 8
+                radius: Skein.radiusInner
                 color: choiceMouse.containsMouse ? Qt.alpha(Skein.accent, 0.9) : "transparent"
 
                 Text {

@@ -27,5 +27,5 @@ o.window(
 )
 
 -- Common app-controlled tags.
-o.window({ tag = "pop" }, { rounding = 8 })
+o.window({ tag = "pop" }, { rounding = 9 })
 o.window({ tag = "noidle" }, { idle_inhibit = "always" })

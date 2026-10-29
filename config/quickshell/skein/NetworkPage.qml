@@ -305,7 +305,7 @@ SettingsPage {
             visible: modelData.known && !modelData.connected
             width: forgetText.implicitWidth + 24
             height: Math.round(24 * Skein.textScale)
-            radius: 6
+            radius: Skein.radiusInner
             color: "transparent"
             border.width: 1
             border.color: Qt.alpha(Skein.foreground, 0.3)
@@ -331,7 +331,7 @@ SettingsPage {
             visible: modelData.connected || modelData.known || !root.secured(modelData)
             width: actionText.implicitWidth + 24
             height: Math.round(24 * Skein.textScale)
-            radius: 6
+            radius: Skein.radiusInner
             color: "transparent"
             border.width: 1
             border.color: Qt.alpha(Skein.accent, 0.7)

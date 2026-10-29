@@ -12,7 +12,7 @@ SettingsRow {
   Rectangle {
     width: Math.round(240 * Skein.textScale)
     height: Math.round(26 * Skein.textScale)
-    radius: Skein.glass ? 10 : 6
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.foreground, 0.06)
     border.width: 1
     border.color: field.activeFocus ? Skein.accent : Qt.alpha(Skein.foreground, 0.25)
