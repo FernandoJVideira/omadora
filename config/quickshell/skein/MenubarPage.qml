@@ -22,6 +22,197 @@ SettingsPage {
       label: "Right"
     }
   ]
+
+  // Ready-made menu bars: a whole look and arrangement in one click
+  readonly property var presets: [
+    {
+      name: "Classic",
+      description: "The original Skein bar: a row of icons on the right, a clock in the middle",
+      settings: {
+        controlCenter: false,
+        notificationCenter: true,
+        showModes: true,
+        barSize: 26,
+        barOpacity: 1,
+        barFloating: false,
+        barBorder: false,
+        barStyle: "classic",
+        barDensity: "default",
+        clockStyle: "day",
+        clock24h: true,
+        clockSeconds: false,
+        barLayout: Skein.defaultBarLayout
+      }
+    },
+    {
+      name: "Mac",
+      description: "Menu on the left, Control Center, bell and a dated clock on the right, like macOS",
+      settings: {
+        controlCenter: true,
+        notificationCenter: true,
+        showModes: true,
+        barSize: 24,
+        barOpacity: 0.85,
+        barFloating: false,
+        barBorder: false,
+        barStyle: "classic",
+        barDensity: "default",
+        clockStyle: "date",
+        clock24h: false,
+        clockSeconds: false,
+        barLayout: {
+          left: ["menu", "workspaces"],
+          center: [],
+          right: ["tray", "agents", "bluetooth", "network", "audio", "display", "cpu", "battery", "update", "controlcenter", "notifications", "clock"]
+        }
+      }
+    },
+    {
+      name: "GNOME",
+      description: "Workspaces on the left, the clock in the middle, one quick-settings button on the right",
+      settings: {
+        controlCenter: true,
+        notificationCenter: false,
+        showModes: true,
+        barSize: 28,
+        barOpacity: 1,
+        barFloating: false,
+        barBorder: false,
+        barStyle: "classic",
+        barDensity: "default",
+        clockStyle: "date",
+        clock24h: true,
+        clockSeconds: false,
+        barLayout: {
+          left: ["workspaces"],
+          center: ["clock"],
+          right: ["tray", "agents", "bluetooth", "network", "audio", "display", "battery", "update", "controlcenter"]
+        }
+      }
+    },
+    {
+      name: "Floating islands",
+      description: "A gap around the bar and a separate rounded capsule for each side, as in popular Waybar setups",
+      settings: {
+        controlCenter: true,
+        notificationCenter: true,
+        showModes: true,
+        barSize: 32,
+        barOpacity: 0.9,
+        barFloating: true,
+        barBorder: false,
+        barStyle: "pills",
+        barDensity: "comfortable",
+        clockStyle: "day",
+        clock24h: true,
+        clockSeconds: false,
+        barLayout: {
+          left: ["menu", "workspaces"],
+          center: ["clock"],
+          right: ["tray", "agents", "bluetooth", "network", "audio", "display", "battery", "update", "controlcenter", "notifications"]
+        }
+      }
+    },
+    {
+      name: "Centered workspaces",
+      description: "Workspaces in the middle of the bar, the clock and status on the right, like Polybar and i3bar setups",
+      settings: {
+        controlCenter: true,
+        notificationCenter: true,
+        showModes: true,
+        barSize: 26,
+        barOpacity: 1,
+        barFloating: false,
+        barBorder: true,
+        barStyle: "classic",
+        barDensity: "default",
+        clockStyle: "time",
+        clock24h: true,
+        clockSeconds: false,
+        barLayout: {
+          left: ["menu", "weather"],
+          center: ["workspaces"],
+          right: ["tray", "agents", "bluetooth", "network", "audio", "display", "cpu", "battery", "update", "controlcenter", "notifications", "clock"]
+        }
+      }
+    },
+    {
+      name: "Dashboard",
+      description: "Everything at a glance: separate icons, processor, battery, weather and updates, kept tight",
+      settings: {
+        controlCenter: false,
+        notificationCenter: true,
+        showModes: true,
+        barSize: 24,
+        barOpacity: 1,
+        barFloating: false,
+        barBorder: false,
+        barStyle: "classic",
+        barDensity: "compact",
+        clockStyle: "date",
+        clock24h: true,
+        clockSeconds: true,
+        barLayout: {
+          left: ["menu", "workspaces", "cpu"],
+          center: ["clock", "weather"],
+          right: ["tray", "agents", "bluetooth", "network", "audio", "display", "battery", "update"]
+        }
+      }
+    },
+    {
+      name: "Minimal",
+      description: "Only workspaces and the time, see-through and out of the way",
+      settings: {
+        controlCenter: true,
+        notificationCenter: false,
+        showModes: false,
+        barSize: 22,
+        barOpacity: 0.5,
+        barFloating: false,
+        barBorder: false,
+        barStyle: "classic",
+        barDensity: "compact",
+        clockStyle: "time",
+        clock24h: true,
+        clockSeconds: false,
+        barLayout: {
+          left: ["workspaces"],
+          center: [],
+          right: ["clock"]
+        }
+      }
+    }
+  ]
+
+  // What the bar has now, read by name so the bindings that call presetActive() see every change
+  readonly property var currentBar: ({
+      controlCenter: Skein.controlCenter,
+      notificationCenter: Skein.notificationCenter,
+      showModes: Skein.showModes,
+      barSize: Skein.barSize,
+      barOpacity: Skein.barOpacity,
+      barFloating: Skein.barFloating,
+      barBorder: Skein.barBorder,
+      barStyle: Skein.barStyle,
+      barDensity: Skein.barDensity,
+      clockStyle: Skein.clockStyle,
+      clock24h: Skein.clock24h,
+      clockSeconds: Skein.clockSeconds,
+      barLayout: Skein.normalizeLayout(Skein.barLayout)
+    })
+
+  // A preset is in use when every setting it holds is what the bar has now
+  function presetActive(preset: var): bool {
+    const now = currentBar;
+    for (const key of Object.keys(preset.settings)) {
+      const want = key === "barLayout" ? Skein.normalizeLayout(preset.settings[key]) : preset.settings[key];
+      if (JSON.stringify(now[key]) !== JSON.stringify(want)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Items in no section: hidden from the bar
   readonly property var hidden: Skein.barItems.filter(item => Skein.sectionOf(item.id) === "")
 
@@ -165,6 +356,88 @@ SettingsPage {
       return "";
     }
     return item.only === "controlcenter" ? "Only with the Control Center" : "Only in the classic layout";
+  }
+
+  SettingsSection {
+    title: "Presets"
+
+    Repeater {
+      model: root.presets
+
+      Item {
+        id: presetRow
+
+        required property var modelData
+        readonly property bool active: root.presetActive(modelData)
+
+        width: parent.width
+        height: presetText.implicitHeight + preview.height + 34
+
+        Column {
+          id: presetText
+
+          anchors.left: parent.left
+          anchors.leftMargin: 14
+          anchors.right: applyButton.left
+          anchors.rightMargin: 12
+          anchors.top: parent.top
+          anchors.topMargin: 12
+          spacing: 2
+
+          Text {
+            width: parent.width
+            text: presetRow.modelData.name
+            color: Skein.foreground
+            font.family: Skein.fontFamily
+            font.pointSize: Skein.fontSize
+          }
+
+          Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            text: presetRow.modelData.description
+            color: Qt.alpha(Skein.foreground, 0.6)
+            font.family: Skein.fontFamily
+            font.pointSize: Skein.fontSize - 1.5
+          }
+        }
+
+        SmallButton {
+          id: applyButton
+
+          anchors.right: parent.right
+          anchors.rightMargin: 14
+          anchors.top: parent.top
+          anchors.topMargin: 12
+          text: presetRow.active ? "In use" : "Use"
+          highlighted: presetRow.active
+          enabled: !presetRow.active
+          onClicked: Skein.applyBar(presetRow.modelData.settings)
+        }
+
+        BarPreview {
+          id: preview
+
+          anchors.left: parent.left
+          anchors.leftMargin: 14
+          anchors.right: parent.right
+          anchors.rightMargin: 14
+          anchors.top: presetText.bottom
+          anchors.topMargin: 10
+          width: parent.width - 28
+          settings: presetRow.modelData.settings
+        }
+
+        Rectangle {
+          anchors.left: parent.left
+          anchors.leftMargin: 14
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          height: 1
+          color: Qt.alpha(Skein.foreground, 0.08)
+        }
+      }
+    }
   }
 
   SettingsSection {
@@ -461,6 +734,103 @@ SettingsPage {
       description: "Needed by the weather item; turning it off also stops the background check"
       checked: root.sys.weather ?? true
       onToggled: value => root.backend.set("weather", value, "skein-toggle-weather-check")
+    }
+  }
+
+  SettingsSection {
+    title: "Custom items"
+
+    Repeater {
+      model: Skein.customItems
+
+      ButtonRow {
+        required property var modelData
+
+        label: `${modelData.icon ?? ""} ${modelData.label || modelData.id}`
+        description: modelData.script ? `Runs ${modelData.script}` : (modelData.onClick ? `Click runs ${modelData.onClick}` : "")
+        buttonText: "Remove"
+        onClicked: Skein.customItemCommand(["remove", modelData.id])
+      }
+    }
+
+    TextInputRow {
+      id: customName
+
+      label: "Name"
+      description: "Add your own item to the bar; it appears at the end of the right side, move it in the lists above"
+      placeholder: "VPN"
+    }
+
+    TextInputRow {
+      id: customIcon
+
+      label: "Icon"
+      description: "A glyph or a few characters"
+      placeholder: "󰖂"
+    }
+
+    TextInputRow {
+      id: customScript
+
+      label: "Status command"
+      description: "Optional. Its output is shown next to the icon (plain text or Waybar-style JSON)"
+      placeholder: "~/bin/vpn-status"
+    }
+
+    TextInputRow {
+      id: customInterval
+
+      label: "Refresh every (seconds)"
+      description: "How often the status command runs; empty runs it once"
+      placeholder: "10"
+    }
+
+    TextInputRow {
+      id: customClick
+
+      label: "On click"
+      description: "Optional command run when the item is clicked"
+      placeholder: "nm-connection-editor"
+    }
+
+    ButtonRow {
+      label: "Add the item"
+      description: "Needs a name and an icon or a status command"
+      buttonText: "Add"
+      enabled: customName.text.trim() !== "" && (customIcon.text.trim() !== "" || customScript.text.trim() !== "")
+      onClicked: {
+        const label = customName.text.trim();
+        const id = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item";
+        const interval = parseInt(customInterval.text);
+        Skein.customItemCommand(["add", JSON.stringify({
+            id: id,
+            label: label,
+            icon: customIcon.text.trim(),
+            script: customScript.text.trim(),
+            interval: interval > 0 ? interval : undefined,
+            onClick: customClick.text.trim()
+          })]);
+        Skein.placeBarItem(`custom-${id}`, "right");
+        customName.text = "";
+        customIcon.text = "";
+        customScript.text = "";
+        customInterval.text = "";
+        customClick.text = "";
+      }
+    }
+
+    ButtonRow {
+      label: "Edit by hand"
+      description: "~/.config/skein/bar-items.json: id, label, icon, text, script, interval, tooltip, onClick, onRightClick"
+      buttonText: "Open"
+      onClicked: Skein.run("xdg-open \"$HOME/.config/skein/bar-items.json\"")
+    }
+
+    ButtonRow {
+      label: "Main menu entries"
+      description: "~/.config/skein/menu-items: one \"Label, tab, command\" per line adds a Custom submenu to the Skein menu"
+      buttonText: "Open"
+      onClicked: Skein.run("xdg-open \"$HOME/.config/skein/menu-items\"")
     }
   }
 

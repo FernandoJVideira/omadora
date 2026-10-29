@@ -1,9 +1,9 @@
 import QtQuick
 import Quickshell.Io
 
-// Mode indicators left of the clock (ported from Omarchy): screen recording, reminders, night light,
-// do not disturb and stay awake. Active ones always show; hover to peek at the inactive ones.
-// Clicking toggles the mode.
+// Mode indicators (ported from Omarchy): screen recording, reminders, night light, do not disturb and
+// stay awake. They sit in the tray drawer: active ones always show, the inactive ones slide out with the
+// tray (revealed). Clicking toggles the mode.
 Item {
   id: root
 
@@ -14,7 +14,7 @@ Item {
   property bool nightLight: false
   property int reminders: 0
 
-  readonly property bool revealed: hover.hovered
+  property bool revealed: false
   readonly property bool anyShown: row.implicitWidth > 0
 
   function refresh(): void {
@@ -24,12 +24,7 @@ Item {
   }
 
   height: parent ? parent.height : Skein.barHeight
-  // A little hover zone stays when nothing is active, so there is something to hover
-  width: Math.max(row.implicitWidth, Math.round(18 * Skein.textScale))
-
-  HoverHandler {
-    id: hover
-  }
+  width: row.implicitWidth
 
   Process {
     id: probe
@@ -82,7 +77,6 @@ Item {
   Row {
     id: row
 
-    anchors.right: parent.right
     height: parent.height
 
     Indicator {

@@ -1,7 +1,6 @@
 -- Menus.
 o.bind("SUPER + SPACE", "Launch apps", o.libexec("skein-menu apps"))
 o.bind("SUPER + CTRL + C", "Capture menu", o.libexec("skein-menu capture"))
-o.bind("SUPER + CTRL + O", "Toggle menu", o.libexec("skein-menu toggle"))
 o.bind("SUPER + CTRL + H", "Hardware menu", o.libexec("skein-menu hardware"))
 o.bind("SUPER + SHIFT + SPACE", "Skein menu", o.libexec("skein-menu"))
 o.bind("SUPER + SHIFT + code:201", "Skein menu", o.libexec("skein-menu"))

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Custom menu bar items, kept in ~/.config/skein/bar-items.json (the shell watches the file).
+#   skein-bar-item list
+#   skein-bar-item add <json object>   id (letters, digits, - _), label, icon, text, script, interval, tooltip,
+#                                      onClick, onRightClick
+#   skein-bar-item remove <id>
+# A new item starts hidden: place it with Settings > Menu Bar, or put "custom-<id>" in barLayout.
+
+config="${XDG_CONFIG_HOME:-$HOME/.config}/skein/bar-items.json"
+mkdir -p "$(dirname "$config")"
+[[ -f $config ]] || echo '[]' >"$config"
+
+case "${1:-}" in
+list) jq -c '.[]' "$config" ;;
+add)
+  jq -e 'type == "object" and (.id | type == "string" and test("^[A-Za-z0-9_-]+$"))' <<<"${2:-}" >/dev/null 2>&1 ||
+    { echo "Usage: skein-bar-item add '{\"id\":\"vpn\",\"icon\":\"X\",\"script\":\"...\"}'" >&2; exit 1; }
+  jq --argjson v "$2" '(map(select(.id != $v.id))) + [$v | with_entries(select(.value != "" and .value != null))]' "$config" >"$config.tmp" && mv "$config.tmp" "$config"
+  ;;
+remove)
+  [[ -n ${2:-} ]] || { echo "Usage: skein-bar-item remove <id>" >&2; exit 1; }
+  jq --arg id "$2" 'map(select(.id != $id))' "$config" >"$config.tmp" && mv "$config.tmp" "$config"
+  # Also take it out of the bar layout
+  shell="${XDG_CONFIG_HOME:-$HOME/.config}/skein/shell.json"
+  [[ -f $shell ]] && jq --arg id "custom-$2" 'if .barLayout then .barLayout |= with_entries(.value |= map(select(. != $id))) else . end' "$shell" >"$shell.tmp" && mv "$shell.tmp" "$shell"
+  ;;
+*)
+  echo "Usage: skein-bar-item list | add <json> | remove <id>" >&2
+  exit 1
+  ;;
+esac

@@ -43,7 +43,7 @@ PanelWindow {
     case "update":
       return cUpdate;
     default:
-      return null;
+      return id.startsWith("custom-") ? cCustom : null;
     }
   }
 
@@ -137,6 +137,9 @@ PanelWindow {
 
             height: parent.height
             sourceComponent: bar.componentFor(cell.modelData)
+            onLoaded: if (item && "customId" in item) {
+              item.customId = cell.modelData.slice(7);
+            }
           }
 
           // Rearranging: the item stops reacting to clicks and can be dragged to another place
@@ -291,12 +294,6 @@ PanelWindow {
     ids: Skein.barLayout.left
   }
 
-  IndicatorsModule {
-    visible: Skein.showModes
-    anchors.right: centerSection.left
-    barWindow: bar
-  }
-
   Section {
     id: centerSection
 
@@ -398,6 +395,15 @@ PanelWindow {
           }
         }
       }
+    }
+  }
+
+  // An item from ~/.config/skein/bar-items.json
+  Component {
+    id: cCustom
+
+    CustomModule {
+      barWindow: bar
     }
   }
 

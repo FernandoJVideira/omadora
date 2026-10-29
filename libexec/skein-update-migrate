@@ -6,6 +6,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
 # Run all pending migrations to bring the system in line with the installed version.
 
+# Migrations call Skein's helper scripts by name, whatever PATH this was started with.
+export PATH="$(dirname "${BASH_SOURCE[0]}"):$(dirname "${BASH_SOURCE[0]}")/../bin:$PATH"
+
 # Where we store an empty file for each migration that has already been performed.
 SKEIN_MIGRATIONS_STATE_DIR="$HOME/.local/state/skein/migrations"
 ensure_dir "$SKEIN_MIGRATIONS_STATE_DIR"
