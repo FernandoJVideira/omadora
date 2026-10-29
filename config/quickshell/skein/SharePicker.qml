@@ -162,11 +162,12 @@ Scope {
       anchors.centerIn: parent
       width: Math.min(Math.round(940 * Skein.textScale), parent.width - 80)
       height: Math.min(Math.round(640 * Skein.textScale), parent.height - 80)
-      radius: 16
-      color: Qt.alpha(Skein.background, 0.97)
+      radius: 26
+      color: Qt.alpha(Skein.background, 0.6)
       border.width: 1
-      border.color: Qt.alpha(Skein.foreground, 0.16)
+      border.color: Qt.alpha(Skein.foreground, 0.12)
       focus: true
+
 
       NumberAnimation on opacity {
         id: cardFade
@@ -224,7 +225,7 @@ Scope {
         x: 28
         width: tabRow.implicitWidth + 8
         height: 38
-        radius: height / 2
+        radius: 16
         color: Qt.alpha(Skein.foreground, 0.06)
         border.width: 1
         border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -310,7 +311,7 @@ Scope {
 
               width: tiles.tileWidth
               height: Math.round(tiles.tileWidth * 0.5625) + 52
-              radius: 12
+              radius: 16
               color: current ? Qt.alpha(Skein.accent, 0.14) : (tileMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : Qt.alpha(Skein.foreground, 0.04))
               border.width: current ? 2 : 1
               border.color: current ? Skein.accent : Qt.alpha(Skein.foreground, 0.12)

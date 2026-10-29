@@ -24,6 +24,7 @@ Rectangle {
   border.width: 1
   border.color: highlighted ? Qt.alpha(Skein.accent, 0.9) : Qt.alpha(Skein.foreground, 0.16)
 
+
   Text {
     id: label
 

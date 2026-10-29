@@ -25,6 +25,7 @@ SettingsRow {
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.16)
 
+
     Text {
       id: btnText
 

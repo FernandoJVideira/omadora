@@ -425,11 +425,12 @@ Scope {
             anchors.rightMargin: win.gap
             anchors.horizontalCenter: win.vertical ? undefined : parent.horizontalCenter
             anchors.verticalCenter: win.vertical ? parent.verticalCenter : undefined
-            radius: 16
+            radius: 24
             // Frosted glass: a light veil over the blurred screen behind, with a bright hairline on top
-            color: Qt.alpha(Skein.background, 0.42)
+            color: Qt.alpha(Skein.background, 0.26)
             border.width: 1
             border.color: Qt.alpha(Skein.foreground, 0.22)
+
 
             // The icons sit on the screen-side edge and grow into the room above the frame
             Grid {
@@ -770,9 +771,10 @@ Scope {
           }
           height: menuColumn.implicitHeight + 12
           radius: 9
-          color: Qt.alpha(Skein.background, 0.97)
+          color: Qt.alpha(Skein.background, 0.62)
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
+
           x: win.edge === "left" ? win.areaThickness + 6 : (win.edge === "right" ? parent.width - win.areaThickness - width - 6 : Math.max(8, Math.min(parent.width - width - 8, win.menuAnchor - width / 2)))
           y: win.edge === "bottom" ? parent.height - win.areaThickness - height - 6 : Math.max(8, Math.min(parent.height - height - 8, win.menuAnchor - height / 2))
 

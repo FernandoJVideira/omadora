@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Wayland
 
 // The top bar, one per screen. What it shows and where is set by Skein.barLayout
 // (Settings > Menu Bar); how it looks by Skein.barSize, barOpacity, barFloating and barBorder.
@@ -60,6 +61,7 @@ PanelWindow {
   }
   implicitHeight: Skein.barHeight
   exclusionMode: ExclusionMode.Normal
+  WlrLayershell.namespace: "skein-bar"
   exclusiveZone: Skein.barHeight + Skein.barInset * 2
   color: "transparent"
 
@@ -67,9 +69,10 @@ PanelWindow {
     visible: Skein.barStyle === "classic"
     anchors.fill: parent
     radius: Skein.barFloating ? Math.round(10 * Skein.textScale) : 0
-    color: Qt.alpha(Skein.background, Skein.barOpacity)
+    color: Qt.alpha(Skein.background, Math.min(Skein.barOpacity, 0.5))
     border.width: Skein.barBorder ? 1 : 0
     border.color: Qt.alpha(Skein.accent, 0.5)
+
   }
 
   // A row of bar items for one section
@@ -108,9 +111,10 @@ PanelWindow {
       anchors.topMargin: bar.pillInset
       anchors.bottomMargin: bar.pillInset
       radius: height / 2
-      color: Qt.alpha(Skein.background, Skein.barOpacity)
+      color: Qt.alpha(Skein.background, Math.min(Skein.barOpacity, 0.5))
       border.width: Skein.barBorder ? 1 : 0
       border.color: Qt.alpha(Skein.accent, 0.5)
+
     }
 
     Row {

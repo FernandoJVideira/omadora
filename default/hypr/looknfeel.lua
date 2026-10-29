@@ -1,13 +1,14 @@
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 
-local active_border_color = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 }
-local inactive_border_color = "rgba(595959aa)"
+-- Liquid Glass: windows are edged with a pale glass rim instead of a coloured line
+local active_border_color = { colors = { "rgba(ffffff80)", "rgba(ffffff30)" }, angle = 45 }
+local inactive_border_color = "rgba(ffffff22)"
 
 hl.config({
   general = {
     gaps_in = 5,
     gaps_out = 10,
-    border_size = 2,
+    border_size = 1,
 
     col = {
       active_border = active_border_color,
@@ -20,22 +21,26 @@ hl.config({
   },
 
   decoration = {
-    rounding = 0,
+    rounding = 16,
 
+    -- Liquid Glass: deep, soft shadows and a heavy, saturated blur behind translucent surfaces
     shadow = {
       enabled = true,
-      range = 2,
+      range = 28,
       render_power = 3,
-      color = "rgba(1a1a1aee)",
+      color = "rgba(00000055)",
     },
 
     blur = {
       enabled = true,
-      size = 2,
-      passes = 2,
+      size = 9,
+      passes = 3,
       special = true,
-      brightness = 0.60,
-      contrast = 0.75,
+      vibrancy = 0.45,
+      vibrancy_darkness = 0.2,
+      noise = 0.015,
+      brightness = 1.0,
+      contrast = 1.0,
     },
   },
 
