@@ -77,7 +77,7 @@ PanelWindow {
     anchors.rightMargin: 8
     width: root.panelWidth
     height: body.implicitHeight + 24
-    color: Qt.alpha(Skein.background, 0.3)
+    color: Qt.alpha(Skein.background, Skein.glass ? 0.3 : 0.97)
     radius: 28
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)

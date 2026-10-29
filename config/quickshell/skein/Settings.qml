@@ -337,7 +337,7 @@ Scope {
       width: Math.min(Math.round(900 * Skein.textScale), parent.width - 40)
       height: Math.min(Math.round(780 * Skein.textScale), parent.height - 40)
       radius: 26
-      color: Qt.alpha(Skein.background, 0.6)
+      color: Qt.alpha(Skein.background, Skein.glass ? 0.74 : 0.98)
       focus: true
 
 
@@ -717,7 +717,7 @@ Scope {
           x: Math.min(dropdown.anchorX + dropdown.anchorWidth - width, dropdown.width - width - 10)
           y: Math.min(dropdown.anchorY, dropdown.height - height - 10)
           radius: 12
-          color: Qt.alpha(Skein.background, 0.7)
+          color: Qt.alpha(Skein.background, Skein.glass ? 0.7 : 0.98)
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
 
