@@ -134,8 +134,8 @@ Singleton {
   ]
   // Items the user added in ~/.config/skein/bar-items.json (Settings > Menu Bar > Custom items)
   // Liquid Glass (Settings > Appearance), read from glass.conf: translucent shell surfaces and the blur level
-  property bool glass: true
-  property real glassBlur: 2.0
+  property bool glass: false
+  property real glassBlur: 1.0
   property var customItems: []
   readonly property var barItems: builtinBarItems.concat(customItems.map(item => ({
         id: `custom-${item.id}`,
@@ -326,7 +326,7 @@ Singleton {
     onLoadFailed: root.customItems = []
   }
 
-  // Liquid Glass settings: enabled=1 / blur=2.0 (written by skein-glass)
+  // Liquid Glass settings: enabled=1 / blur=1.0 (written by skein-glass)
   FileView {
     path: `${root.home}/.config/skein/glass.conf`
     watchChanges: true
@@ -338,9 +338,14 @@ Singleton {
         if (match && match[1] === "enabled") {
           root.glass = match[2] !== "0";
         } else if (match && match[1] === "blur") {
-          root.glassBlur = Math.max(0.5, Math.min(6, parseFloat(match[2]) || 2));
+          root.glassBlur = Math.max(0.1, Math.min(4, parseFloat(match[2]) || 1));
         }
       }
+    }
+    onLoadFailed: {
+      // No file: glass is off, as shipped
+      root.glass = false;
+      root.glassBlur = 1.0;
     }
   }
 

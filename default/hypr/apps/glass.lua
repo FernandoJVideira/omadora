@@ -14,29 +14,23 @@ local namespaces = {
   ["skein-picker"] = 0.5,
 }
 
--- Settings > Appearance > Liquid Glass (skein-glass): ~/.config/skein/glass.conf, key=value lines
-local enabled, blur = true, 2.0
-local conf = io.open(os.getenv("HOME") .. "/.config/skein/glass.conf", "r")
-if conf then
-  for line in conf:lines() do
-    local key, value = line:match("^(%w+)=(.+)$")
-    if key == "enabled" then
-      enabled = value ~= "0"
-    elseif key == "blur" then
-      blur = tonumber(value) or blur
-    end
-  end
-  conf:close()
-end
+local glass_conf = require("default.hypr.glass_conf")
+local enabled, blur = glass_conf.enabled, glass_conf.blur
 
 if hl.plugin and hl.plugin.hyprglass then
   local hg = hl.plugin.hyprglass
+
+  -- The blur strength lives in the preset: a preset's own value wins over the global one
+  hg.preset("skein", {
+    inherits = "pomme",
+    blur_strength = blur,
+  })
 
   hg.config({
     enabled = enabled,
     blur_strength = blur,
     default_theme = "dark",
-    default_preset = "clear",
+    default_preset = "skein",
     layers = { enabled = true },
     -- Clearer than the dark default: no dimming of bright backgrounds, a faint white tint, strong edge light
     tint_color = 0xffffff14,
@@ -47,7 +41,8 @@ if hl.plugin and hl.plugin.hyprglass then
   })
 
   for namespace, threshold in pairs(namespaces) do
-    hg.layer(namespace, { mask_threshold = threshold })
+    -- Settings stays open while you change the blur: it must resample the background to show it
+    hg.layer(namespace, { mask_threshold = threshold, live_resample = namespace == "skein-settings" })
   end
   -- Layers that only exist to catch clicks must never be glass
   hg.layer("skein-panel-dismiss", { exclude = true })

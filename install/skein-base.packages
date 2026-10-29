@@ -10,6 +10,7 @@ btop
 cargo
 chromium
 clang
+cmake
 dbus-tools
 dua-cli
 evince

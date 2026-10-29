@@ -195,7 +195,7 @@ Panel {
 
     width: (parent.width - parent.spacing) / 2
     height: 58
-    radius: 29
+    radius: Skein.glass ? 29 : 11
     color: tileMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.12) : Qt.alpha(Skein.foreground, 0.07)
 
     Behavior on color {
@@ -289,7 +289,7 @@ Panel {
 
     width: parent.width
     height: 64
-    radius: 26
+    radius: Skein.glass ? 26 : 11
     color: Qt.alpha(Skein.foreground, 0.07)
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -501,7 +501,7 @@ Panel {
     visible: root.appsOpen
     width: parent.width
     height: root.streams.length === 0 ? 46 : Math.min(appList.implicitHeight + 24, 250)
-    radius: 22
+    radius: Skein.glass ? 22 : 11
     color: Qt.alpha(Skein.foreground, 0.05)
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -643,7 +643,7 @@ Panel {
     visible: root.shownProviders.length > 0
     width: parent.width
     height: agentsColumn.implicitHeight + 20
-    radius: 24
+    radius: Skein.glass ? 24 : 11
     color: Qt.alpha(Skein.foreground, 0.07)
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)

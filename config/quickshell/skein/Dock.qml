@@ -425,7 +425,7 @@ Scope {
             anchors.rightMargin: win.gap
             anchors.horizontalCenter: win.vertical ? undefined : parent.horizontalCenter
             anchors.verticalCenter: win.vertical ? parent.verticalCenter : undefined
-            radius: 24
+            radius: Skein.glass ? 24 : 16
             // Frosted glass: a light veil over the blurred screen behind, with a bright hairline on top
             color: Qt.alpha(Skein.background, Skein.glass ? 0.26 : 0.42)
             border.width: 1

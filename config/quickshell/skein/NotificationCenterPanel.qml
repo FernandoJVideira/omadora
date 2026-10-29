@@ -131,7 +131,7 @@ Panel {
 
           width: list.width
           height: cardBody.implicitHeight + 22
-          radius: 18
+          radius: Skein.glass ? 18 : 12
           color: cardMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.1) : Qt.alpha(Skein.foreground, 0.06)
           border.width: 1
           border.color: modelData.urgency === 2 ? Qt.alpha(Skein.accent, 0.8) : Qt.alpha(Skein.foreground, 0.12)

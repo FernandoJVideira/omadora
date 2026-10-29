@@ -98,12 +98,13 @@ SettingsPage {
 
     SliderRow {
       label: "Blur"
-      valueText: Skein.glassBlur.toFixed(1)
-      value: Skein.glassBlur
-      maximum: 6
+      // The plugin's blur only changes between about 0.1 and 1.5, so the track is squared: fine steps at the low end
+      valueText: `${Math.round(Math.sqrt((Skein.glassBlur - 0.1) / 3.9) * 100)}%`
+      value: Math.sqrt(Math.max(0, (Skein.glassBlur - 0.1) / 3.9))
+      maximum: 1
       opacity: Skein.glass ? 1 : 0.4
       onMoved: v => {
-        Skein.glassBlur = Math.max(0.5, Math.min(6, v));
+        Skein.glassBlur = 0.1 + Math.max(0, Math.min(1, v)) * Math.max(0, Math.min(1, v)) * 3.9;
         blurTimer.restart();
       }
     }
