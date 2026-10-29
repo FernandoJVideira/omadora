@@ -39,6 +39,11 @@ Singleton {
   // Do not disturb: only notify-send gets through (see Notifications.qml)
   property bool silenced: false
 
+  // Corner radii, one scale for the whole shell: Radius matches the windows (Hyprland rounding), RadiusInner is
+  // for what sits inside a surface (cards, tiles, rows, fields). Switches, sliders and buttons stay capsules.
+  readonly property int radius: 9
+  readonly property int radiusInner: 6
+
   // Menu bar settings (Settings > Menu Bar), read from shell.json. With controlCenter on, one Control
   // Center button and a notification center replace the row of indicators; off is the classic bar.
   property bool controlCenter: false

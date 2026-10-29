@@ -680,7 +680,7 @@ Scope {
         y: bar.height + 10
         width: parent.width
         height: Math.min(spotList.contentHeight, root.apps ? 8 * 40 : Math.max(root.panelHeight - 80, 8 * 40)) + 16
-        radius: 18
+        radius: Skein.radius
         color: Qt.alpha(Skein.background, 0.55)
         border.width: 1
         border.color: Qt.alpha(Skein.foreground, 0.22)
@@ -749,7 +749,7 @@ Scope {
             Rectangle {
               visible: !srow.plain
               anchors.fill: parent
-              radius: 11
+              radius: Skein.radiusInner
               color: srow.current ? Qt.alpha(Skein.accent, 0.38) : "transparent"
 
               Text {

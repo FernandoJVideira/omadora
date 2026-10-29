@@ -68,7 +68,7 @@ PanelWindow {
   Rectangle {
     visible: Skein.barStyle === "classic"
     anchors.fill: parent
-    radius: Skein.barFloating ? Math.round(10 * Skein.textScale) : 0
+    radius: Skein.barFloating ? Skein.radius : 0
     color: Qt.alpha(Skein.background, Skein.glass ? Math.min(Skein.barOpacity, 0.5) : Skein.barOpacity)
     border.width: Skein.barBorder ? 1 : 0
     border.color: Qt.alpha(Skein.accent, 0.5)
@@ -152,7 +152,7 @@ PanelWindow {
             anchors.fill: parent
             anchors.topMargin: bar.pillInset + 1
             anchors.bottomMargin: bar.pillInset + 1
-            radius: 6
+            radius: Skein.radiusInner
             color: Qt.alpha(Skein.accent, drag.pressed ? 0.35 : 0.15)
             border.width: 1
             border.color: Qt.alpha(Skein.accent, 0.8)

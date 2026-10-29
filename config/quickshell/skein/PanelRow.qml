@@ -21,7 +21,7 @@ Rectangle {
       duration: 100
     }
   }
-  radius: 9
+  radius: Skein.radiusInner
 
   Row {
     anchors.fill: parent

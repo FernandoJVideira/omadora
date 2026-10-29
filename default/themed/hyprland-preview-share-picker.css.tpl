@@ -58,7 +58,7 @@ flowboxchild > .card, button > .card {
     transition: all 0.2s ease;
     border: solid 2px transparent;
     border-color: @background;
-    border-radius: 5px;
+    border-radius: 6px;
     background-color: @card_bg;
     padding: 5px;
 }
@@ -68,12 +68,12 @@ flowboxchild:hover > .card, button:hover > .card, flowboxchild:active > .card, f
 }
 
 .image {
-    border-radius: 5px;
+    border-radius: 6px;
 }
 
 .region-button {
     padding: 0.5rem 1rem;
-    border-radius: 5px;
+    border-radius: 6px;
     background-color: @accent;
     color: @text_dark;
     transition: all 0.2s ease;

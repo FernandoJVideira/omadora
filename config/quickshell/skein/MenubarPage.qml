@@ -315,7 +315,7 @@ SettingsPage {
     height: Math.round(36 * Skein.textScale)
     x: 12
     y: root.contentItem.mapFromItem(null, 0, root.dragY).y - height / 2
-    radius: 8
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.accent, 0.85)
 
     Text {

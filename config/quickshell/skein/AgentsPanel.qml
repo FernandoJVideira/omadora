@@ -139,7 +139,7 @@ Panel {
         width: (parent.width - (root.providers.length - 1) * 8) / root.providers.length
         height: 32
         color: active ? Qt.alpha(Skein.foreground, 0.14) : (tabMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.06) : "transparent")
-        radius: 8
+        radius: Skein.radiusInner
         border.width: 1
         border.color: Qt.alpha(Skein.foreground, active ? 0.5 : 0.25)
 
@@ -355,13 +355,13 @@ Panel {
             required property var modelData
 
             width: content.width
-            radius: Skein.glass ? 12 : 6
+            radius: Skein.radiusInner
             height: 32
             color: Qt.alpha(Skein.foreground, 0.06)
 
             Rectangle {
               width: parent.width * model.modelData.tokens / root.maxModel
-              radius: 6
+              radius: Skein.radiusInner
               height: parent.height
               color: Qt.alpha(Skein.foreground, 0.14)
             }

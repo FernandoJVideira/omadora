@@ -425,7 +425,7 @@ Scope {
             anchors.rightMargin: win.gap
             anchors.horizontalCenter: win.vertical ? undefined : parent.horizontalCenter
             anchors.verticalCenter: win.vertical ? parent.verticalCenter : undefined
-            radius: Skein.glass ? 24 : 16
+            radius: Skein.radius
             // Frosted glass: a light veil over the blurred screen behind, with a bright hairline on top
             color: Qt.alpha(Skein.background, Skein.glass ? 0.26 : 0.42)
             border.width: 1
@@ -598,7 +598,7 @@ Scope {
 
                     visible: !cell.isSeparator && win.hoverPos >= 0 && Math.abs(win.hoverPos - cell.index) < 0.5 && !win.menuOpen
                     z: 5
-                    radius: 8
+                    radius: Skein.radiusInner
                     color: Qt.alpha(Skein.background, 0.95)
                     border.width: 1
                     border.color: Qt.alpha(Skein.foreground, 0.16)
@@ -770,7 +770,7 @@ Scope {
             y: win.edge === "bottom" ? (1 - menu.opacity) * 8 : 0
           }
           height: menuColumn.implicitHeight + 12
-          radius: 9
+          radius: Skein.radius
           color: Qt.alpha(Skein.background, Skein.glass ? 0.62 : 0.97)
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
@@ -857,7 +857,7 @@ Scope {
 
                 width: menuColumn.width
                 height: 30
-                radius: 8
+                radius: Skein.radiusInner
                 color: entryMouse.containsMouse && modelData.enabled ? Qt.alpha(Skein.foreground, 0.1) : "transparent"
                 opacity: modelData.enabled ? 1 : 0.4
 

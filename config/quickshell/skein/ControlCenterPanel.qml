@@ -195,7 +195,7 @@ Panel {
 
     width: (parent.width - parent.spacing) / 2
     height: 58
-    radius: Skein.glass ? 29 : 11
+    radius: Skein.radiusInner
     color: tileMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.12) : Qt.alpha(Skein.foreground, 0.07)
 
     Behavior on color {
@@ -289,7 +289,7 @@ Panel {
 
     width: parent.width
     height: 64
-    radius: Skein.glass ? 26 : 11
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.foreground, 0.07)
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -322,7 +322,7 @@ Panel {
       y: 6
       width: 26
       height: 22
-      radius: 7
+      radius: Skein.radiusInner
       color: chevronMouse.containsMouse || card.expanded ? Qt.alpha(Skein.accent, 0.3) : Qt.alpha(Skein.foreground, 0.08)
 
       Text {
@@ -501,7 +501,7 @@ Panel {
     visible: root.appsOpen
     width: parent.width
     height: root.streams.length === 0 ? 46 : Math.min(appList.implicitHeight + 24, 250)
-    radius: Skein.glass ? 22 : 11
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.foreground, 0.05)
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -559,7 +559,7 @@ Panel {
             Rectangle {
               anchors.fill: appIcon
               visible: !appIcon.visible
-              radius: 7
+              radius: Skein.radiusInner
               color: Qt.alpha(Skein.accent, 0.6)
 
               Text {
@@ -643,7 +643,7 @@ Panel {
     visible: root.shownProviders.length > 0
     width: parent.width
     height: agentsColumn.implicitHeight + 20
-    radius: Skein.glass ? 24 : 11
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.foreground, 0.07)
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.12)

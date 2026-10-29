@@ -49,7 +49,7 @@ Scope {
     Rectangle {
       anchors.fill: parent
       color: Qt.alpha(Skein.background, Skein.glass ? 0.4 : 0.95)
-      radius: Skein.glass ? 28 : 16
+      radius: Skein.radius
       border.width: 1
       border.color: Qt.alpha(Skein.foreground, 0.12)
 

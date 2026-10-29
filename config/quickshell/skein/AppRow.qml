@@ -30,7 +30,7 @@ Item {
   Rectangle {
     anchors.fill: icon
     visible: !icon.visible
-    radius: 6
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.accent, 0.6)
 
     Text {

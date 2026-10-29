@@ -23,7 +23,7 @@ PopupWindow {
   Rectangle {
     anchors.fill: parent
     color: Skein.background
-    radius: 9
+    radius: Skein.radius
     border.width: 1
     border.color: Qt.alpha(Skein.foreground, 0.16)
 

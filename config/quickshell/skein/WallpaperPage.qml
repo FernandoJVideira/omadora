@@ -82,7 +82,7 @@ SettingsPage {
 
     width: root.tileWidth
     height: Math.round(width * 0.62)
-    radius: 8
+    radius: Skein.radiusInner
     color: Qt.alpha(Skein.foreground, 0.08)
     border.width: wallpaper.current ? 2 : 1
     border.color: wallpaper.current ? Skein.accent : Qt.alpha(Skein.foreground, 0.16)
@@ -125,7 +125,7 @@ SettingsPage {
       anchors.margins: 8
       width: 18
       height: 18
-      radius: 9
+      radius: Skein.radiusInner
       color: Skein.accent
 
       Text {
@@ -165,7 +165,7 @@ SettingsPage {
         Rectangle {
           width: 150
           height: 92
-          radius: 6
+          radius: Skein.radiusInner
           color: "black"
           border.width: 3
           border.color: Qt.alpha(Skein.foreground, 0.25)
@@ -316,7 +316,7 @@ SettingsPage {
 
         width: label.implicitWidth + 28
         height: Math.round(28 * Skein.textScale)
-        radius: 6
+        radius: Skein.radiusInner
         color: btn.containsMouse ? Qt.alpha(Skein.accent, 0.25) : Qt.alpha(Skein.foreground, 0.06)
         border.width: 1
         border.color: Qt.alpha(Skein.accent, 0.6)

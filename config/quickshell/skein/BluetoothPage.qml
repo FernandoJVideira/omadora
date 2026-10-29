@@ -68,7 +68,7 @@ SettingsPage {
             visible: modelData.paired
             width: forgetText.implicitWidth + 24
             height: Math.round(24 * Skein.textScale)
-            radius: 6
+            radius: Skein.radiusInner
             color: "transparent"
             border.width: 1
             border.color: Qt.alpha(Skein.foreground, 0.3)
@@ -93,7 +93,7 @@ SettingsPage {
           Rectangle {
             width: actionText.implicitWidth + 24
             height: Math.round(24 * Skein.textScale)
-            radius: 6
+            radius: Skein.radiusInner
             color: "transparent"
             border.width: 1
             border.color: Qt.alpha(Skein.accent, 0.7)

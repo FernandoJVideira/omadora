@@ -203,7 +203,7 @@ Panel {
               color: "transparent"
               border.width: 1
               border.color: Qt.alpha(Skein.foreground, 0.6)
-              radius: 8
+              radius: Skein.radiusInner
             }
 
             Text {

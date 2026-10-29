@@ -51,7 +51,7 @@ SettingsRow {
       anchors.verticalCenter: parent.verticalCenter
       width: Math.round(200 * Skein.textScale)
       height: Math.round(26 * Skein.textScale)
-      radius: 6
+      radius: Skein.radiusInner
       color: Qt.alpha(Skein.foreground, 0.06)
       border.width: 1
       border.color: Skein.accent

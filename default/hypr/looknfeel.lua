@@ -23,7 +23,7 @@ hl.config({
   },
 
   decoration = {
-    rounding = glass and 16 or 0,
+    rounding = 9, -- one radius for windows and the shell (Skein.radius)
 
     -- Liquid Glass: deep, soft shadows and a heavy, saturated blur behind translucent surfaces
     shadow = {
