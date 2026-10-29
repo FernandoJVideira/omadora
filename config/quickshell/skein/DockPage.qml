@@ -55,9 +55,202 @@ SettingsPage {
     }
   }
 
+  // Ready-made docks: position, size and behavior in one click. The apps you keep stay as they are.
+  readonly property var presets: [
+    {
+      name: "macOS",
+      description: "Centered at the bottom, icons grow under the pointer, Downloads and Trash at the end",
+      settings: {
+        position: "bottom",
+        iconSize: 48,
+        magnify: true,
+        magnifySize: 72,
+        autoHide: false,
+        showRunning: true,
+        showIndicators: true,
+        showTrash: true,
+        showDownloads: true
+      }
+    },
+    {
+      name: "Plank",
+      description: "Slim and out of the way: it slides off the screen until you reach for the edge",
+      settings: {
+        position: "bottom",
+        iconSize: 44,
+        magnify: true,
+        magnifySize: 64,
+        autoHide: true,
+        showRunning: true,
+        showIndicators: true,
+        showTrash: false,
+        showDownloads: false
+      }
+    },
+    {
+      name: "Sidebar",
+      description: "A narrow strip down the left edge, like Dash to Dock or the Unity launcher",
+      settings: {
+        position: "left",
+        iconSize: 40,
+        magnify: false,
+        magnifySize: 40,
+        autoHide: false,
+        showRunning: true,
+        showIndicators: true,
+        showTrash: false,
+        showDownloads: false
+      }
+    },
+    {
+      name: "Right rail",
+      description: "The same strip on the right, with Downloads and Trash",
+      settings: {
+        position: "right",
+        iconSize: 40,
+        magnify: false,
+        magnifySize: 40,
+        autoHide: false,
+        showRunning: true,
+        showIndicators: true,
+        showTrash: true,
+        showDownloads: true
+      }
+    },
+    {
+      name: "Compact",
+      description: "Small icons and a light zoom, for when screen space matters",
+      settings: {
+        position: "bottom",
+        iconSize: 36,
+        magnify: true,
+        magnifySize: 56,
+        autoHide: false,
+        showRunning: true,
+        showIndicators: true,
+        showTrash: false,
+        showDownloads: false
+      }
+    },
+    {
+      name: "Showcase",
+      description: "Big icons and a big zoom",
+      settings: {
+        position: "bottom",
+        iconSize: 64,
+        magnify: true,
+        magnifySize: 100,
+        autoHide: false,
+        showRunning: true,
+        showIndicators: true,
+        showTrash: true,
+        showDownloads: true
+      }
+    },
+    {
+      name: "Hidden",
+      description: "Only your kept apps, no zoom, hidden until you need it",
+      settings: {
+        position: "bottom",
+        iconSize: 40,
+        magnify: false,
+        magnifySize: 40,
+        autoHide: true,
+        showRunning: false,
+        showIndicators: false,
+        showTrash: false,
+        showDownloads: false
+      }
+    }
+  ]
+
+  function presetActive(preset: var): bool {
+    return Object.keys(preset.settings).every(key => DockConfig[key] === preset.settings[key]);
+  }
+
   readonly property string search: searchRow.text.trim().toLowerCase()
   // Installed apps that are not in the dock yet, filtered by the search box
   readonly property var available: DesktopEntries.applications.values.filter(e => !e.noDisplay && !DockConfig.pinned.includes(e.id) && (search === "" || e.name.toLowerCase().includes(search))).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 8)
+
+  SettingsSection {
+    title: "Presets"
+
+    Repeater {
+      model: root.presets
+
+      Item {
+        id: presetRow
+
+        required property var modelData
+        readonly property bool active: root.presetActive(modelData)
+
+        width: parent.width
+        height: presetText.implicitHeight + preview.height + 34
+
+        Column {
+          id: presetText
+
+          anchors.left: parent.left
+          anchors.leftMargin: 14
+          anchors.right: applyButton.left
+          anchors.rightMargin: 12
+          anchors.top: parent.top
+          anchors.topMargin: 12
+          spacing: 2
+
+          Text {
+            width: parent.width
+            text: presetRow.modelData.name
+            color: Skein.foreground
+            font.family: Skein.fontFamily
+            font.pointSize: Skein.fontSize
+          }
+
+          Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            text: presetRow.modelData.description
+            color: Qt.alpha(Skein.foreground, 0.6)
+            font.family: Skein.fontFamily
+            font.pointSize: Skein.fontSize - 1.5
+          }
+        }
+
+        SmallButton {
+          id: applyButton
+
+          anchors.right: parent.right
+          anchors.rightMargin: 14
+          anchors.top: parent.top
+          anchors.topMargin: 12
+          text: presetRow.active ? "In use" : "Use"
+          highlighted: presetRow.active
+          enabled: !presetRow.active
+          onClicked: DockConfig.applyLayout(presetRow.modelData.settings)
+        }
+
+        DockPreview {
+          id: preview
+
+          anchors.left: parent.left
+          anchors.leftMargin: 14
+          anchors.top: presetText.bottom
+          anchors.topMargin: 10
+          width: parent.width - 28
+          settings: presetRow.modelData.settings
+        }
+
+        Rectangle {
+          anchors.left: parent.left
+          anchors.leftMargin: 14
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          height: 1
+          color: Qt.alpha(Skein.foreground, 0.08)
+        }
+      }
+    }
+  }
 
   SettingsSection {
     title: "Dock"
@@ -167,6 +360,26 @@ SettingsPage {
         label: modelData.active ? `${modelData.name} (in use)` : modelData.name
         description: modelData.description
 
+        // A taste of the pack: a few well known apps drawn with it
+        leading: Row {
+          spacing: 6
+
+          Repeater {
+            model: packRow.modelData.preview ?? []
+
+            Image {
+              required property string modelData
+
+              width: Math.round(30 * Skein.textScale)
+              height: width
+              source: `file://${modelData}`
+              sourceSize: Qt.size(96, 96)
+              fillMode: Image.PreserveAspectFit
+              asynchronous: true
+            }
+          }
+        }
+
         Row {
           spacing: 6
 
@@ -270,6 +483,12 @@ SettingsPage {
           }
 
           SmallButton {
+            visible: pinnedRow.modelData.startsWith("skein-custom-")
+            text: "Delete"
+            onClicked: DockConfig.removeLauncher(pinnedRow.modelData)
+          }
+
+          SmallButton {
             text: "Remove"
             onClicked: DockConfig.unpin(pinnedRow.modelData)
           }
@@ -308,6 +527,46 @@ SettingsPage {
     SettingsRow {
       visible: root.available.length === 0
       label: root.search === "" ? "Every app is already in the dock" : "No app matches"
+    }
+  }
+
+  SettingsSection {
+    title: "Custom launcher"
+
+    TextInputRow {
+      id: launcherName
+
+      label: "Name"
+      description: "Your own dock entry: a button that runs any command"
+      placeholder: "Notes"
+    }
+
+    TextInputRow {
+      id: launcherCommand
+
+      label: "Command"
+      placeholder: "kitty -e nvim ~/notes.md"
+    }
+
+    TextInputRow {
+      id: launcherIcon
+
+      label: "Icon"
+      description: "An image path or an icon name; empty gives a generic icon, and Icon… on the app changes it later"
+      placeholder: "~/Pictures/notes.png"
+    }
+
+    ButtonRow {
+      label: "Add to the dock"
+      description: "It is also a normal app entry: the launcher finds it, and the list above can reorder or remove it"
+      buttonText: "Add"
+      enabled: launcherName.text.trim() !== "" && launcherCommand.text.trim() !== ""
+      onClicked: {
+        DockConfig.addLauncher(launcherName.text.trim(), launcherCommand.text.trim(), launcherIcon.text.trim());
+        launcherName.text = "";
+        launcherCommand.text = "";
+        launcherIcon.text = "";
+      }
     }
   }
 }

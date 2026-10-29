@@ -24,6 +24,9 @@ if [[ $name == "$(hostnamectl hostname)" ]]; then
 fi
 
 if pkexec hostnamectl set-hostname "$name"; then
+  # Chromium-based apps (Spotify, Discord, ...) lock their profile with the hostname; locks left behind
+  # under the old name make them think another machine owns it and exit silently.
+  "$(dirname "${BASH_SOURCE[0]}")/skein-clean-browser-locks" || true
   notify-send -u low "Computer name" "Now called $name. Open terminals show it after they restart."
 else
   notify-send -u critical "Computer name" "The name was not changed"

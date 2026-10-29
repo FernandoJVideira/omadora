@@ -55,7 +55,7 @@ Singleton {
   property string barDensity: "default" // compact, default or comfortable
 
   // Everything the bar can show. `only` limits an item to the classic bar or to the Control Center.
-  readonly property var barItems: [
+  readonly property var builtinBarItems: [
     {
       id: "menu",
       label: "Skein menu",
@@ -132,6 +132,13 @@ Singleton {
       only: ""
     }
   ]
+  // Items the user added in ~/.config/skein/bar-items.json (Settings > Menu Bar > Custom items)
+  property var customItems: []
+  readonly property var barItems: builtinBarItems.concat(customItems.map(item => ({
+        id: `custom-${item.id}`,
+        label: item.label || item.id,
+        only: ""
+      })))
   readonly property var defaultBarLayout: ({
       left: ["menu", "workspaces"],
       center: ["clock", "weather"],
@@ -147,7 +154,7 @@ Singleton {
     const seen = {};
     const result = {};
     for (const section of ["left", "center", "right"]) {
-      result[section] = (Array.isArray(layout?.[section]) ? layout[section] : []).filter(id => known.includes(id) && !seen[id] && (seen[id] = true));
+      result[section] = Array.from(layout?.[section] ?? []).filter(id => (known.includes(id) || String(id).startsWith("custom-")) && !seen[id] && (seen[id] = true));
     }
     return result;
   }
@@ -211,6 +218,19 @@ Singleton {
   function setBar(key: string, value: var): void {
     root[key] = value;
     Quickshell.execDetached([`${skeinPath}/libexec/skein-menubar`, "set", key, JSON.stringify(value)]);
+  }
+
+  // Use a whole menu bar preset at once: {controlCenter, barLayout, barStyle, ...}
+  function applyBar(settings: var): void {
+    for (const key of Object.keys(settings)) {
+      root[key] = key === "barLayout" ? normalizeLayout(settings[key]) : settings[key];
+    }
+    Quickshell.execDetached([`${skeinPath}/libexec/skein-menubar`, "apply", JSON.stringify(settings)]);
+  }
+
+  // Add or remove one of the user's own bar items (~/.config/skein/bar-items.json)
+  function customItemCommand(args: var): void {
+    Quickshell.execDetached([`${skeinPath}/libexec/skein-bar-item`].concat(args));
   }
 
   signal refreshRequested(string module)
@@ -284,6 +304,23 @@ Singleton {
       }
     }
     onLoadFailed: root.textSize = 12
+  }
+
+  // Custom bar items: [{"id": "vpn", "label": "VPN", "icon": "󰖂", "script": "~/bin/vpn-status", "interval": 10, "onClick": "...", "onRightClick": "..."}]
+  FileView {
+    path: `${root.home}/.config/skein/bar-items.json`
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: {
+      try {
+        const list = JSON.parse(text());
+        root.customItems = Array.isArray(list) ? list.filter(i => i && typeof i.id === "string" && /^[A-Za-z0-9_-]+$/.test(i.id)) : [];
+      } catch (e) {
+        root.customItems = [];
+      }
+    }
+    onLoadFailed: root.customItems = []
   }
 
   FileView {

@@ -59,14 +59,28 @@ case "${1:-}" in
 list)
   active="$(active_dir)"
   out='[]'
+  # A few well known apps, so a pack can be judged by sight: up to six image files of the pack
+  sample_names=(firefox org.gnome.nautilus utilities-terminal code spotify steam discord org.gnome.settings chromium vlc gimp org.mozilla.firefox google-chrome telegram obsidian)
+  preview() { # <apps dir>
+    local dir="$1" name ext found=()
+    [[ -n $dir ]] || { echo '[]'; return; }
+    for name in "${sample_names[@]}"; do
+      for ext in svg png; do
+        [[ -f $dir/$name.$ext ]] && { found+=("$dir/$name.$ext"); break; }
+      done
+      ((${#found[@]} >= 6)) && break
+    done
+    ((${#found[@]})) && printf '%s\n' "${found[@]}" | jq -R . | jq -sc . || echo '[]'
+  }
   add() { # id name description kind removable dir
-    local dir="$6" installed=false inuse=false apps
+    local dir="$6" installed=false inuse=false apps shots='[]'
     apps="$(apps_dir "$dir")"
+    [[ $1 != system ]] && shots="$(preview "$apps")"
     [[ -n $apps ]] && installed=true
     [[ $installed == true && -n $active && $active == "$apps" ]] && inuse=true
     out="$(jq -c --arg id "$1" --arg name "$2" --arg d "$3" --arg k "$4" --argjson r "$5" \
-      --argjson i "$installed" --argjson a "$inuse" \
-      '. + [{id: $id, name: $name, description: $d, kind: $k, removable: $r, installed: $i, active: $a}]' <<<"$out")"
+      --argjson i "$installed" --argjson a "$inuse" --argjson p "$shots" \
+      '. + [{id: $id, name: $name, description: $d, kind: $k, removable: $r, installed: $i, active: $a, preview: $p}]' <<<"$out")"
   }
   add system "System icons" "The icon theme of your desktop" system false "$system_icons/hicolor"
   # system entry is "in use" when no pack is set

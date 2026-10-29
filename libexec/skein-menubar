@@ -6,6 +6,7 @@ set -euo pipefail
 #   skein-menubar set <key> <json value>   controlCenter, notificationCenter, clockStyle, clock24h, clockSeconds,
 #                                          barLayout ({"left":[ids],"center":[ids],"right":[ids]}), barSize,
 #                                          barOpacity, barFloating, barBorder, barDensity, showModes
+#   skein-menubar apply <json object>      several of those at once (a preset), in one write
 #   skein-menubar reset                    back to the classic bar and default items
 
 config="${XDG_CONFIG_HOME:-$HOME/.config}/skein/shell.json"
@@ -33,9 +34,13 @@ set)
   [[ ${2:-} =~ $keys || ${2:-} =~ $other_keys ]] || { echo "Unknown setting: ${2:-}" >&2; exit 1; }
   write_config '.[$k] = $v' --arg k "$2" --argjson v "$3"
   ;;
+apply)
+  [[ -n ${2:-} ]] && jq -e 'type == "object"' <<<"$2" >/dev/null 2>&1 || { echo "Usage: skein-menubar apply <json object>" >&2; exit 1; }
+  write_config '. + ($v | with_entries(select(.key | test($keys))))' --argjson v "$2" --arg keys "$keys"
+  ;;
 reset) write_config 'with_entries(select((.key | test("'"$keys"'")) or (.key | test("'"$old_keys"'")) | not))' ;;
 *)
-  echo "Usage: skein-menubar get | set <key> <json> | reset" >&2
+  echo "Usage: skein-menubar get | set <key> <json> | apply <json> | reset" >&2
   exit 1
   ;;
 esac

@@ -167,6 +167,7 @@ SettingsPage {
       id: newAdmin
 
       label: "Administrator"
+      onToggled: value => newAdmin.checked = value
     }
 
     ButtonRow {

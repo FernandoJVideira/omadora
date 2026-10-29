@@ -114,12 +114,11 @@ show_learn_menu() {
 }
 
 show_trigger_menu() {
-  case $(menu "Trigger" "󰔛  Reminder\n  Capture\n󰧸  Transcode\n  Share\n󰔎  Toggle\n  Hardware") in
+  case $(menu "Trigger" "󰔛  Reminder\n  Capture\n󰧸  Transcode\n  Share\n  Hardware") in
   *Reminder*) show_reminder_menu ;;
   *Capture*) show_capture_menu ;;
   *Transcode*) present_skein_terminal skein-transcode ;;
   *Share*) show_share_menu ;;
-  *Toggle*) show_toggle_menu ;;
   *Hardware*) show_hardware_menu ;;
   *) show_main_menu ;;
   esac
@@ -240,45 +239,22 @@ show_share_menu() {
   esac
 }
 
-show_toggle_menu() {
-  local options="󱄄  Screensaver\n󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n  Weather\n󰍜  Top Bar\n󱂬  Workspace Layout\n  Window Gaps\n  1-Window Ratio\n󰍹  Monitor Scaling\n󱚡  Crash Capture"
-
-  case $(menu "Toggle" "$options") in
-  *Screensaver*) skein_run skein-toggle-screensaver ;;
-  *Nightlight*) skein_run skein-toggle-nightlight ;;
-  *Idle*) skein_run skein-toggle-idle ;;
-  *Notifications*) skein_run skein-toggle-notification-silencing ;;
-  *Weather*) skein_run skein-toggle-weather-check ;;
-  *Bar*) skein_run skein-toggle-bar ;;
-  *Layout*) skein_run skein-hyprland-workspace-layout-toggle ;;
-  *Ratio*) skein_run skein-hyprland-window-single-square-aspect-toggle ;;
-  *Gaps*) skein_run skein-hyprland-window-gaps-toggle ;;
-  *Scaling*) skein_run skein-hyprland-monitor-scaling-cycle ;;
-  *Crash*) skein_run skein-toggle-crash-capture ;;
-  *) back_to show_trigger_menu ;;
-  esac
-}
-
 show_hardware_menu() {
   local options="󰛧  Laptop Display\n󰍹  Mirror Display"
-
-  if skein_run skein-hw-touchpad; then
-    options="$options\n󰟸  Touchpad"
-  fi
 
   if skein_run skein-hw-touchscreen; then
     options="$options\n󰆽  Touchscreen"
   fi
 
-  case $(menu "Toggle" "$options") in
+  case $(menu "Hardware" "$options") in
   *Laptop*) skein_run skein-hyprland-monitor-internal toggle ;;
   *Mirror*) skein_run skein-hyprland-monitor-internal-mirror toggle ;;
-  *Touchpad*) skein_run skein-toggle-touchpad ;;
   *Touchscreen*) skein_run skein-toggle-touchscreen ;;
   *) back_to show_trigger_menu ;;
   esac
 }
 
+# Theme, wallpaper and terminal font are in Settings > Appearance
 show_style_menu() {
   case $(menu "Style" "󰸌  Theme\n  Terminal Font\n  Background\n  Login Screen\n  Hyprland\n󱄄  Screensaver\n  About") in
   *Theme*) show_theme_menu ;;
@@ -342,127 +318,24 @@ show_font_menu() {
 }
 
 show_setup_menu() {
-  local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n󰍹  Monitors"
+  local options="󰱔  DNS\n  Security\n  Config"
   [ -f ~/.config/hypr/bindings.lua ] && options="$options\n  Keybindings"
-  [ -f ~/.config/hypr/input.lua ] && options="$options\n󰍽  Input"
-  options="$options\n󰱔  DNS\n  Defaults\n  Security\n  Config"
 
   case $(menu "Setup" "$options") in
-  *Audio*) skein_run skein-launch-audio ;;
-  *Wifi*) skein_run skein-launch-wifi ;;
-  *Bluetooth*) skein_run skein-launch-bluetooth ;;
-  *Power*) show_setup_power_menu ;;
-  *Monitors*) open_in_editor ~/.config/hypr/monitors.lua ;;
   *Keybindings*) open_in_editor ~/.config/hypr/bindings.lua ;;
-  *Input*) open_in_editor ~/.config/hypr/input.lua ;;
   *DNS*) present_skein_terminal skein-setup-dns ;;
-  *Defaults*) show_defaults_menu ;;
   *Security*) show_setup_security_menu ;;
   *Config*) show_setup_config_menu ;;
   *) show_main_menu ;;
   esac
 }
 
-# A list of choices for one default, with the current one marked
-# usage: default_menu <title> <current> <entries...>, entries as "<glyph>  <Label>|<value>"
-default_menu() {
-  local title="$1" current="$2"
-  shift 2
-
-  local options="" entry label value
-  for entry in "$@"; do
-    label="${entry%%|*}"
-    value="${entry##*|}"
-    options+="$label"
-    [[ $value == "$current" ]] && options+="\t✓"
-    options+="\n"
-  done
-
-  menu "$title" "${options%\\n}"
-}
-
-show_defaults_menu() {
-  case $(menu "Defaults" "󰚩  Agent\t›\n  Browser\t›\n  Terminal\t›\n  Editor\t›") in
-  *Agent*) show_default_agent_menu ;;
-  *Browser*) show_default_browser_menu ;;
-  *Terminal*) show_default_terminal_menu ;;
-  *Editor*) show_default_editor_menu ;;
-  *) show_setup_menu ;;
-  esac
-}
-
-show_default_agent_menu() {
-  local choice
-  choice=$(default_menu "Default Agent" "$(skein_run skein-default-agent)" \
-    "󰛄  Claude|claude" "  Codex|codex" "  OpenCode|opencode" "󰫢  Antigravity|agy" "  Copilot|copilot" \
-    "󰋑  Crush|crush" "  Grok|grok" "  Cursor CLI|cursor-agent" "󰛤  Muse Code|muse" "󰚩  Pi|pi" "󰚩  Oh My Pi|omp" "󰚩  Ori|ori")
-  case "$choice" in
-  *Claude*) skein_run skein-default-agent claude ;;
-  *Codex*) skein_run skein-default-agent codex ;;
-  *OpenCode*) skein_run skein-default-agent opencode ;;
-  *Antigravity*) skein_run skein-default-agent agy ;;
-  *Copilot*) skein_run skein-default-agent copilot ;;
-  *Crush*) skein_run skein-default-agent crush ;;
-  *Grok*) skein_run skein-default-agent grok ;;
-  *Cursor*) skein_run skein-default-agent cursor-agent ;;
-  *Muse*) skein_run skein-default-agent muse ;;
-  *"Oh My Pi"*) skein_run skein-default-agent omp ;;
-  *Pi*) skein_run skein-default-agent pi ;;
-  *Ori*) skein_run skein-default-agent ori ;;
-  *) back_to show_defaults_menu ;;
-  esac
-}
-
-show_default_browser_menu() {
-  local choice
-  choice=$(default_menu "Default Browser" "$(skein_run skein-default-browser)" \
-    "  Chromium|chromium" "󰈹  Firefox|firefox" "󰖟  Helium|helium" "󰖟  Brave|brave" "󰖟  Brave Origin|brave-origin" "󰊯  Chrome|chrome" "󰇩  Edge|edge" "󰖟  Zen|zen")
-  case "$choice" in
-  *Chromium*) skein_run skein-default-browser chromium ;;
-  *Firefox*) skein_run skein-default-browser firefox ;;
-  *Helium*) skein_run skein-default-browser helium ;;
-  *"Brave Origin"*) skein_run skein-default-browser brave-origin ;;
-  *Brave*) skein_run skein-default-browser brave ;;
-  *Chrome*) skein_run skein-default-browser chrome ;;
-  *Edge*) skein_run skein-default-browser edge ;;
-  *Zen*) skein_run skein-default-browser zen ;;
-  *) back_to show_defaults_menu ;;
-  esac
-}
-
-show_default_terminal_menu() {
-  local choice
-  choice=$(default_menu "Default Terminal" "$(skein_run skein-default-terminal)" \
-    "  Alacritty|alacritty" "  Foot|foot" "  Ghostty|ghostty" "  Kitty|kitty")
-  case "$choice" in
-  *Alacritty*) skein_run skein-default-terminal alacritty ;;
-  *Foot*) skein_run skein-default-terminal foot ;;
-  *Ghostty*) skein_run skein-default-terminal ghostty ;;
-  *Kitty*) skein_run skein-default-terminal kitty ;;
-  *) back_to show_defaults_menu ;;
-  esac
-}
-
-show_default_editor_menu() {
-  local choice
-  choice=$(default_menu "Default Editor" "$(skein_run skein-default-editor)" \
-    "  Neovim|nvim" "  Vim|vim" "  Helix|hx" "  Emacs|emacs" "  VSCode|flatpak run com.visualstudio.code" "  Zed|flatpak run dev.zed.Zed")
-  case "$choice" in
-  *Neovim*) skein_run skein-default-editor nvim ;;
-  *Vim*) skein_run skein-default-editor vim ;;
-  *Helix*) skein_run skein-default-editor helix ;;
-  *Emacs*) skein_run skein-default-editor emacs ;;
-  *VSCode*) skein_run skein-default-editor code ;;
-  *Zed*) skein_run skein-default-editor zed ;;
-  *) back_to show_defaults_menu ;;
-  esac
-}
-
+# Reached from the battery icon; the rest of power is in Settings > Power & Idle
 show_setup_power_menu() {
   profile=$(menu "Power Profile" "$(skein_run skein-powerprofiles-list)" "" "$(powerprofilesctl get)")
 
   if [[ "$profile" == "CNCLD" || -z "$profile" ]]; then
-    back_to show_setup_menu
+    show_setup_menu
   else
     skein_run skein-powerprofiles-set "$profile"
   fi
@@ -477,7 +350,7 @@ show_setup_security_menu() {
 }
 
 show_setup_config_menu() {
-  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprsunset\n󰍜  Bar\n󰞅  XCompose") in
+  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprsunset\n󰍜  Bar\n󰞅  XCompose") in
   *Hyprland*) open_in_editor ~/.config/hypr/hyprland.lua ;;
   *Hypridle*) open_in_editor ~/.config/hypr/hypridle.conf && skein_run skein-restart-hypridle ;;
   *Hyprsunset*) open_in_editor ~/.config/hypr/hyprsunset.conf && skein_run skein-restart-hyprsunset ;;
@@ -557,7 +430,7 @@ show_update_process_menu() {
 }
 
 show_update_config_menu() {
-  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprsunset\n󱣴  Plymouth\n  Tmux\n󰍜  Bar") in
+  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprsunset\n󱣴  Plymouth\n  Tmux\n󰍜  Bar") in
   *Hyprland*) present_skein_terminal skein-refresh-hyprland ;;
   *Hypridle*) present_skein_terminal skein-refresh-hypridle ;;
   *Hyprsunset*) present_skein_terminal skein-refresh-hyprsunset ;;
@@ -590,10 +463,8 @@ show_about() {
 }
 
 show_system_menu() {
-  case $(menu "System" "󰒓  Settings\n  Lock\n󱄄  Screensaver\n󰍃  Logout\n󰜉  Reboot\n󰐥  Shutdown") in
-  *Settings*) qs -c skein ipc call settings open ;;
+  case $(menu "System" "  Lock\n󰍃  Logout\n󰜉  Reboot\n󰐥  Shutdown") in
   *Lock*) skein_run skein-system-lock ;;
-  *Screensaver*) skein_run skein-launch-screensaver ;;
   *Logout*) skein_run skein-system-logout ;;
   *Reboot*) skein_run skein-system-reboot ;;
   *Shutdown*) skein_run skein-system-shutdown ;;
@@ -601,12 +472,31 @@ show_system_menu() {
   esac
 }
 
+# Your own entries: one per line in ~/.config/skein/menu-items, "Label<TAB>command" (lines starting with # are ignored)
+CUSTOM_MENU_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/skein/menu-items"
+
+show_custom_menu() {
+  local label command entries=""
+  while IFS=$'\t' read -r label command; do
+    [[ -z $label || $label == \#* ]] && continue
+    entries+="${entries:+\n}$label"
+  done <"$CUSTOM_MENU_FILE"
+  local choice
+  choice="$(menu "Custom" "$entries")"
+  [[ -z $choice ]] && { show_main_menu; return; }
+  while IFS=$'\t' read -r label command; do
+    [[ $label == "$choice" && -n $command ]] && { skein_run bash -c "$command"; return; }
+  done <"$CUSTOM_MENU_FILE"
+}
+
 show_main_menu() {
-  local search_file choice
+  local search_file choice items
   search_file="$(mktemp)"
   "$SKEIN_LIBEXEC_DIR/skein-menu-index" >"$search_file" 2>/dev/null
 
-  choice="$(menu "Go" "󰀻  Apps\t›\n󰧑  Learn\t›\n󱓞  Trigger\t›\n  Style\t›\n  Setup\t›\n󰉉  Install\t›\n󰭌  Remove\t›\n  Update\t›\n  About\n  System\t›" "" "" "$search_file")"
+  items="󰀻  Apps\t›\n󰒓  Settings\n󰧑  Learn\t›\n󱓞  Trigger\t›\n  Style\t›\n  Setup\t›\n󰉉  Install\t›\n󰭌  Remove\t›\n  Update\t›\n  About\n  System\t›"
+  [[ -f $CUSTOM_MENU_FILE ]] && grep -qvE "^(#|[[:space:]]*$)" "$CUSTOM_MENU_FILE" && items+="\n󰣖  Custom\t›"
+  choice="$(menu "Go" "$items" "" "" "$search_file")"
   rm -f "$search_file"
 
   if [[ $choice == @replay:* ]]; then
@@ -625,22 +515,19 @@ show_main_menu() {
 go_to_menu() {
   case "${1,,}" in
   *apps*) skein_run skein-launch-picker --show drun -p "Launch…" ;;
+  *settings*) qs -c skein ipc call settings open ;;
+  *custom*) show_custom_menu ;;
   *learn*) show_learn_menu ;;
   *trigger*) show_trigger_menu ;;
-  *toggle*) show_toggle_menu ;;
   *hardware*) show_hardware_menu ;;
   *share*) show_share_menu ;;
   *reminder-set*) show_custom_reminder_input ;;
   *reminder*) show_reminder_menu ;;
-  *background*) show_background_menu ;;
   *capture*) show_capture_menu ;;
   *style*) show_style_menu ;;
   *theme*) show_theme_menu ;;
-  *font*) show_font_menu ;;
   *screenrecord*) show_screenrecord_menu ;;
   *setup*) show_setup_menu ;;
-  *defaults*) show_defaults_menu ;;
-  *agent*) show_default_agent_menu ;;
   *power*) show_setup_power_menu ;;
   *install*) show_install_menu ;;
   *remove*) show_remove_menu ;;

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# Remove stale profile locks of Chromium-based apps (Spotify, Discord, Vesktop, Element, Brave, ...).
+#
+# Such an app keeps a symlink "SingletonLock -> <hostname>-<pid>" in its profile. After the computer is
+# renamed, a lock left by a process that is gone still names the old hostname, so the app believes
+# another machine owns the profile and exits without a word. A lock is removed only when
+#   - its hostname is not this computer's, and
+#   - the process it names is gone (or is a different process that reused the pid).
+# A lock that already names this computer is never touched. The lock of an app that is still running is
+# not removed but renamed to this computer (the same pid), so it stays valid if the app crashes later.
+#
+#   skein-clean-browser-locks          clean up quietly
+#   skein-clean-browser-locks --list   only print the locks that would be removed
+
+list_only=false
+[[ ${1:-} == --list ]] && list_only=true
+
+host="$(cat /proc/sys/kernel/hostname 2>/dev/null || hostname)"
+removed=0
+
+live() { # <lock symlink> -> success when the process it names is running and owns it
+  local target pid lock_time proc_time
+  target="$(readlink -- "$1")" || return 1
+  [[ $target =~ ^(.+)-([0-9]+)$ ]] || return 1
+  pid="${BASH_REMATCH[2]}"
+  [[ -d /proc/$pid ]] || return 1
+  lock_time="$(stat -c %Y -- "$1" 2>/dev/null)" || return 1
+  proc_time="$(stat -c %Y -- "/proc/$pid" 2>/dev/null)" || return 1
+  ((proc_time <= lock_time + 5))
+}
+
+stale() { # <lock symlink> -> success when it can be removed
+  local target owner pid lock_time proc_time
+  target="$(readlink -- "$1")" || return 1
+  [[ $target =~ ^(.+)-([0-9]+)$ ]] || return 1
+  owner="${BASH_REMATCH[1]}"
+  pid="${BASH_REMATCH[2]}"
+
+  [[ $owner == "$host" ]] && return 1
+  if [[ -d /proc/$pid ]]; then
+    # The pid is alive. It is still ours only if it started before the lock was made; a process that
+    # started later just reused the number.
+    lock_time="$(stat -c %Y -- "$1" 2>/dev/null)" || return 1
+    proc_time="$(stat -c %Y -- "/proc/$pid" 2>/dev/null)" || return 1
+    ((proc_time > lock_time + 5)) || return 1
+  fi
+  return 0
+}
+
+while IFS= read -r lock; do
+  target="$(readlink -- "$lock")" || continue
+  if [[ $target =~ ^(.+)-([0-9]+)$ && ${BASH_REMATCH[1]} != "$host" ]] && live "$lock"; then
+    $list_only || ln -sfn -- "$host-${BASH_REMATCH[2]}" "$lock"
+    continue
+  fi
+  stale "$lock" || continue
+  dir="$(dirname "$lock")"
+  if $list_only; then
+    echo "$lock -> $(readlink -- "$lock")"
+    continue
+  fi
+  for name in SingletonLock SingletonCookie SingletonSocket; do
+    [[ -L $dir/$name ]] && rm -f -- "$dir/$name"
+  done
+  removed=$((removed + 1))
+done < <(find "$HOME/.config" "$HOME/.cache" "$HOME/.var/app" "$HOME/snap" -maxdepth 6 -type l -name SingletonLock 2>/dev/null)
+
+exit 0

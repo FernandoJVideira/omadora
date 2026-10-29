@@ -12,6 +12,10 @@ set -euo pipefail
 #   skein-dock icon <app> <image path>     use your own icon for an app (<app> is its lowercase desktop id)
 #   skein-dock icon-reset <app>            back to the pack or theme icon
 #   skein-dock choose-icon <app>           pick the image with a file dialog, then do the same as "icon"
+#   skein-dock apply <json object>         several of the settings above at once (a preset); never the apps or icons
+#   skein-dock launcher <name> <command> [icon]  your own dock entry: a launcher running <command>; icon is an image
+#                                          path or an icon name. It is also a desktop entry (~/.local/share/applications)
+#   skein-dock launcher-remove <id>        delete one of those (id: skein-custom-<name>) and take it out of the dock
 #   skein-dock toggle                      show or hide the dock
 
 file="${XDG_CONFIG_HOME:-$HOME/.config}/skein/dock.json"
@@ -54,6 +58,10 @@ set)
   [[ $2 =~ ^(enabled|position|iconSize|magnify|magnifySize|autoHide|showRunning|showIndicators|showTrash|showDownloads|iconPack|iconPackName)$ ]] || { echo "Unknown setting: $2" >&2; exit 1; }
   edit '.[$k] = $v' --arg k "$2" --argjson v "$3"
   ;;
+apply)
+  [[ -n ${2:-} ]] && jq -e 'type == "object"' <<<"$2" >/dev/null 2>&1 || { echo "Usage: skein-dock apply <json object>" >&2; exit 1; }
+  edit '. + ($v | with_entries(select(.key | test("^(position|iconSize|magnify|magnifySize|autoHide|showRunning|showIndicators|showTrash|showDownloads)$"))))' --argjson v "$2"
+  ;;
 pin) edit '(.pinned // []) as $p | .pinned = (if ($p | index($id)) then $p else $p + [$id] end)' --arg id "$2" ;;
 unpin) edit '.pinned -= [$id]' --arg id "$2" ;;
 move)
@@ -73,6 +81,30 @@ choose-icon)
   ;;
 place)
   edit '((.pinned // []) - [$id]) as $p | .pinned = ($p[0:$i] + [$id] + $p[$i:])' --arg id "$2" --argjson i "$3"
+  ;;
+launcher)
+  [[ -n ${2:-} && -n ${3:-} ]] || { echo "Usage: skein-dock launcher <name> <command> [icon]" >&2; exit 1; }
+  slug="$(tr '[:upper:]' '[:lower:]' <<<"$2" | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')"
+  [[ -n $slug ]] || slug=item
+  id="skein-custom-$slug"
+  dir="$HOME/.local/share/applications"
+  mkdir -p "$dir"
+  icon="${4:-}"
+  icon="${icon/#\~/$HOME}"
+  desktop_icon=application-x-executable
+  [[ -n $icon && ! -f $icon ]] && desktop_icon="$icon"
+  [[ -f $icon ]] && desktop_icon="$icon"
+  # Exec quoting per the Desktop Entry spec: the command in double quotes, \ " $ ` escaped, % doubled
+  exec_cmd="$(sed -E 's/\\/\\\\\\\\/g; s/"/\\\\"/g; s/\$/\\\\$/g; s/`/\\\\`/g; s/%/%%/g' <<<"$3")"
+  printf '[Desktop Entry]\nType=Application\nName=%s\nExec=bash -c "%s"\nIcon=%s\nTerminal=false\nCategories=Utility;\n' "$2" "$exec_cmd" "$desktop_icon" >"$dir/$id.desktop"
+  [[ -f $icon ]] && "$0" icon "$id" "$icon"
+  "$0" pin "$id"
+  ;;
+launcher-remove)
+  [[ ${2:-} == skein-custom-* ]] || { echo "Only skein-custom-* launchers can be removed" >&2; exit 1; }
+  rm -f "$HOME/.local/share/applications/$2.desktop"
+  "$0" unpin "$2"
+  "$0" icon-reset "$2"
   ;;
 toggle)
   init

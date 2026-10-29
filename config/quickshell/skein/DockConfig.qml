@@ -61,12 +61,30 @@ Singleton {
     Quickshell.execDetached([script, "unpin", id]);
   }
 
+  // Your own dock entry (see skein-dock launcher): a desktop entry running a command, pinned at the end
+  function addLauncher(name: string, command: string, icon: string): void {
+    Quickshell.execDetached([script, "launcher", name, command, icon]);
+  }
+
+  function removeLauncher(id: string): void {
+    pinned = pinned.filter(p => p !== id);
+    Quickshell.execDetached([script, "launcher-remove", id]);
+  }
+
   // Drag and drop: put an app at a position, adding it to the dock if it was not there
   function place(id: string, index: int): void {
     const rest = pinned.filter(p => p !== id);
     const at = Math.max(0, Math.min(rest.length, index));
     pinned = [...rest.slice(0, at), id, ...rest.slice(at)];
     Quickshell.execDetached([script, "place", id, `${at}`]);
+  }
+
+  // Use a whole dock preset at once: {position, iconSize, magnify, ...}; the apps stay as they are
+  function applyLayout(settings: var): void {
+    for (const key of Object.keys(settings)) {
+      root[key] = settings[key];
+    }
+    Quickshell.execDetached([script, "apply", JSON.stringify(settings)]);
   }
 
   function move(id: string, delta: int): void {

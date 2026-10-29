@@ -12,15 +12,25 @@ Item {
   readonly property bool expanded: hover.hovered
 
   height: parent ? parent.height : Skein.barHeight
-  width: expander.width + drawer.width
+  width: expander.width + (modes.visible ? modes.width : 0) + drawer.width
 
   HoverHandler {
     id: hover
   }
 
+  // Mode indicators (recording, night light, stay awake ...): active ones always show, the rest slide out with the tray
+  IndicatorsModule {
+    id: modes
+
+    visible: Skein.showModes
+    barWindow: root.barWindow
+    revealed: root.expanded
+  }
+
   Item {
     id: drawer
 
+    x: modes.visible ? modes.width : 0
     anchors.top: parent.top
     anchors.bottom: parent.bottom
     width: root.expanded && SystemTray.items.values.length > 0 ? icons.implicitWidth + 2 * Skein.modulePadding : 0
