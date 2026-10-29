@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The HyprGlass plugin behind Liquid Glass (https://github.com/hyprnux/hyprglass), managed with hyprpm.
+#   skein-hyprglass install    build and enable it (needs a running Hyprland, hyprland-devel and cmake)
+#   skein-hyprglass load       load it into the running Hyprland when it is installed (does nothing otherwise)
+#   skein-hyprglass loaded     succeed when it is loaded
+#   skein-hyprglass installed  succeed when it was built
+
+repo="https://github.com/hyprnux/hyprglass"
+plugin="hyprglass"
+
+loaded() { hyprctl plugin list 2>/dev/null | grep -qi "$plugin"; }
+installed() { hyprpm list 2>/dev/null | grep -qi "Plugin $plugin"; }
+
+case "${1:-}" in
+loaded) loaded ;;
+installed) installed ;;
+load)
+  loaded && exit 0
+  installed || exit 0
+  hyprpm -n reload >/dev/null 2>&1 || true
+  # hyprpm only loads what it has enabled; fall back to loading the built plugin directly
+  if ! loaded; then
+    so="$(ls /var/cache/hyprpm/"$USER"/*/hyprglass.so 2>/dev/null | head -1)"
+    [[ -n $so ]] && hyprctl plugin load "$so" >/dev/null 2>&1 || true
+  fi
+  ;;
+install)
+  command -v hyprpm >/dev/null || { echo "hyprpm is not installed" >&2; exit 1; }
+  # hyprpm keeps its state in /var/cache/hyprpm/<user>; make that folder ours so it never asks for root again
+  if [[ ! -w /var/cache/hyprpm/$USER ]]; then
+    own="mkdir -p /var/cache/hyprpm/$USER && chown -R $USER: /var/cache/hyprpm/$USER"
+    if sudo -n true 2>/dev/null; then
+      sudo bash -c "$own"
+    else
+      pkexec bash -c "$own"
+    fi
+  fi
+  installed || hyprpm -n add "$repo"
+  hyprpm -n update >/dev/null 2>&1 || true
+  hyprpm -n enable "$plugin"
+  ;;
+*)
+  echo "Usage: skein-hyprglass install | load | loaded | installed" >&2
+  exit 1
+  ;;
+esac

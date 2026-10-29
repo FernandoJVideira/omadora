@@ -10,6 +10,7 @@ if [[ -f $FIRST_RUN_MODE ]]; then
   rm -f "$FIRST_RUN_MODE"
 
   bash "$SKEIN_PATH/install/first-run/gdk-scale.sh"
+  bash "$SKEIN_PATH/install/first-run/hyprglass.sh"
   bash "$SKEIN_PATH/install/first-run/welcome.sh"
   bash "$SKEIN_PATH/install/first-run/agent-setup.sh"
 fi

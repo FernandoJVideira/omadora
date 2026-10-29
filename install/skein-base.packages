@@ -8,6 +8,9 @@ bluez-utils
 bind
 brightnessctl
 btop
+cmake
+cpio
+meson
 rust
 chromium
 clang

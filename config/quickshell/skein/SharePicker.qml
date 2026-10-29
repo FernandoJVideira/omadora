@@ -162,7 +162,7 @@ Scope {
       anchors.centerIn: parent
       width: Math.min(Math.round(940 * Skein.textScale), parent.width - 80)
       height: Math.min(Math.round(640 * Skein.textScale), parent.height - 80)
-      radius: 26
+      radius: Skein.glass ? 26 : 16
       color: Qt.alpha(Skein.background, Skein.glass ? 0.6 : 0.97)
       border.width: 1
       border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -225,7 +225,7 @@ Scope {
         x: 28
         width: tabRow.implicitWidth + 8
         height: 38
-        radius: 16
+        radius: Skein.glass ? 16 : height / 2
         color: Qt.alpha(Skein.foreground, 0.06)
         border.width: 1
         border.color: Qt.alpha(Skein.foreground, 0.12)
@@ -311,7 +311,7 @@ Scope {
 
               width: tiles.tileWidth
               height: Math.round(tiles.tileWidth * 0.5625) + 52
-              radius: 16
+              radius: Skein.glass ? 16 : 12
               color: current ? Qt.alpha(Skein.accent, 0.14) : (tileMouse.containsMouse ? Qt.alpha(Skein.foreground, 0.07) : Qt.alpha(Skein.foreground, 0.04))
               border.width: current ? 2 : 1
               border.color: current ? Skein.accent : Qt.alpha(Skein.foreground, 0.12)

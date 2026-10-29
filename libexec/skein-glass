@@ -3,42 +3,60 @@ set -euo pipefail
 
 # Liquid Glass settings, kept in ~/.config/skein/glass.conf (key=value lines; the shell and Hyprland read it).
 #   skein-glass get                  print the settings
+#   skein-glass boot                 at login: load the plugin when glass is on
 #   skein-glass set enabled 0|1      glass on or off
-#   skein-glass set blur <0.5-6>     blur strength (2 is the default)
-# Applied at once when the HyprGlass plugin is loaded; without it only the shell's own surfaces change.
+#   skein-glass set blur <0.1-4>     blur strength (1 is the default; the useful range is 0.1-1.5)
+# Off by default. Switching it on loads the HyprGlass plugin (skein-hyprglass) when it is installed; applied at once
+# when it is loaded; without it only the shell's own surfaces change.
 
 file="${XDG_CONFIG_HOME:-$HOME/.config}/skein/glass.conf"
 mkdir -p "$(dirname "$file")"
-[[ -f $file ]] || printf 'enabled=1\nblur=2.0\n' >"$file"
+[[ -f $file ]] || printf 'enabled=0\nblur=1.0\n' >"$file"
 
 value() { sed -n "s/^$1=//p" "$file" | head -1; }
 
 apply() {
-  local enabled blur
+  local enabled blur changed_blur=${1:-0}
   enabled="$(value enabled)"
   blur="$(value blur)"
-  if hyprctl plugin list 2>/dev/null | grep -q hyprglass; then
-    hyprctl eval "hl.plugin.hyprglass.config({ enabled = $([[ $enabled == 0 ]] && echo false || echo true), blur_strength = ${blur:-2.0} })" >/dev/null
-  else
+  if [[ $enabled == 1 ]] && ! "$(dirname "${BASH_SOURCE[0]}")/skein-hyprglass" loaded; then
+    # Load the plugin if it is installed, then re-read the Hyprland config so its glass settings apply
+    "$(dirname "${BASH_SOURCE[0]}")/skein-hyprglass" load
     hyprctl reload >/dev/null 2>&1 || true
+  else
+    # Plugin loaded (or absent): the Hyprland config holds the glass settings, so re-read it
+    hyprctl reload >/dev/null 2>&1 || true
+    # The plugin caches what it blurred, so a new strength only shows after it is loaded afresh
+    if [[ $enabled == 1 && $changed_blur == 1 ]]; then
+      so="$(ls /var/cache/hyprpm/"$USER"/*/hyprglass.so 2>/dev/null | head -1)"
+      if [[ -n $so ]]; then
+        hyprctl plugin unload "$so" >/dev/null 2>&1 && hyprctl plugin load "$so" >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
+      fi
+    fi
   fi
 }
 
 case "${1:-}" in
+boot)
+  # At login: load the plugin only when glass is switched on, then re-read the config so it takes effect
+  [[ $(value enabled) == 1 ]] || exit 0
+  "$(dirname "${BASH_SOURCE[0]}")/skein-hyprglass" load
+  hyprctl reload >/dev/null 2>&1 || true
+  ;;
 get) cat "$file" ;;
 set)
   key="${2:-}"
   val="${3:-}"
   case "$key" in
   enabled) [[ $val =~ ^[01]$ ]] || { echo "enabled takes 0 or 1" >&2; exit 1; } ;;
-  blur) [[ $val =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk "BEGIN{exit !($val >= 0.5 && $val <= 6)}" || { echo "blur takes a number from 0.5 to 6" >&2; exit 1; } ;;
+  blur) [[ $val =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk "BEGIN{exit !($val >= 0.1 && $val <= 4)}" || { echo "blur takes a number from 0.1 to 4" >&2; exit 1; } ;;
   *) echo "Unknown setting: $key" >&2; exit 1 ;;
   esac
   grep -q "^$key=" "$file" && sed -i "s/^$key=.*/$key=$val/" "$file" || echo "$key=$val" >>"$file"
-  apply
+  apply "$([[ $key == blur ]] && echo 1 || echo 0)"
   ;;
 *)
-  echo "Usage: skein-glass get | set enabled 0|1 | set blur <0.5-6>" >&2
+  echo "Usage: skein-glass get | set enabled 0|1 | set blur <0.1-4>" >&2
   exit 1
   ;;
 esac
