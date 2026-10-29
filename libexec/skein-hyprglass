@@ -28,17 +28,20 @@ load)
   ;;
 install)
   command -v hyprpm >/dev/null || { echo "hyprpm is not installed" >&2; exit 1; }
-  # hyprpm keeps its state in /var/cache/hyprpm/<user>; make that folder ours so it never asks for root again
-  if [[ ! -w /var/cache/hyprpm/$USER ]]; then
-    own="mkdir -p /var/cache/hyprpm/$USER && chown -R $USER: /var/cache/hyprpm/$USER"
+  # hyprpm keeps its state in /var/cache/hyprpm/<user>, and some of its steps create files as root there.
+  # Hand the folder back to us before and after, so enabling the plugin can write its state.
+  own() {
+    local cmd="mkdir -p /var/cache/hyprpm/$USER && chown -R $USER: /var/cache/hyprpm/$USER"
     if sudo -n true 2>/dev/null; then
-      sudo bash -c "$own"
+      sudo bash -c "$cmd"
     else
-      pkexec bash -c "$own"
+      pkexec bash -c "$cmd"
     fi
-  fi
+  }
+  [[ -w /var/cache/hyprpm/$USER ]] || own
   installed || hyprpm -n add "$repo"
   hyprpm -n update >/dev/null 2>&1 || true
+  [[ -w /var/cache/hyprpm/$USER/state.toml ]] || own
   hyprpm -n enable "$plugin"
   ;;
 *)
