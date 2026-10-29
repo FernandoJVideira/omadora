@@ -75,6 +75,40 @@ SettingsPage {
     }
   }
 
+  // The blur slider fires while dragging: apply once it settles
+  Timer {
+    id: blurTimer
+
+    interval: 250
+    onTriggered: Quickshell.execDetached([`${root.scripts}/skein-glass`, "set", "blur", Skein.glassBlur.toFixed(1)])
+  }
+
+  SettingsSection {
+    title: "Liquid Glass"
+
+    SwitchRow {
+      label: "Liquid Glass"
+      description: "Translucent glass bar, panels, windows and dock with refraction. Needs the HyprGlass plugin; without it the surfaces are only blurred. Off gives solid surfaces."
+      checked: Skein.glass
+      onToggled: value => {
+        Skein.glass = value;
+        Quickshell.execDetached([`${root.scripts}/skein-glass`, "set", "enabled", value ? "1" : "0"]);
+      }
+    }
+
+    SliderRow {
+      label: "Blur"
+      valueText: Skein.glassBlur.toFixed(1)
+      value: Skein.glassBlur
+      maximum: 6
+      opacity: Skein.glass ? 1 : 0.4
+      onMoved: v => {
+        Skein.glassBlur = Math.max(0.5, Math.min(6, v));
+        blurTimer.restart();
+      }
+    }
+  }
+
   SettingsSection {
     title: "Text"
 

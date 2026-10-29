@@ -14,10 +14,27 @@ local namespaces = {
   ["skein-picker"] = 0.5,
 }
 
+-- Settings > Appearance > Liquid Glass (skein-glass): ~/.config/skein/glass.conf, key=value lines
+local enabled, blur = true, 2.0
+local conf = io.open(os.getenv("HOME") .. "/.config/skein/glass.conf", "r")
+if conf then
+  for line in conf:lines() do
+    local key, value = line:match("^(%w+)=(.+)$")
+    if key == "enabled" then
+      enabled = value ~= "0"
+    elseif key == "blur" then
+      blur = tonumber(value) or blur
+    end
+  end
+  conf:close()
+end
+
 if hl.plugin and hl.plugin.hyprglass then
   local hg = hl.plugin.hyprglass
 
   hg.config({
+    enabled = enabled,
+    blur_strength = blur,
     default_theme = "dark",
     default_preset = "clear",
     layers = { enabled = true },
@@ -34,7 +51,7 @@ if hl.plugin and hl.plugin.hyprglass then
   end
   -- Layers that only exist to catch clicks must never be glass
   hg.layer("skein-panel-dismiss", { exclude = true })
-else
+elseif enabled then
   for namespace, threshold in pairs(namespaces) do
     hl.layer_rule({ match = { namespace = namespace }, blur = true, blur_popups = true, ignore_alpha = math.max(threshold, 0.1) })
   end

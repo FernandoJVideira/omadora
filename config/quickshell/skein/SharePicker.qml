@@ -163,7 +163,7 @@ Scope {
       width: Math.min(Math.round(940 * Skein.textScale), parent.width - 80)
       height: Math.min(Math.round(640 * Skein.textScale), parent.height - 80)
       radius: 26
-      color: Qt.alpha(Skein.background, 0.6)
+      color: Qt.alpha(Skein.background, Skein.glass ? 0.6 : 0.97)
       border.width: 1
       border.color: Qt.alpha(Skein.foreground, 0.12)
       focus: true
