@@ -77,11 +77,12 @@ PanelWindow {
     anchors.rightMargin: 8
     width: root.panelWidth
     height: body.implicitHeight + 24
-    color: Qt.alpha(Skein.background, 0.97)
-    radius: 16
+    color: Qt.alpha(Skein.background, 0.3)
+    radius: 28
     border.width: 1
-    border.color: Qt.alpha(Skein.foreground, 0.16)
+    border.color: Qt.alpha(Skein.foreground, 0.12)
     focus: true
+
 
     Keys.onEscapePressed: root.open = false
 

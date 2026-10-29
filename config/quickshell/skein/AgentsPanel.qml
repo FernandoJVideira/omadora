@@ -355,7 +355,7 @@ Panel {
             required property var modelData
 
             width: content.width
-            radius: 6
+            radius: 12
             height: 32
             color: Qt.alpha(Skein.foreground, 0.06)
 

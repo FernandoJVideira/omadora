@@ -212,10 +212,11 @@ Scope {
           width: stack.width
           height: shown ? body.implicitHeight + 25 : 0
           z: -index
-          color: Skein.background
-          radius: 13
+          color: Qt.alpha(Skein.background, 0.4)
+          radius: 22
           border.width: 1
           border.color: Qt.alpha(Skein.foreground, 0.16)
+
 
           // Show again when a notification is replaced in place (e.g. volume steps)
           Connections {
