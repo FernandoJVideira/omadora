@@ -4,6 +4,22 @@ set -euo pipefail
 # shellcheck source=lib/common/init.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common/init.sh"
 
+# A driver update leaves the old kernel module loaded; the greeter then fails with "API mismatch"
+check_nvidia_mismatch() {
+  local version_file="${SKEIN_NVIDIA_VERSION_FILE:-/proc/driver/nvidia/version}"
+  local loaded installed lib
+  [[ -r $version_file ]] || return 0
+  loaded=$(grep -m1 'Module' "$version_file" | grep -oE -m1 '[0-9]+\.[0-9]+(\.[0-9]+)+') || return 0
+  for lib in ${SKEIN_NVIDIA_LIB_DIRS:-/usr/lib64 /usr/lib}; do
+    installed=$(compgen -G "$lib/libnvidia-ml.so.*.*.*" | head -n1) || continue
+    [[ -n $installed ]] && { installed=${installed#*libnvidia-ml.so.}; break; }
+    installed=""
+  done
+  [[ -n $installed && $loaded != "$installed" ]] || return 0
+  warn "NVIDIA driver updated (loaded $loaded, installed $installed): reboot before logging out or the login screen will fail"
+  sudo touch /run/reboot-required || true
+}
+
 # Nobara ships its own updater that applies required package fixups
 if has_cmd nobara-sync; then
   info "Updating system packages (nobara-sync)"
@@ -12,6 +28,7 @@ if has_cmd nobara-sync; then
   if ! dnf5 needs-restarting >/dev/null 2>&1; then
     sudo touch /run/reboot-required
   fi
+  check_nvidia_mismatch || true
   exit 0
 fi
 
@@ -30,3 +47,5 @@ sudo dnf5 upgrade -y ||
 if ! dnf5 needs-restarting >/dev/null 2>&1; then
   sudo touch /run/reboot-required
 fi
+
+check_nvidia_mismatch || true

@@ -82,6 +82,8 @@ Forecast data is provided by [Open-Meteo](https://open-meteo.com/) under [CC BY 
 Try logging out and back in again.
 This should recreate the `login` keyring if it doesn't already exist in `~/.local/share/keyrings`.
 
+The login keyring is GNOME Keyring by default. On Nobara, set `SKEIN_KEYRING=kwallet` before installing to keep KWallet instead.
+
 ## Where is the Skein default plymouth theme from?
 
 The default plymouth theme installed is from the great theme collection at [adi1090x/plymouth-themes](https://github.com/adi1090x/plymouth-themes).

@@ -15,6 +15,15 @@ if [[ "${ID:-}" == "nobara" ]]; then
   export SKEIN_NOBARA=true
 fi
 
+# Login keyring: gnome (default) or kwallet (Nobara only)
+case "${SKEIN_KEYRING:-gnome}" in
+gnome | kwallet) export SKEIN_KEYRING="${SKEIN_KEYRING:-gnome}" ;;
+*)
+  echo "WARNING: SKEIN_KEYRING must be gnome or kwallet, using gnome." >&2
+  export SKEIN_KEYRING=gnome
+  ;;
+esac
+
 install_log="$HOME/skein-install.log"
 exec > >(tee -a "$install_log") 2>&1
 echo "Logging install output to: $install_log"

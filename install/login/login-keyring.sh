@@ -7,6 +7,9 @@ configure_skein_login_keyring() {
   chmod 700 "$keyrings_dir"
   printf '%s\n' "$default_keyring" >"$keyrings_dir/default"
 
+  # greetd's PAM file is handled by skein-greeter, so Nobara keeps its authselect profile
+  [[ -n "${SKEIN_NOBARA:-}" ]] && return 0
+
   local profile_name="skein"
   local profile_id="custom/$profile_name"
   local profile_dir="/etc/authselect/custom/$profile_name"
@@ -29,8 +32,8 @@ configure_skein_login_keyring() {
   sudo authselect apply-changes
 }
 
-# Nobara uses KWallet via its display manager; keep its authselect profile/features
-if [[ -z "${SKEIN_NOBARA:-}" ]]; then
+# Nobara with KWallet keeps the display manager's keyring setup
+if [[ -z "${SKEIN_NOBARA:-}" || "${SKEIN_KEYRING:-gnome}" == "gnome" ]]; then
   configure_skein_login_keyring
 fi
 unset -f configure_skein_login_keyring

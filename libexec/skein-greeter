@@ -105,17 +105,21 @@ command = "cage -s -- env QT_WAYLAND_DISABLE_WINDOWDECORATION=1 quickshell -p $d
 user = "$greeter_user"
 TOML
 
-  # unlock the keyring at login, like the display manager it replaces did (KWallet on Nobara,
-  # GNOME Keyring elsewhere)
-  local pam=/etc/pam.d/greetd module="" lib
-  for lib in /usr/lib64/security /usr/lib/security /usr/lib/x86_64-linux-gnu/security; do
-    [[ -f $lib/pam_kwallet5.so ]] && { module=kwallet; break; }
-  done
-  if [[ -z $module ]]; then
-    for lib in /usr/lib64/security /usr/lib/security /usr/lib/x86_64-linux-gnu/security; do
-      [[ -f $lib/pam_gnome_keyring.so ]] && { module=gnome; break; }
-    done
+  # unlock the keyring at login, like the display manager it replaces did (SKEIN_KEYRING:
+  # gnome by default, kwallet only on Nobara)
+  local want=${SKEIN_KEYRING:-gnome} other m so pam=/etc/pam.d/greetd module="" lib
+  if [[ $want == kwallet && -z ${SKEIN_NOBARA:-} ]]; then
+    echo "WARNING: SKEIN_KEYRING=kwallet is only supported on Nobara, using gnome." >&2
+    want=gnome
   fi
+  [[ $want == kwallet ]] && other=gnome || other=kwallet
+  for m in $want $other; do
+    [[ $m == kwallet ]] && so=pam_kwallet5.so || so=pam_gnome_keyring.so
+    for lib in /usr/lib64/security /usr/lib/security /usr/lib/x86_64-linux-gnu/security; do
+      [[ -f $lib/$so ]] && { module=$m; break 2; }
+    done
+  done
+  [[ -n $module && $module != "$want" ]] && echo "WARNING: pam module for $want not found, using $module." >&2
   if [[ -f $pam ]] && ! sudo grep -qE 'pam_kwallet5|pam_gnome_keyring' "$pam"; then
     case $module in
     kwallet) printf '%s\n' 'auth       optional    pam_kwallet5.so' 'session    optional    pam_kwallet5.so auto_start' | sudo tee -a "$pam" >/dev/null ;;
