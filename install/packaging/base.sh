@@ -40,3 +40,18 @@ fi
 # Install copr packages
 mapfile -t packages < <(grep -v '^#' "$SKEIN_INSTALL/skein-copr.packages" | grep -v '^$')
 sudo dnf install -y "${packages[@]}"
+
+# The COPR's hyprland-devel needs its own glaze-devel; hold it so Nobara's updater doesn't hit terra's newer one
+if [[ -n "${SKEIN_NOBARA:-}" ]]; then
+  (
+    if rpm -q glaze-devel >/dev/null 2>&1; then
+      locks=$(dnf5 versionlock list 2>/dev/null) || exit 1
+      grep -q 'glaze-devel' <<<"$locks" && exit 0
+      origin=$(dnf5 repoquery --installed glaze-devel --qf '%{from_repo}\n' 2>/dev/null | head -n1)
+      if [[ "$origin" == *lionheartp* || "$origin" == *Hyprland* ]] ||
+        { [[ -z "$origin" || "$origin" == "@System" || "$origin" == "<unknown>" ]] && rpm -q hyprland-devel >/dev/null 2>&1; }; then
+        sudo dnf5 versionlock add glaze-devel
+      fi
+    fi
+  ) || echo "Could not lock glaze-devel; if 'nobara-sync' reports a glaze-devel conflict, run 'sudo dnf5 versionlock add glaze-devel'"
+fi

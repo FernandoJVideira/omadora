@@ -84,6 +84,13 @@ This should recreate the `login` keyring if it doesn't already exist in `~/.loca
 
 The login keyring is GNOME Keyring by default. On Nobara, set `SKEIN_KEYRING=kwallet` before installing to keep KWallet instead.
 
+## On Nobara, the updater fails with "Package conflicts prevent this update ... glaze-devel"?
+
+The error reads `cannot install both glaze-devel-9.x from terra and glaze-devel-8.x`, with `hyprland-devel requires glaze-static`.
+The Hyprland COPR's `hyprland-devel` (installed for Liquid Glass) needs `glaze-static`, which only the COPR's `glaze-devel` provides, and terra ships a newer `glaze-devel` that doesn't.
+Skein holds the COPR build with a version lock: `sudo dnf5 versionlock add glaze-devel`.
+Once the COPR's `hyprland-devel` works with the newer glaze, remove the lock with `sudo dnf5 versionlock delete glaze-devel`.
+
 ## Where is the Skein default plymouth theme from?
 
 The default plymouth theme installed is from the great theme collection at [adi1090x/plymouth-themes](https://github.com/adi1090x/plymouth-themes).
