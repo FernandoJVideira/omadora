@@ -20,6 +20,7 @@ set -euo pipefail
 log() { printf '\033[32m==>\033[0m %s\n' "$*"; }
 
 PROTECTED_FILE=/etc/dnf/protected.d/skein-nobara.conf
+LEGACY_PROTECTED_FILE=/etc/dnf/protected.d/omadora-nobara.conf  # written before the rename, never cleaned up
 PENDING=/etc/skein/remove-kde.pending
 UNIT=/etc/systemd/system/skein-remove-kde.service
 INSTALLED_COPY=/usr/local/libexec/skein-remove-kde
@@ -60,7 +61,7 @@ DEFAULT_APPS=(
 # Never removed: dnf protects them, and a preview that would take one is refused.
 KEEP_PACKAGES=(
   'nobara-*' greetd cage 'hyprland*' 'quickshell*' uwsm xfce-polkit NetworkManager 'pipewire*' wireplumber
-  as_root systemd 'kernel*' 'dnf*' flatpak kitty zsh git steam lutris 'heroic*' gamescope 'wine*'
+  systemd 'kernel*' 'dnf*' flatpak kitty zsh git steam lutris 'heroic*' gamescope 'wine*'
   mangohud goverlay protonplus 'umu-launcher' timeshift falcond inputplumber '*kwallet*'
   # needed by the KWallet libraries, the Qt/KF libraries Quickshell uses, and Nobara's identity
   'kf5-*' kde-filesystem 'nobara-release*' plasma-breeze-common
@@ -147,10 +148,24 @@ settle_protection() {
   for f in "${LIFTED[@]}"; do as_root rm -f "$f.skein-lifted"; done
   LIFTED=()
 }
-trap restore_protection EXIT
+
+# The protection only has to hold while this script's own dnf transactions run. Left in place, it
+# makes dnf5 refuse every later kernel install or removal, since it protects by package name.
+PROTECTED_WRITTEN=0
+drop_protected_file() {
+  ((PROTECTED_WRITTEN)) || return 0
+  as_root rm -f "$PROTECTED_FILE" "$LEGACY_PROTECTED_FILE"
+}
+
+cleanup() {
+  restore_protection
+  drop_protected_file
+}
+trap cleanup EXIT
 
 # Protect what must stay: dnf then refuses a transaction that would remove any of it.
 write_protected() {
+  PROTECTED_WRITTEN=1
   keep_names | as_root tee "$PROTECTED_FILE" >/dev/null
 }
 
