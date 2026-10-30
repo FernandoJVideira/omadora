@@ -9,6 +9,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common/init.sh"
 
 SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
 
+if ! command -v socat >/dev/null 2>&1; then
+  echo "socat is not installed; monitor recovery is disabled until 'sudo dnf install socat' (or your distro's equivalent) is run" >&2
+  exit 0
+fi
+
 socat -U - "UNIX-CONNECT:$SOCKET" | while IFS= read -r event; do
   case "$event" in
   monitorremovedv2\>\>*)
