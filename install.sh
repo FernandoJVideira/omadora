@@ -6,6 +6,7 @@ set -eEo pipefail
 # Define paths
 export SKEIN_PATH="$HOME/.local/share/skein"
 export SKEIN_INSTALL="$SKEIN_PATH/install"
+export SKEIN_KEYRING="${SKEIN_KEYRING:-gnome}"
 export PATH="$SKEIN_PATH/bin:$PATH"
 
 install_log="$HOME/skein-install.log"
