@@ -3,16 +3,17 @@ set -euo pipefail
 
 # Choose the main display and each display's resolution and refresh rate.
 #   skein-monitors-set main <name>             make <name> the main display (0x0, workspaces 1-5)
+#   skein-monitors-set layout <name>=<x>x<y>...  place every display at pixel positions, e.g. DP-1=0x0 HDMI-A-1=1920x0
 #   skein-monitors-set apply <name> <mode>     try a mode now, without saving it (<mode> is WxH@Hz)
 #   skein-monitors-set save <name> <mode>      keep a mode across restarts
 #   skein-monitors-set save <name> auto        back to the monitor's best mode
-# The layout lives in the generated blocks of ~/.config/hypr/monitors.lua.
+# SKEIN_NO_APPLY=1 skips the live apply of layout. The layout lives in the generated blocks of ~/.config/hypr/monitors.lua.
 
 lua="$(readlink -f "${SKEIN_MONITORS_LUA:-$HOME/.config/hypr/monitors.lua}")"
 reload() { [[ -n ${SKEIN_NO_RELOAD:-} ]] || hyprctl reload >/dev/null; }
 
 die() {
-  echo "skein-monitors-set: $*" >&2
+  echo -e "skein-monitors-set: $*" >&2
   exit 1
 }
 
@@ -69,11 +70,13 @@ main)
 
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
-  echo 'local configured_positions = {' >"$tmp/pos"
+  echo '-- saved in Settings > Display' >"$tmp/pos"
+  echo 'local configured_positions = {' >>"$tmp/pos"
   : >"$tmp/ws"
-  i=0
+  i=0 x=0
   for mon in "${order[@]}"; do
-    echo "  [\"$mon\"] = \"$( ((i == 0)) && echo 0x0 || echo auto-right)\"," >>"$tmp/pos"
+    echo "  [\"$mon\"] = \"${x}x0\"," >>"$tmp/pos"
+    x=$((x + $(hyprctl monitors all -j | jq --arg n "$mon" '.[] | select(.name == $n) | (.width / .scale | round)')))
     for ws in 1 2 3 4 5; do
       printf 'hl.workspace_rule({ workspace = "%d", monitor = "%s", default = %s, persistent = true })\n' \
         $((i * 5 + ws)) "$mon" "$([[ $ws == 1 ]] && echo true || echo false)" >>"$tmp/ws"
@@ -84,6 +87,58 @@ main)
   replace_block monitors "$tmp/pos"
   replace_block workspaces "$tmp/ws"
   reload
+  "$(dirname "${BASH_SOURCE[0]}")/skein-xwayland-primary" || true
+  ;;
+
+layout)
+  shift
+  (($# > 0)) || die "usage: skein-monitors-set layout <name>=<x>x<y> ..."
+  specs=()
+  for arg in "$@"; do
+    [[ $arg =~ ^(.+)=(-?[0-9]+)x(-?[0-9]+)$ ]] || die "bad position '$arg' (want NAME=XxY)"
+    specs+=("$(jq -cn --arg n "${BASH_REMATCH[1]}" --argjson x "${BASH_REMATCH[2]}" --argjson y "${BASH_REMATCH[3]}" '{name: $n, x: $x, y: $y}')")
+  done
+  placed="$(printf '%s\n' "${specs[@]}" | jq -cs .)"
+  active="$(hyprctl monitors all -j | jq -c '[.[] | select(.disabled | not)]')"
+  errors="$(jq -rn --argjson act "$active" --argjson lay "$placed" '
+    def touch($a; $b):
+      (($a.x + $a.w == $b.x or $b.x + $b.w == $a.x) and $a.y < $b.y + $b.h and $b.y < $a.y + $a.h)
+      or (($a.y + $a.h == $b.y or $b.y + $b.h == $a.y) and $a.x < $b.x + $b.w and $b.x < $a.x + $a.w);
+    def overlap($a; $b):
+      $a.x < $b.x + $b.w and $b.x < $a.x + $a.w and $a.y < $b.y + $b.h and $b.y < $a.y + $a.h;
+    ($act | map(.name)) as $names
+    | ($lay | map(.name)) as $given
+    | ($names - $given | map("monitor not listed: " + .)[]),
+      ($given - $names | map("not an active monitor: " + .)[]),
+      ($given | group_by(.) | map(select(length > 1) | "listed twice: " + .[0])[]),
+      (if ($names - $given | length) == 0 and ($given - $names | length) == 0 then
+         [$lay[] | . as $p | ($act[] | select(.name == $p.name)) as $m
+          | $p + {w: ($m.width / $m.scale | round), h: ($m.height / $m.scale | round)}] as $r
+         | ([range(0; $r | length)] | map(. as $i | range($i + 1; $r | length) as $j
+              | select(overlap($r[$i]; $r[$j])) | "overlap: \($r[$i].name) and \($r[$j].name)")[]),
+           (if ($r | length) > 1 then
+              $r[] | . as $a | select([$r[] | select(.name != $a.name) | select(touch($a; .))] | length == 0)
+              | "not touching any other monitor: " + .name
+            else empty end)
+       else empty end)')"
+  [[ -z $errors ]] || die "invalid layout:\n$errors"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  {
+    echo '-- saved in Settings > Display'
+    echo 'local configured_positions = {'
+    jq -r 'sort_by([.x, .y])[] | "  [\"\(.name)\"] = \"\(.x)x\(.y)\","' <<<"$placed"
+    echo '}'
+  } >"$tmp/pos"
+  replace_block monitors "$tmp/pos"
+  if [[ -z ${SKEIN_NO_APPLY:-} ]]; then
+    while IFS=$'\t' read -r name mode position scale; do
+      hyprctl eval "hl.monitor({ output = \"$name\", mode = \"$mode\", position = \"$position\", scale = $scale })" >/dev/null
+    done < <(jq -rn --argjson act "$active" --argjson lay "$placed" '
+      $lay[] | . as $p | ($act[] | select(.name == $p.name))
+      | [.name, "\(.width)x\(.height)@\(.refreshRate * 100 | round / 100)", "\($p.x)x\($p.y)", .scale] | @tsv')
+    "$(dirname "${BASH_SOURCE[0]}")/skein-xwayland-primary" || true
+  fi
   ;;
 
 apply)
@@ -122,6 +177,6 @@ save)
   ;;
 
 *)
-  die "usage: skein-monitors-set main <name> | apply <name> <mode> | save <name> <mode|auto>"
+  die "usage: skein-monitors-set main <name> | layout <name>=<x>x<y>... | apply <name> <mode> | save <name> <mode|auto>"
   ;;
 esac

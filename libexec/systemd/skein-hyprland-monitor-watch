@@ -19,6 +19,7 @@ socat -U - "UNIX-CONNECT:$SOCKET" | while IFS= read -r event; do
   monitorremovedv2\>\>*)
     skein_run skein-hyprland-monitor-internal recover
     skein_run skein-hyprland-monitor-internal-mirror recover
+    "$(dirname "${BASH_SOURCE[0]}")/../skein-xwayland-primary" || true
     ;;
   esac
 done

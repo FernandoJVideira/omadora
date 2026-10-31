@@ -193,6 +193,20 @@ SettingsPage {
   }
 
   SettingsSection {
+    title: "Arrangement"
+    visible: root.monitors.displays.length > 1
+
+    MonitorLayoutEditor {
+      displays: root.monitors.displays
+      onCommitted: placements => {
+        Quickshell.execDetached([`${root.scripts}/skein-monitors-set`, "layout", ...placements.map(p => `${p.name}=${p.x}x${p.y}`)]);
+        refreshTimer.interval = 2500;
+        refreshTimer.restart();
+      }
+    }
+  }
+
+  SettingsSection {
     title: "Main display"
     visible: root.monitors.displays.length > 1
 
