@@ -26,10 +26,12 @@ if ((firmware_total == 0)); then
   exit 0
 fi
 
-sudo fwupdmgr update \
+if ! sudo fwupdmgr update \
   --assume-yes \
-  --no-reboot-check ||
-  die "failed to install firmware updates"
+  --no-reboot-check; then
+  warn "firmware update failed (see the fwupdmgr error above); skipping"
+  exit 0
+fi
 
 # Assume a reboot is required after firmware updates
 sudo touch /run/reboot-required

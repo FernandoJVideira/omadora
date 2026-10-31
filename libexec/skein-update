@@ -40,6 +40,9 @@ update_confirm() {
 # Cleanup
 # -----------------------------------------------------------------------------
 
+update_started=0
+state_refreshed=0
+
 cleanup() {
   local exit_code=$?
 
@@ -48,6 +51,10 @@ cleanup() {
   fi
 
   hyprctl dispatch 'hl.dsp.window.tag({ tag = "-noidle" })' &>/dev/null || hyprctl dispatch tagwindow -- -noidle &>/dev/null || true
+
+  if [[ "$update_started" == 1 && "$state_refreshed" != 1 ]]; then
+    update_state_refresh || true
+  fi
 
   state_clear "update-running" || true
 
@@ -97,6 +104,7 @@ update_state_refresh() {
 
   if ! flock -u 9; then
     info "Could not drop update lock. Skipping."
+    state_refreshed=1
     return 0
   fi
 
@@ -105,6 +113,8 @@ update_state_refresh() {
   else
     info "Failed to refresh update state. Skipped."
   fi
+
+  state_refreshed=1
 }
 
 # -----------------------------------------------------------------------------
@@ -147,6 +157,7 @@ exec 9>"$SKEIN_UPDATE_LOCK_FILE"
 flock -n 9 ||
   die "another update operation is already running"
 
+update_started=1
 update_perform
 
 update_state_refresh
